@@ -1,0 +1,5 @@
+module libmpdclient {
+	header "../mpd/client.h"
+	header "../mpd/entity.h"
+	export *
+}

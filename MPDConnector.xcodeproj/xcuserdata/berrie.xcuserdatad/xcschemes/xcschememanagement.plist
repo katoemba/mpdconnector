@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SchemeUserState</key>
+	<dict>
+		<key>MPDConnector_MacOS.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
+		<key>MPDConnector_iOS.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>MPDConnector_tvOS.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>5</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>C546AF3B1F35A824003C5B7E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>C546AF441F35A824003C5B7E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>C546B1581F37AAA9003C5B7E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>C546B1E81F37AFF9003C5B7E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>
