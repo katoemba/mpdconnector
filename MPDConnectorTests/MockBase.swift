@@ -34,10 +34,11 @@ class MockBase {
     }
     
     func callCount(_ functionName: String) -> Int {
-        if let callInfos = calls[functionName] {
-            return callInfos.count
+        guard let callInfos = calls[functionName] else {
+            return 0
         }
-        return 0
+
+        return callInfos.count
     }
     
     func assertCall(_ functionName: String, expectedCallCount: Int = 1, expectedParameters: [String: String] = [:]) {
