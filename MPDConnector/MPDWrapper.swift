@@ -23,12 +23,32 @@ public class MPDWrapper: MPDProtocol {
         mpd_connection_free(connection)
     }
 
+    public func connection_get_error(_ connection: OpaquePointer!) -> mpd_error {
+        return mpd_connection_get_error(connection)
+    }
+    
+    public func connection_get_error_message(_ connection: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_connection_get_error_message(connection))
+    }
+    
+    public func connection_get_server_error(_ connection: OpaquePointer!) -> mpd_server_error {
+        return mpd_connection_get_server_error(connection)
+    }
+    
+    public func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool {
+        return mpd_run_password(connection, password)
+    }
+
     public func run_play(_ connection: OpaquePointer!) -> Bool {
         return mpd_run_play(connection)
     }
     
     public func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         return mpd_run_pause(connection, mode)
+    }
+    
+    public func run_toggle_pause(_ connection: OpaquePointer!) -> Bool {
+        return mpd_run_toggle_pause(connection)
     }
     
     public func run_next(_ connection: OpaquePointer!) -> Bool {

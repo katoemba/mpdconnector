@@ -22,6 +22,10 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var repeatValue = false
     var random = false
     var state = MPD_STATE_UNKNOWN
+    var connectionError = MPD_ERROR_SUCCESS
+    var connectionErrorMessage = ""
+    var connectionServerError = MPD_SERVER_ERROR_UNK
+    var passwordValid = true
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -40,6 +44,33 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("connection_free", ["connection": "\(connection)"])
     }
     
+    public func connection_get_error(_ connection: OpaquePointer!) -> mpd_error {
+        registerCall("connection_get_error", [:])
+        return connectionError
+    }
+    
+    public func connection_get_error_message(_ connection: OpaquePointer!) -> String {
+        registerCall("connection_get_error_message", [:])
+        return connectionErrorMessage
+    }
+    
+    public func connection_get_server_error(_ connection: OpaquePointer!) -> mpd_server_error {
+        registerCall("connection_get_server_error", [:])
+        return connectionServerError
+    }
+    
+    public func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool {
+        registerCall("run_password", ["password": stringFromMPDString(password)])
+        if passwordValid == false {
+            connectionError = MPD_ERROR_SERVER
+            connectionServerError = MPD_SERVER_ERROR_PASSWORD
+        }
+        else {
+            connectionError = MPD_ERROR_SUCCESS
+        }
+        return true
+    }
+    
     func run_play(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_play", [:])
         return true
@@ -47,6 +78,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         registerCall("run_pause", ["mode": "\(mode)"])
+        return true
+    }
+    
+    func run_toggle_pause(_ connection: OpaquePointer!) -> Bool {
+        registerCall("run_toggle_pause", [:])
         return true
     }
     

@@ -10,36 +10,177 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 
-public class MPDPlayer: ControlProtocol {
+public class MPDPlayer: ControlProtocol, PlayerProtocol {
+    private var host: String
+    private var port: Int
+    private var password: String
+    private var connectedHandler: ((_ player: MPDPlayer) -> Void)?
+    private var disconnectedHandler: ((_ player: MPDPlayer, _ errorNumber: Int, _ errorMessage: String) -> Void)?
+    
     /// Connection to a MPD Player
-    private var _connection: OpaquePointer? = nil
-    private let _mpd: MPDProtocol
+    private var connection: OpaquePointer? = nil
+    private let mpd: MPDProtocol
     
     private var _statusTimer: Timer?
 
     /// PlayerStatus object for the player
     public var playerStatus = PlayerStatus()
+    
+    /// Current connection status
+    public var connectionStatus = ConnectionStatus.Disconnected
+    
+    public var uniqueID: String {
+        get {
+            return "mpd:\(host):\(port)"
+        }
+    }
+    
+    public var connectionProperties: [String: Any] {
+        get {
+            return ["host": host, "port": port, "password": password]
+        }
+    }
 
-    // MARK: - Initialization
-    public init(mpd: MPDProtocol) {
-        _mpd = mpd
-        _connection = mpd.connection_new("localhost", UInt32(6600), 1000)
-        fetchStatus()
+    // MARK: - Initialization and connecting
+    
+    /// Initialize a new player object
+    ///
+    /// - Parameters:
+    ///   - mpd: MPDWrapper object.
+    ///   - host: Host ip-address to connect to.
+    ///   - port: Port to connect to.
+    ///   - password: Password to use when connection, default is ""
+    ///   - connectedHandler: Optional handler that is called when a successful (re)connection is made
+    ///   - disconnectedHandler: Optional handler that is called when a connection can't be made or is lost
+    public init(mpd: MPDProtocol, host: String, port: Int, password: String = "",
+                connectedHandler: ((_ player: MPDPlayer) -> Void)? = nil,
+                disconnectedHandler: ((_ player: MPDPlayer, _ errorNumber: Int, _ errorMessage: String) -> Void)? = nil) {
+        self.mpd = mpd
+        self.host = host
+        self.port = port
+        self.password = password
+        self.connectedHandler = connectedHandler
+        self.disconnectedHandler = disconnectedHandler
     }
     
     /// Cleanup connection object
     deinit {
-        if let connection = _connection {
-            _mpd.connection_free(connection)
-            _connection = nil
+        if let connection = self.connection {
+            self.mpd.connection_free(connection)
+            self.connection = nil
         }
     }
     
-    /// Start listening for status updates on a regular interval (every second)
+    // MARK: - PlayerProtocol Implementations
+
+    /// Attempt to (re)connect based on the internal variables. When successful an internal connection object will be set.
+    ///
+    /// - Parameter numberOfTries: Number of times to try connection, default = 3.
+    public func connect(numberOfTries: Int = 3) {
+        if connectionStatus == .Disconnected {
+            self.connectionStatus = .Connecting
+            DispatchQueue.global(qos: .background).async {
+                
+                var connection: OpaquePointer? = nil
+                var actualTries = 0
+                while actualTries < numberOfTries {
+                    if connection != nil {
+                        self.mpd.connection_free(connection)
+                    }
+
+                    connection = self.connect(host: self.host, port: self.port, password: self.password)
+                    if connection != nil {
+                        if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
+                            // Successfully connected, call connectedHandler.
+                            DispatchQueue.main.async {
+                                self.connection = connection
+                                self.connectionStatus = .Connected
+                                if let connectedHandler = self.connectedHandler  {
+                                    connectedHandler(self)
+                                }
+                                
+                                let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Connected.rawValue), object: nil, userInfo: ["player": self])
+                                NotificationCenter.default.post(notification)
+                            }
+                            return
+                        }
+                    }
+                    actualTries += 1
+                }
+                
+                // Didn't manage to connect after <numberOfTries>, call disconnectedHandler.
+                DispatchQueue.main.async {
+                    self.connectionStatus = .Disconnected
+
+                    if let disconnectedHandler = self.disconnectedHandler  {
+                        disconnectedHandler(self, Int(self.mpd.connection_get_error(connection).rawValue), self.mpd.connection_get_error_message(connection))
+                    }
+                    let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Disconnected.rawValue), object: nil, userInfo: ["player": self])
+                    NotificationCenter.default.post(notification)
+
+                    if connection != nil {
+                        self.mpd.connection_free(connection)
+                    }
+                    self.connection = nil
+                }
+            }
+        }
+    }
+
+    /// Connect to a MPD Player
+    ///
+    /// - Parameters:
+    ///   - host: Host ip-address to connect to.
+    ///   - port: Port to connect to.
+    ///   - password: Password to use after connecting, default = "".
+    /// - Returns: A mpd_connection object.
+    private func connect(host: String, port: Int, password: String = "") -> OpaquePointer? {
+        let connection = self.mpd.connection_new(host, UInt32(port), 1000)
+        if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
+            if password != "" {
+                _ = self.mpd.run_password(connection, password: password)
+            }
+        }
+        
+        return connection
+    }
+    
+    /// Validate if the current connection is valid, and if not try to reconnect.
+    ///
+    /// - Returns: <#return value description#>
+    private func validateConnection() -> Bool {
+        if let connection = self.connection {
+            let error = self.mpd.connection_get_error(connection)
+
+            if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
+                self.connectionStatus = .Disconnected
+                if let disconnectedHandler = self.disconnectedHandler  {
+                    disconnectedHandler(self, Int(self.mpd.connection_get_error(connection).rawValue), self.mpd.connection_get_error_message(connection))
+                }
+                let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Disconnected.rawValue), object: nil, userInfo: ["player": self])
+                NotificationCenter.default.post(notification)
+
+                self.mpd.connection_free(connection)
+                self.connection = nil
+
+                return false
+            }
+            return true
+        }
+        
+        return false
+    }
+
+    /// Start listening for status updates on a regular interval (every second). This will also perform an immediate fetchStatus.
     public func startListeningForStatusUpdates() {
-        _statusTimer = Timer.scheduledTimer(withTimeInterval: 1.0 , repeats: true, block: { (timer) in
+        // Start a statusUpdate timer only once
+        if _statusTimer == nil {
+            self.playerStatus = PlayerStatus()
             self.fetchStatus()
-        })
+            _statusTimer = Timer.scheduledTimer(withTimeInterval: 1.0 , repeats: true, block: { (timer) in
+                self.fetchStatus()
+            })
+        }
     }
 
     /// Stop listening for status updates. Must be called before nilling a MPDPlayer object to prevent retain cycles.
@@ -54,29 +195,41 @@ public class MPDPlayer: ControlProtocol {
 
     /// Start playback.
     public func play() {
-        if let connection = _connection {
-            _ = _mpd.run_play(connection)
+        if validateConnection() {
+            _ = self.mpd.run_play(connection)
+            fetchStatus()
         }
     }
     
     /// Start playback.
     public func pause() {
-        if let connection = _connection {
-            _ = _mpd.run_pause(connection, true)
+        if validateConnection() {
+            _ = self.mpd.run_pause(connection, true)
+            fetchStatus()
+        }
+    }
+    
+    /// Toggle between play and pause: when paused -> start to play, when playing -> pause.
+    public func togglePlayPause() {
+        if validateConnection() {
+            _ = self.mpd.run_toggle_pause(connection)
+            fetchStatus()
         }
     }
     
     /// Skip to the next track.
     public func skip() {
-        if let connection = _connection {
-            _ = _mpd.run_next(connection)
+        if validateConnection() {
+            _ = self.mpd.run_next(connection)
+            fetchStatus()
         }
     }
     
     /// Go back to the previous track.
     public func back() {
-        if let connection = _connection {
-            _ = _mpd.run_previous(connection)
+        if validateConnection() {
+            _ = self.mpd.run_previous(connection)
+            fetchStatus()
         }
     }
     
@@ -84,8 +237,9 @@ public class MPDPlayer: ControlProtocol {
     ///
     /// - Parameter shuffleMode: The shuffle mode to use.
     public func setShuffle(shuffleMode: ShuffleMode) {
-        if let connection = _connection {
-            _ = _mpd.run_random(connection, (shuffleMode == .On) ? true : false)
+        if validateConnection() {
+            _ = self.mpd.run_random(connection, (shuffleMode == .On) ? true : false)
+            fetchStatus()
         }
     }
     
@@ -93,8 +247,9 @@ public class MPDPlayer: ControlProtocol {
     ///
     /// - Parameter repeatMode: The repeat mode to use.
     public func setRepeat(repeatMode: RepeatMode) {
-        if let connection = _connection {
-            _ = _mpd.run_repeat(connection, (repeatMode == .Off) ? false : true)
+        if validateConnection() {
+            _ = self.mpd.run_repeat(connection, (repeatMode == .Off) ? false : true)
+            fetchStatus()
         }
     }
     
@@ -106,34 +261,35 @@ public class MPDPlayer: ControlProtocol {
             return
         }
         
-        if let connection = _connection {
-            _ = _mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
+        if validateConnection() {
+            _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
+            fetchStatus()
         }
     }
     
     /// Retrieve the status from the player and fill all relevant elements in the playerStatus object
     public func fetchStatus() {
-        if let connection = _connection {
+        if validateConnection() {
             playerStatus.beginUpdate()
             
-            if let status = _mpd.run_status(connection) {
-                playerStatus.volume = Float(_mpd.status_get_volume(status)) / 100.0
-                playerStatus.elapsedTime = Int(_mpd.status_get_elapsed_time(status))
-                playerStatus.trackTime = Int(_mpd.status_get_total_time(status))
+            if let status = self.mpd.run_status(connection) {
+                playerStatus.volume = Float(self.mpd.status_get_volume(status)) / 100.0
+                playerStatus.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))
+                playerStatus.trackTime = Int(self.mpd.status_get_total_time(status))
                 
-                playerStatus.playingStatus = (_mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
-                playerStatus.shuffleMode = (_mpd.status_get_random(status) == true) ? .On : .Off
-                playerStatus.repeatMode = (_mpd.status_get_repeat(status) == true) ? .All : .Off
+                playerStatus.playingStatus = (self.mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
+                playerStatus.shuffleMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
+                playerStatus.repeatMode = (self.mpd.status_get_repeat(status) == true) ? .All : .Off
                 
-                _mpd.status_free(status)
+                self.mpd.status_free(status)
             }
             
-            if let song = _mpd.run_current_song(connection) {
-                playerStatus.song = _mpd.song_get_tag(song, MPD_TAG_TITLE, 0)
-                playerStatus.album = _mpd.song_get_tag(song, MPD_TAG_ALBUM, 0)
-                playerStatus.artist = _mpd.song_get_tag(song, MPD_TAG_ARTIST, 0)
+            if let song = self.mpd.run_current_song(connection) {
+                playerStatus.song = self.mpd.song_get_tag(song, MPD_TAG_TITLE, 0)
+                playerStatus.album = self.mpd.song_get_tag(song, MPD_TAG_ALBUM, 0)
+                playerStatus.artist = self.mpd.song_get_tag(song, MPD_TAG_ARTIST, 0)
                 
-                _mpd.song_free(song)
+                self.mpd.song_free(song)
             }
             
             playerStatus.endUpdate()

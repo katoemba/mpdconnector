@@ -14,13 +14,13 @@ import libmpdclient
 class MPDPlayerTests: XCTestCase {    
     var mpdWrapper = MPDWrapperMock()
     var mpdPlayer: MPDPlayer?
+    var mpdConnectedExpectation: XCTestExpectation?
     
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
 
         mpdWrapper = MPDWrapperMock()
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper)
     }
     
     override func tearDown() {
@@ -33,13 +33,34 @@ class MPDPlayerTests: XCTestCase {
         }
     }
     
+    func setupConnectionToPlayer(clearAllCalls: Bool = true) {
+        // Setup a mpdPlayer connection and wait until it's connected.
+        mpdConnectedExpectation = expectation(description: "Connected to MPD Player")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
+                                   connectedHandler: { (mpdPlayer) in
+                                    self.mpdConnectedExpectation?.fulfill()
+        },
+                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+        })
+        mpdPlayer?.connect()
+        waitForExpectations(timeout: 1.0, handler: nil)
+        
+        if clearAllCalls {
+            mpdWrapper.clearAllCalls()
+        }
+    }
+    
     func testMPDPlayerInitializationAndCleanup() {
         // Given nothing
         
-        // When creating a new MPDPlayer object (done during setup)
+        // When creating a new MPDPlayer object
+        setupConnectionToPlayer(clearAllCalls: false)
         
         // Then a new connection to an mpd server is created
         XCTAssert(self.mpdWrapper.callCount("connection_new") == 1, "connection_new not called once")
+        
+        // And the status is .Connected
+        XCTAssert(self.mpdPlayer!.connectionStatus == .Connected, "Expected connectionStatus \(ConnectionStatus.Connected), got '\(self.mpdPlayer!.connectionStatus)'")
         
         // Given an existing MPDPlayer object (created during setup)
         
@@ -62,9 +83,131 @@ class MPDPlayerTests: XCTestCase {
         // Then the mpd connection is freed
         waitForExpectations(timeout: 1.0, handler: nil)
     }
+    
+    func testMPDPlayerCantConnect() {
+        // Given nothing
+        mpdWrapper.connectionError = MPD_ERROR_RESOLVER
+        mpdWrapper.connectionErrorMessage = "An error"
+        
+        // When connecting to a player fails
+        
+        // Then the disconnectedHandler gets called
+        let mpdDisconnectedExpectation = expectation(description: "Not connected to MPD Player")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
+                                   connectedHandler: { (mpdPlayer) in
+        },
+                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+                                    mpdDisconnectedExpectation.fulfill()
+                                    XCTAssert(errorNumber == Int(MPD_ERROR_RESOLVER.rawValue), "Expected errorNumber \(MPD_ERROR_RESOLVER), got \(errorNumber)")
+                                    XCTAssert(errorMessage == "An error", "Expected errorMessage 'An error', got '\(errorMessage)'")
+        })
+        mpdPlayer?.connect()
+        waitForExpectations(timeout: 1.0, handler: nil)
+        
+        // And the status is .Disconnected
+        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+    }
 
+    func testMPDPlayerDisconnect() {
+        // Given an initialized MPDPlayer
+        let mpdConnectedExpectation = expectation(description: "Connected to MPD Player")
+        let mpdDisconnectedExpectation = expectation(description: "Not connected to MPD Player")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
+                                   connectedHandler: { (mpdPlayer) in
+                                    mpdConnectedExpectation.fulfill()
+        },
+                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+                                    mpdDisconnectedExpectation.fulfill()
+                                    XCTAssert(errorNumber == Int(MPD_ERROR_CLOSED.rawValue), "Expected errorNumber \(MPD_ERROR_CLOSED), got \(errorNumber)")
+                                    XCTAssert(errorMessage == "Connection lost", "Expected errorMessage 'Connection lost', got '\(errorMessage)'")
+        })
+        mpdPlayer?.connect()
+        wait(for: [mpdConnectedExpectation], timeout: 1.0)
+        XCTAssert(mpdPlayer!.connectionStatus == .Connected, "Expected connectionStatus \(ConnectionStatus.Connected), got '\(mpdPlayer!.connectionStatus)'")
+
+        mpdWrapper.clearAllCalls()
+        
+        // When a player looses its connection
+        mpdWrapper.connectionError = MPD_ERROR_CLOSED
+        mpdWrapper.connectionErrorMessage = "Connection lost"
+        mpdPlayer!.pause()
+
+        // Then the disconnectedHandler gets called
+        wait(for: [mpdDisconnectedExpectation], timeout: 1.0)
+        
+        // And the status is .Disconnected
+        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+
+        // And connection is freed is called with value "pwd"
+        mpdWrapper.assertCall("connection_free")
+
+        mpdWrapper.clearAllCalls()
+
+        // When a subsequent call is made
+        mpdPlayer!.pause()
+        
+        // Then the status remains .Disconnected
+        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+
+        // And connection_free is not called this time
+        XCTAssert(mpdWrapper.callCount("connection_free") == 0, "mpd_connection_free called unexpectedly")
+    }
+    
+    func testMPDPlayerValidPassword() {
+        // Given nothing
+        let password = "pwd"
+        
+        // When connecting to a player with a valid password
+        
+        // Then the disconnectedHandler gets called
+        let mpdConnectedExpectation = expectation(description: "Not connected to MPD Player")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password,
+                                   connectedHandler: { (mpdPlayer) in
+                                    mpdConnectedExpectation.fulfill()
+        },
+                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+        })
+        mpdPlayer?.connect()
+        waitForExpectations(timeout: 1.0, handler: nil)
+        
+        // And mpd_run_password is called with value "pwd"
+        mpdWrapper.assertCall("run_password", expectedParameters: ["password": "\(password)"])
+
+        // And the status is .Connected
+        XCTAssert(self.mpdPlayer!.connectionStatus == .Connected, "Expected connectionStatus \(ConnectionStatus.Connected), got '\(self.mpdPlayer!.connectionStatus)'")
+    }
+    
+    func testMPDPlayerInvalidPassword() {
+        // Given nothing
+        mpdWrapper.passwordValid = false
+        mpdWrapper.connectionErrorMessage = "An error"
+        let password = "pwd"
+        
+        // When connecting to a player with an invalid password
+        
+        // Then the disconnectedHandler gets called
+        let mpdDisconnectedExpectation = expectation(description: "Not connected to MPD Player")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password,
+                                   connectedHandler: { (mpdPlayer) in
+        },
+                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+                                    mpdDisconnectedExpectation.fulfill()
+                                    XCTAssert(errorNumber == Int(MPD_ERROR_SERVER.rawValue), "Expected errorNumber \(MPD_ERROR_SERVER), got \(errorNumber)")
+                                    XCTAssert(errorMessage == "An error", "Expected errorMessage 'An error', got '\(errorMessage)'")
+        })
+        mpdPlayer?.connect()
+        waitForExpectations(timeout: 1.0, handler: nil)
+
+        // And mpd_run_password is called with value "pwd"
+        mpdWrapper.assertCall("run_password", expectedParameters: ["password": "\(password)"])
+        
+        // And the status is .Disconnected
+        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+    }
+    
     func testSetValidVolumeSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When setting the volume to 0.6
         mpdPlayer?.setVolume(volume: 0.6)
@@ -75,6 +218,7 @@ class MPDPlayerTests: XCTestCase {
 
     func testSetInvalidVolumeNotSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When setting the volume to -10.0
         mpdPlayer?.setVolume(volume: -10.0)
@@ -94,107 +238,171 @@ class MPDPlayerTests: XCTestCase {
     
     func testPlaySentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a play command
         mpdPlayer?.play()
         
         // Then mpd_run_play is called
         mpdWrapper.assertCall("run_play")
+
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
 
     func testPauseSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a pause command
         mpdPlayer?.pause()
         
         // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_pause", expectedParameters: ["mode": "\(true)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
 
+    func testTogglePauseSentToMPD() {
+        // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
+        
+        // When giving a pause command
+        mpdPlayer?.togglePlayPause()
+        
+        // Then mpd_run_pause is called with mode = true
+        mpdWrapper.assertCall("run_toggle_pause")
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
+    }
+    
     func testSkipSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a skip command
         mpdPlayer?.skip()
         
         // Then mpd_run_next is called
         mpdWrapper.assertCall("run_next")
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
     
     func testBackSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a back command
         mpdPlayer?.back()
         
         // Then mpd_run_next is called
         mpdWrapper.assertCall("run_previous")
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
     
     func testRepeatOffSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a repeat:off command
         mpdPlayer?.setRepeat(repeatMode: .Off)
         
         // Then mpd_run_repeat is called with mode: false
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
 
     func testRepeatSingleSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a repeat:single command
         mpdPlayer?.setRepeat(repeatMode: .Single)
         
         // Then mpd_run_repeat is called with mode: true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
 
     func testRepeatAllSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a repeat:all command
         mpdPlayer?.setRepeat(repeatMode: .All)
         
         // Then mpd_run_repeat is called with mode: true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
 
     func testRepeatAlbumSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a repeat:album command
         mpdPlayer?.setRepeat(repeatMode: .Album)
         
         // Then mpd_run_repeat is called with mode: true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
     
     func testShuffleOffSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a repeat:off command
         mpdPlayer?.setShuffle(shuffleMode: .Off)
         
         // Then mpd_run_random is called with mode: false
         mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
     
     func testShuffleOnSentToMPD() {
         // Given an initialized MPDPlayer
+        setupConnectionToPlayer()
         
         // When giving a repeat:single command
         mpdPlayer?.setShuffle(shuffleMode: .On)
         
         // Then mpd_run_random is called with mode: true
         mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
+        
+        // Then mpd_run_status/mpd_status_free are called.
+        mpdWrapper.assertCall("run_status")
+        mpdWrapper.assertCall("status_free")
     }
     
     func testFetchStatus() {
         // Given an initialized MPDPlayer
-        mpdWrapper.clearAllCalls()
         mpdWrapper.volume = 10
         mpdWrapper.elapsedTime = 20
         mpdWrapper.trackTime = 30
@@ -204,6 +412,7 @@ class MPDPlayerTests: XCTestCase {
         mpdWrapper.repeatValue = true
         mpdWrapper.random = true
         mpdWrapper.state = MPD_STATE_PLAY
+        setupConnectionToPlayer()
         
         // When giving a fetchStatus command
         mpdPlayer?.fetchStatus()

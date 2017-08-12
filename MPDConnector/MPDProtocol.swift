@@ -13,8 +13,13 @@ import libmpdclient
 public protocol MPDProtocol {
     func connection_new(_ host: UnsafePointer<Int8>!, _ port: UInt32, _ timeout_ms: UInt32) -> OpaquePointer!
     func connection_free(_ connection: OpaquePointer!)
+    func connection_get_error(_ connection: OpaquePointer!) -> mpd_error
+    func connection_get_error_message(_ connection: OpaquePointer!) -> String
+    func connection_get_server_error(_ connection: OpaquePointer!) -> mpd_server_error
+    func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool
     func run_play(_ connection: OpaquePointer!) -> Bool
     func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
+    func run_toggle_pause(_ connection: OpaquePointer!) -> Bool
     func run_next(_ connection: OpaquePointer!) -> Bool
     func run_previous(_ connection: OpaquePointer!) -> Bool
     func run_random(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
