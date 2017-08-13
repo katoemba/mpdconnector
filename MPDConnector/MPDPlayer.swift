@@ -22,6 +22,7 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
     private let mpd: MPDProtocol
     
     private var _statusTimer: Timer?
+    private var fetchStatusRunning = false
 
     /// PlayerStatus object for the player
     public var playerStatus = PlayerStatus()
@@ -83,7 +84,6 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
 
         self.connectionStatus = .Connecting
         DispatchQueue.global(qos: .background).async {
-            
             var connection: OpaquePointer? = nil
             var actualTries = 0
             while actualTries < numberOfTries {
@@ -151,6 +151,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
     ///
     /// - Returns: <#return value description#>
     private func validateConnection() -> Bool {
+        guard Thread.current.isMainThread == true else {
+            return false
+        }
+
         guard let connection = self.connection else {
             return false
         }
@@ -159,14 +163,20 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
 
         if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
             self.connectionStatus = .Disconnected
-            if let disconnectedHandler = self.disconnectedHandler  {
-                disconnectedHandler(self, Int(self.mpd.connection_get_error(connection).rawValue), self.mpd.connection_get_error_message(connection))
-            }
-            let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Disconnected.rawValue), object: nil, userInfo: ["player": self])
-            NotificationCenter.default.post(notification)
 
-            self.mpd.connection_free(connection)
-            self.connection = nil
+            DispatchQueue.main.async {
+                let errorNumber = Int(self.mpd.connection_get_error(connection).rawValue)
+                let errorMessage = self.mpd.connection_get_error_message(connection)
+
+                if let disconnectedHandler = self.disconnectedHandler  {
+                    disconnectedHandler(self, errorNumber, errorMessage)
+                }
+                let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Disconnected.rawValue), object: nil, userInfo: ["player": self])
+                NotificationCenter.default.post(notification)
+
+                self.mpd.connection_free(connection)
+                self.connection = nil
+            }
 
             return false
         }
@@ -206,8 +216,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
         
-        _ = self.mpd.run_play(connection)
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_play(self.connection)
+            self.fetchStatus()
+        }
     }
     
     /// Start playback.
@@ -216,8 +228,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
 
-        _ = self.mpd.run_pause(connection, true)
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_pause(self.connection, true)
+            self.fetchStatus()
+        }
     }
     
     /// Toggle between play and pause: when paused -> start to play, when playing -> pause.
@@ -225,8 +239,11 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
         guard validateConnection() else {
             return
         }
-        _ = self.mpd.run_toggle_pause(connection)
-        fetchStatus()
+        
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_toggle_pause(self.connection)
+            self.fetchStatus()
+        }
     }
     
     /// Skip to the next track.
@@ -235,8 +252,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
 
-        _ = self.mpd.run_next(connection)
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_next(self.connection)
+            self.fetchStatus()
+        }
     }
     
     /// Go back to the previous track.
@@ -245,8 +264,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
 
-        _ = self.mpd.run_previous(connection)
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_previous(self.connection)
+            self.fetchStatus()
+        }
     }
     
     /// Set the shuffle mode of the player.
@@ -257,8 +278,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
 
-        _ = self.mpd.run_random(connection, (shuffleMode == .On) ? true : false)
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_random(self.connection, (shuffleMode == .On) ? true : false)
+            self.fetchStatus()
+        }
     }
     
     /// Set the repeat mode of the player.
@@ -269,8 +292,10 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
 
-        _ = self.mpd.run_repeat(connection, (repeatMode == .Off) ? false : true)
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_repeat(self.connection, (repeatMode == .Off) ? false : true)
+            self.fetchStatus()
+        }
     }
     
     /// Set the volume of the player.((shuffleMode == .On)?,true:false)
@@ -285,42 +310,60 @@ public class MPDPlayer: ControlProtocol, PlayerProtocol {
             return
         }
 
-        _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
-        fetchStatus()
+        DispatchQueue.global(qos: .background).async {
+            _ = self.mpd.run_set_volume(self.connection, UInt32(roundf(volume * 100.0)))
+            self.fetchStatus()
+        }
     }
     
     /// Retrieve the status from the player and fill all relevant elements in the playerStatus object
     public func fetchStatus() {
-        guard validateConnection() else {
-            return
-        }
-
-        playerStatus.beginUpdate()
-        
-        if let status = self.mpd.run_status(connection) {
-            defer {
-                self.mpd.status_free(status)
+        // Call validate and beginUpdate on the main thread.
+        DispatchQueue.main.async {
+            guard self.validateConnection() else {
+                return
             }
 
-            playerStatus.volume = Float(self.mpd.status_get_volume(status)) / 100.0
-            playerStatus.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))
-            playerStatus.trackTime = Int(self.mpd.status_get_total_time(status))
+            // Never run more than one fetchStatus command at the same time
+            guard self.fetchStatusRunning == false else {
+                return
+            }
+
+            self.fetchStatusRunning = true
+            self.playerStatus.beginUpdate()
             
-            playerStatus.playingStatus = (self.mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
-            playerStatus.shuffleMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
-            playerStatus.repeatMode = (self.mpd.status_get_repeat(status) == true) ? .All : .Off
-        }
-        
-        if let song = self.mpd.run_current_song(connection) {
-            defer {
-                self.mpd.song_free(song)
-            }
+            // Then perform fetchStatus on the backgound.
+            DispatchQueue.global(qos: .background).async {
+                if let status = self.mpd.run_status(self.connection) {
+                    defer {
+                        self.mpd.status_free(status)
+                    }
 
-            playerStatus.song = self.mpd.song_get_tag(song, MPD_TAG_TITLE, 0)
-            playerStatus.album = self.mpd.song_get_tag(song, MPD_TAG_ALBUM, 0)
-            playerStatus.artist = self.mpd.song_get_tag(song, MPD_TAG_ARTIST, 0)
+                    self.playerStatus.volume = Float(self.mpd.status_get_volume(status)) / 100.0
+                    self.playerStatus.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))
+                    self.playerStatus.trackTime = Int(self.mpd.status_get_total_time(status))
+                    
+                    self.playerStatus.playingStatus = (self.mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
+                    self.playerStatus.shuffleMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
+                    self.playerStatus.repeatMode = (self.mpd.status_get_repeat(status) == true) ? .All : .Off
+                }
+                
+                if let song = self.mpd.run_current_song(self.connection) {
+                    defer {
+                        self.mpd.song_free(song)
+                    }
+
+                    self.playerStatus.song = self.mpd.song_get_tag(song, MPD_TAG_TITLE, 0)
+                    self.playerStatus.album = self.mpd.song_get_tag(song, MPD_TAG_ALBUM, 0)
+                    self.playerStatus.artist = self.mpd.song_get_tag(song, MPD_TAG_ARTIST, 0)
+                }
+                
+                // And finally do an endUpdate on the main thread.
+                DispatchQueue.main.async {
+                    self.playerStatus.endUpdate()
+                    self.fetchStatusRunning = false
+                }
+            }
         }
-        
-        playerStatus.endUpdate()
     }
 }

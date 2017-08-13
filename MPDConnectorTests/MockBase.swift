@@ -6,8 +6,8 @@
 //  Copyright © 2017 Kaotemba Software. All rights reserved.
 //
 
-import Foundation
 import XCTest
+import Foundation
 
 class MockBase {
     /// Dictionary of calls (functionName as key) and parameters as value.
@@ -64,5 +64,5 @@ class MockBase {
 
         }
         XCTAssert(callCount == expectedCallCount, "Expected \(expectedCallCount) calls to '\(functionName)', actual number of calls is \(callCount)")
-    }
+    }    
 }

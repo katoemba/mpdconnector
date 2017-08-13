@@ -50,6 +50,17 @@ class MPDPlayerTests: XCTestCase {
         }
     }
     
+    func waitForCall(_ functionName: String, expectedCalls: Int = 1, waitTime: Float = 0.5) -> XCTestExpectation {
+        let waitExpectation = expectation(description: "Wait for timeout")
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(waitTime)) {
+            if self.mpdWrapper.callCount(functionName) == expectedCalls {
+                waitExpectation.fulfill()
+            }
+        }
+        
+        return waitExpectation
+    }
+    
     func testMPDPlayerInitializationAndCleanup() {
         // Given nothing
         
@@ -205,6 +216,79 @@ class MPDPlayerTests: XCTestCase {
         XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
     }
     
+    func testCommandsWhenNotConnected() {
+        // Given an initialized but not connected MPDPlayer
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
+                                   connectedHandler: { (mpdPlayer) in
+                                    self.mpdConnectedExpectation?.fulfill()
+        },
+                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+        })
+        
+        // When setting the volume to 0.6
+        mpdPlayer?.setVolume(volume: 0.6)
+        
+        // Then wait for 0.2 seconds and check if run_play is not called
+        var waitForCallExpectation = waitForCall("run_set_volume", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a play command
+        mpdPlayer?.play()
+        
+        // Then wait for 0.2 seconds and check if run_play is called
+        waitForCallExpectation = waitForCall("run_play", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
+        // When giving a pause command
+        mpdPlayer?.pause()
+        
+        // Then wait for 0.2 seconds and check if run_pause is called
+        waitForCallExpectation = waitForCall("run_pause", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a pause command
+        mpdPlayer?.togglePlayPause()
+        
+        // Then wait for 0.2 seconds and check if run_toggle_pause is called
+        waitForCallExpectation = waitForCall("run_toggle_pause", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a skip command
+        mpdPlayer?.skip()
+        
+        // Then wait for 0.2 seconds and check if run_next is called
+        waitForCallExpectation = waitForCall("run_next", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a back command
+        mpdPlayer?.back()
+        
+        // Then wait for 0.2 seconds and check if run_previous is called
+        waitForCallExpectation = waitForCall("run_previous", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a repeat:off command
+        mpdPlayer?.setRepeat(repeatMode: .Off)
+        
+        // Then wait for 0.2 seconds and check if run_repeat is called
+        waitForCallExpectation = waitForCall("run_repeat", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a repeat:off command
+        mpdPlayer?.setShuffle(shuffleMode: .Off)
+        
+        // Then wait for 0.2 seconds and check if run_random is called
+        waitForCallExpectation = waitForCall("run_random", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // When giving a fetchStatus command
+        mpdPlayer?.fetchStatus()
+        
+        // Then wait for 0.2 seconds and check if run_status is called
+        waitForCallExpectation = waitForCall("run_status", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+    }
+    
     func testSetValidVolumeSentToMPD() {
         // Given an initialized MPDPlayer
         setupConnectionToPlayer()
@@ -212,6 +296,11 @@ class MPDPlayerTests: XCTestCase {
         // When setting the volume to 0.6
         mpdPlayer?.setVolume(volume: 0.6)
         
+        // Then wait for 0.2 seconds and check if run_set_volume is called
+        let waitForCallExpectation = waitForCall("run_set_volume", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
+
         // Then mpd_run_set_volume is called with value 60
         mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(60)"])
     }
@@ -223,8 +312,9 @@ class MPDPlayerTests: XCTestCase {
         // When setting the volume to -10.0
         mpdPlayer?.setVolume(volume: -10.0)
         
-        // Then this is not passed to mpd
-        mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
+        // Then wait for 0.2 seconds and check if run_play is called
+        let waitForCallExpectation = waitForCall("run_set_volume", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
 
         // Given an initialized MPDPlayer
         mpdWrapper.clearAllCalls()
@@ -233,7 +323,7 @@ class MPDPlayerTests: XCTestCase {
         mpdPlayer?.setVolume(volume: 1.1)
         
         // Then this is not passed to mpd
-        mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
     }
     
     func testPlaySentToMPD() {
@@ -243,9 +333,13 @@ class MPDPlayerTests: XCTestCase {
         // When giving a play command
         mpdPlayer?.play()
         
+        // Then wait for 0.2 seconds and check if run_play is called
+        let waitForCallExpectation = waitForCall("run_play", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
         // Then mpd_run_play is called
         mpdWrapper.assertCall("run_play")
-
+        
         // Then mpd_run_status/mpd_status_free are called.
         mpdWrapper.assertCall("run_status")
         mpdWrapper.assertCall("status_free")
@@ -258,7 +352,10 @@ class MPDPlayerTests: XCTestCase {
         // When giving a pause command
         mpdPlayer?.pause()
         
-        // Then mpd_run_pause is called with mode = true
+        // Then wait for 0.2 seconds and check if run_pause is called
+        let waitForCallExpectation = waitForCall("run_pause", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+
         mpdWrapper.assertCall("run_pause", expectedParameters: ["mode": "\(true)"])
         
         // Then mpd_run_status/mpd_status_free are called.
@@ -272,6 +369,10 @@ class MPDPlayerTests: XCTestCase {
         
         // When giving a pause command
         mpdPlayer?.togglePlayPause()
+        
+        // Then wait for 0.2 seconds and check if run_toggle_pause is called
+        let waitForCallExpectation = waitForCall("run_toggle_pause", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_toggle_pause")
@@ -288,6 +389,10 @@ class MPDPlayerTests: XCTestCase {
         // When giving a skip command
         mpdPlayer?.skip()
         
+        // Then wait for 0.2 seconds and check if run_next is called
+        let waitForCallExpectation = waitForCall("run_next", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
         // Then mpd_run_next is called
         mpdWrapper.assertCall("run_next")
         
@@ -302,6 +407,10 @@ class MPDPlayerTests: XCTestCase {
         
         // When giving a back command
         mpdPlayer?.back()
+        
+        // Then wait for 0.2 seconds and check if run_previous is called
+        let waitForCallExpectation = waitForCall("run_previous", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // Then mpd_run_next is called
         mpdWrapper.assertCall("run_previous")
@@ -318,6 +427,10 @@ class MPDPlayerTests: XCTestCase {
         // When giving a repeat:off command
         mpdPlayer?.setRepeat(repeatMode: .Off)
         
+        // Then wait for 0.2 seconds and check if run_repeat is called
+        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
         // Then mpd_run_repeat is called with mode: false
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
         
@@ -332,6 +445,10 @@ class MPDPlayerTests: XCTestCase {
         
         // When giving a repeat:single command
         mpdPlayer?.setRepeat(repeatMode: .Single)
+        
+        // Then wait for 0.2 seconds and check if run_repeat is called
+        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // Then mpd_run_repeat is called with mode: true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
@@ -348,6 +465,10 @@ class MPDPlayerTests: XCTestCase {
         // When giving a repeat:all command
         mpdPlayer?.setRepeat(repeatMode: .All)
         
+        // Then wait for 0.2 seconds and check if run_repeat is called
+        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
         // Then mpd_run_repeat is called with mode: true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
         
@@ -362,6 +483,10 @@ class MPDPlayerTests: XCTestCase {
         
         // When giving a repeat:album command
         mpdPlayer?.setRepeat(repeatMode: .Album)
+        
+        // Then wait for 0.2 seconds and check if run_repeat is called
+        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // Then mpd_run_repeat is called with mode: true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
@@ -378,6 +503,10 @@ class MPDPlayerTests: XCTestCase {
         // When giving a repeat:off command
         mpdPlayer?.setShuffle(shuffleMode: .Off)
         
+        // Then wait for 0.2 seconds and check if run_random is called
+        let waitForCallExpectation = waitForCall("run_random", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
         // Then mpd_run_random is called with mode: false
         mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
         
@@ -392,6 +521,10 @@ class MPDPlayerTests: XCTestCase {
         
         // When giving a repeat:single command
         mpdPlayer?.setShuffle(shuffleMode: .On)
+        
+        // Then wait for 0.2 seconds and check if run_random is called
+        let waitForCallExpectation = waitForCall("run_random", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // Then mpd_run_random is called with mode: true
         mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
@@ -416,6 +549,10 @@ class MPDPlayerTests: XCTestCase {
         
         // When giving a fetchStatus command
         mpdPlayer?.fetchStatus()
+        
+        // Then wait for 0.2 seconds and check if run_status is called
+        let waitForCallExpectation = waitForCall("run_status", waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // Then mpd_run_status/mpd_status_free are called.
         mpdWrapper.assertCall("run_status")
