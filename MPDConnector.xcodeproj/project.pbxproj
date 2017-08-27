@@ -288,6 +288,8 @@
 		C546B2841F3B158C003C5B7E /* MPDConnector.framework in Resources */ = {isa = PBXBuildFile; fileRef = C546AF3C1F35A824003C5B7E /* MPDConnector.framework */; };
 		C546B2861F3B6CCB003C5B7E /* MPDWrapperMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */; };
 		C546B2BD1F3C34BE003C5B7E /* MockBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2BC1F3C34BE003C5B7E /* MockBase.swift */; };
+		C585B3661F519A5D00D7B784 /* MPCController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPCController.swift */; };
+		C585B36C1F51BB4E00D7B784 /* MPDControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -437,6 +439,8 @@
 		C546B27C1F3B0A8E003C5B7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDWrapperMock.swift; sourceTree = "<group>"; };
 		C546B2BC1F3C34BE003C5B7E /* MockBase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockBase.swift; sourceTree = "<group>"; };
+		C585B3651F519A5D00D7B784 /* MPCController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPCController.swift; sourceTree = "<group>"; };
+		C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControllerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -503,6 +507,7 @@
 			isa = PBXGroup;
 			children = (
 				C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */,
+				C585B3651F519A5D00D7B784 /* MPCController.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
 			);
@@ -663,6 +668,7 @@
 			isa = PBXGroup;
 			children = (
 				C546B27A1F3B0A8E003C5B7E /* MPDPlayerTests.swift */,
+				C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */,
 				C546B2BC1F3C34BE003C5B7E /* MockBase.swift */,
 				C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */,
 				C546B27C1F3B0A8E003C5B7E /* Info.plist */,
@@ -1063,6 +1069,7 @@
 				C546B01E1F35FAF0003C5B7E /* fd_util.c in Sources */,
 				C546B0651F35FAF0003C5B7E /* sticker.c in Sources */,
 				C546B01B1F35FAF0003C5B7E /* entity.c in Sources */,
+				C585B3661F519A5D00D7B784 /* MPCController.swift in Sources */,
 				C546B0151F35FAF0003C5B7E /* coutput.c in Sources */,
 				C546B0161F35FAF0003C5B7E /* cplaylist.c in Sources */,
 				C546B0281F35FAF0003C5B7E /* list.c in Sources */,
@@ -1195,6 +1202,7 @@
 				C546B27B1F3B0A8E003C5B7E /* MPDPlayerTests.swift in Sources */,
 				C546B2861F3B6CCB003C5B7E /* MPDWrapperMock.swift in Sources */,
 				C546B2BD1F3C34BE003C5B7E /* MockBase.swift in Sources */,
+				C585B36C1F51BB4E00D7B784 /* MPDControllerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

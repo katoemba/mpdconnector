@@ -43,6 +43,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_play(connection)
     }
     
+    public func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool {
+        return mpd_run_play_pos(connection, song_pos)
+    }
+    
     public func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         return mpd_run_pause(connection, mode)
     }
@@ -103,6 +107,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_status_get_state(status)
     }
     
+    public func status_get_song_pos(_ status: OpaquePointer!) -> Int32 {
+        return mpd_status_get_song_pos(status)
+    }
+    
     public func status_get_elapsed_time(_ status: OpaquePointer!) -> UInt32 {
         return mpd_status_get_elapsed_time(status)
     }
@@ -111,8 +119,32 @@ public class MPDWrapper: MPDProtocol {
         return mpd_status_get_total_time(status)
     }
 
+    public func status_get_queue_length(_ status: OpaquePointer!) -> UInt32 {
+        return mpd_status_get_queue_length(status)
+    }
+    
+    public func status_get_queue_version(_ status: OpaquePointer!) -> UInt32 {
+        return mpd_status_get_queue_version(status)
+    }
+    
     public func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String {
         return stringFromMPDString(mpd_song_get_tag(song, type, idx))
+    }
+    
+    public func song_get_duration(_ song: OpaquePointer!) -> UInt32 {
+        return mpd_song_get_duration(song)
+    }
+
+    public func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
+        return mpd_send_list_queue_range_meta(connection, start, end)
+    }
+    
+    public func get_song(_ connection: OpaquePointer!) -> OpaquePointer! {
+        return mpd_recv_song(connection)
+    }
+    
+    public func response_finish(_ connection: OpaquePointer!) -> Bool {
+        return mpd_response_finish(connection)
     }
     
     /// Convert a raw mpd-string to a standard Swift string.

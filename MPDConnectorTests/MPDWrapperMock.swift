@@ -26,6 +26,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var connectionErrorMessage = ""
     var connectionServerError = MPD_SERVER_ERROR_UNK
     var passwordValid = true
+    var queueLength = UInt32(0)
+    var queueVersion = UInt32(0)
+    var songIndex = Int32(0)
+    var availableSongs = 0
+    var songDuration = UInt32(0)
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -73,6 +78,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_play(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_play", [:])
+        return true
+    }
+    
+    func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool {
+        registerCall("run_play_pos", ["song_pos": "\(song_pos)"])
         return true
     }
     
@@ -149,6 +159,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return state
     }
     
+    func status_get_song_pos(_ status: OpaquePointer!) -> Int32 {
+        registerCall("status_get_song_pos", ["status": "\(status)"])
+        return songIndex
+    }
+    
     func status_get_elapsed_time(_ status: OpaquePointer!) -> UInt32 {
         registerCall("status_get_elapsed_time", ["status": "\(status)"])
         return elapsedTime
@@ -157,6 +172,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func status_get_total_time(_ status: OpaquePointer!) -> UInt32 {
         registerCall("status_get_total_time", ["status": "\(status)"])
         return trackTime
+    }
+    
+    func status_get_queue_length(_ status: OpaquePointer!) -> UInt32 {
+        registerCall("status_get_queue_length", ["status": "\(status)"])
+        return queueLength
+    }
+    
+    func status_get_queue_version(_ status: OpaquePointer!) -> UInt32 {
+        registerCall("status_get_queue_version", ["status": "\(status)"])
+        return queueVersion
     }
     
     func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String {
@@ -172,4 +197,31 @@ class MPDWrapperMock: MockBase, MPDProtocol {
             return "Unknown"
         }
     }
+    
+    func song_get_duration(_ song: OpaquePointer!) -> UInt32 {
+        registerCall("song_get_tag", ["song": "\(song)"])
+        return songDuration
+    }
+
+    func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
+        registerCall("send_list_queue_range_meta", ["start": "\(start)", "end": "\(end)"])
+        return true
+    }
+    
+    func get_song(_ connection: OpaquePointer!) -> OpaquePointer! {
+        registerCall("get_song", [:])
+        if availableSongs > 0 {
+            availableSongs -= 1
+            return OpaquePointer.init(bitPattern: 6)
+        }
+        else {
+            return nil
+        }
+    }
+    
+    func response_finish(_ connection: OpaquePointer!) -> Bool {
+        registerCall("response_finish", [:])
+        return true
+    }
+
 }
