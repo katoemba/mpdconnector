@@ -41,6 +41,7 @@ public protocol MPDProtocol {
     func status_get_queue_version(_ status: OpaquePointer!) -> UInt32
     func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String
     func song_get_duration(_ song: OpaquePointer!) -> UInt32
+    func song_get_uri(_ song: OpaquePointer!) -> String
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool
     func get_song(_ connection: OpaquePointer!) -> OpaquePointer!
     func response_finish(_ connection: OpaquePointer!) -> Bool

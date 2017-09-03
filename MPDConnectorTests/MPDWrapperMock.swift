@@ -22,6 +22,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var repeatValue = false
     var random = false
     var state = MPD_STATE_UNKNOWN
+    var connectionErrorCount = 0
     var connectionError = MPD_ERROR_SUCCESS
     var connectionErrorMessage = ""
     var connectionServerError = MPD_SERVER_ERROR_UNK
@@ -31,6 +32,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var songIndex = Int32(0)
     var availableSongs = 0
     var songDuration = UInt32(0)
+    var songUri = ""
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -42,6 +44,17 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func connection_new(_ host: UnsafePointer<Int8>!, _ port: UInt32, _ timeout_ms: UInt32) -> OpaquePointer! {
         registerCall("connection_new", ["host": stringFromMPDString(host), "port": "\(port)", "timeout": "\(timeout_ms)"])
+        
+        if connectionErrorCount > 0 {
+            connectionErrorCount -= 1
+            connectionError = MPD_ERROR_RESOLVER
+            connectionErrorMessage = "Error"
+        }
+        else {
+            connectionError = MPD_ERROR_SUCCESS
+            connectionErrorMessage = ""
+        }
+        
         return OpaquePointer.init(bitPattern: 1)
     }
     
@@ -78,41 +91,50 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_play(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_play", [:])
+        self.state = MPD_STATE_PLAY
         return true
     }
     
     func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool {
         registerCall("run_play_pos", ["song_pos": "\(song_pos)"])
+        self.state = MPD_STATE_PLAY
+        self.songIndex = Int32(song_pos)
         return true
     }
     
     func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         registerCall("run_pause", ["mode": "\(mode)"])
+        self.state = MPD_STATE_PAUSE
         return true
     }
     
     func run_toggle_pause(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_toggle_pause", [:])
+        self.state = (self.state == MPD_STATE_PLAY) ? MPD_STATE_PAUSE : MPD_STATE_PLAY
         return true
     }
     
     func run_next(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_next", [:])
+        self.songIndex += 1
         return true
     }
     
     func run_previous(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_previous", [:])
+        self.songIndex -= 1
         return true
     }
     
     func run_random(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         registerCall("run_random", ["mode": "\(mode)"])
+        self.random = mode
         return true
     }
     
     func run_repeat(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         registerCall("run_repeat", ["mode": "\(mode)"])
+        self.repeatValue = mode
         return true
     }
     
@@ -197,6 +219,12 @@ class MPDWrapperMock: MockBase, MPDProtocol {
             return "Unknown"
         }
     }
+    
+    func song_get_uri(_ song: OpaquePointer!) -> String {
+        registerCall("song_get_uri", ["song": "\(song)"])
+        return songUri
+    }
+
     
     func song_get_duration(_ song: OpaquePointer!) -> UInt32 {
         registerCall("song_get_tag", ["song": "\(song)"])

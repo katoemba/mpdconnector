@@ -9,19 +9,26 @@
 import Foundation
 import ConnectorProtocol
 import libmpdclient
+import RxSwift
+import RxCocoa
+
+enum ConnectionError: Error {
+    case internalError
+}
 
 public class MPDPlayer: PlayerProtocol {
     private var host: String
     private var port: Int
     private var password: String
-    private var connectedHandler: ((_ player: MPDPlayer) -> Void)?
-    private var disconnectedHandler: ((_ player: MPDPlayer, _ errorNumber: Int, _ errorMessage: String) -> Void)?
     
     /// Connection to a MPD Player
     private let mpd: MPDProtocol
     
     /// Current connection status
-    public var connectionStatus = ConnectionStatus.Disconnected
+    private var _connectionStatus = Variable<ConnectionStatus>(ConnectionStatus.Unknown)
+    public var connectionStatus: Driver<ConnectionStatus> {
+        return _connectionStatus.asDriver()
+    }
     
     private var mpdController: MPDController
     public var controller: ControlProtocol {
@@ -39,6 +46,9 @@ public class MPDPlayer: PlayerProtocol {
             return ["host": host, "port": port, "password": password]
         }
     }
+    
+    private let serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdcontroller.player")
+    private let bag = DisposeBag()
 
     // MARK: - Initialization and connecting
     
@@ -51,35 +61,23 @@ public class MPDPlayer: PlayerProtocol {
     ///   - connectedHandler: Optional handler that is called when a successful (re)connection is made
     ///   - disconnectedHandler: Optional handler that is called when a connection can't be made or is lost
     public init(mpd: MPDProtocol? = nil,
-                host: String, port: Int, password: String = "",
-                connectedHandler: ((_ player: MPDPlayer) -> Void)? = nil,
-                disconnectedHandler: ((_ player: MPDPlayer, _ errorNumber: Int, _ errorMessage: String) -> Void)? = nil) {
+                host: String, port: Int, password: String = "") {
         self.mpd = mpd ?? MPDWrapper()
         self.host = host
         self.port = port
         self.password = password
-        self.connectedHandler = connectedHandler
-        self.disconnectedHandler = disconnectedHandler
         self.mpdController = MPDController.init(mpd: self.mpd,
                                                 connection: nil,
                                                 disconnectedHandler: nil)
         
         self.mpdController.disconnectedHandler = { [weak self] (connection, error) in
             if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
-                self?.connectionStatus = .Disconnected
+                self?._connectionStatus.value = .Disconnected
                 
-                DispatchQueue.main.async {
-                    let errorNumber = Int((self?.mpd.connection_get_error(connection).rawValue)!)
-                    let errorMessage = self?.mpd.connection_get_error_message(connection)
-                    
-                    if let disconnectedHandler = self?.disconnectedHandler  {
-                        disconnectedHandler(self!, errorNumber, errorMessage!)
-                    }
-                    let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Disconnected.rawValue), object: nil, userInfo: ["player": self!])
-                    NotificationCenter.default.post(notification)
-                    
-                    self?.mpd.connection_free(connection)
-                }
+                //let errorNumber = Int((self?.mpd.connection_get_error(connection).rawValue)!)
+                //let errorMessage = self?.mpd.connection_get_error_message(connection)
+                
+                self?.mpd.connection_free(connection)
             }
         }
     }
@@ -89,55 +87,44 @@ public class MPDPlayer: PlayerProtocol {
     /// Attempt to (re)connect based on the internal variables. When successful an internal connection object will be set.
     ///
     /// - Parameter numberOfTries: Number of times to try connection, default = 3.
-    public func connect(numberOfTries: Int = 3) {
-        guard connectionStatus == .Disconnected else {
+    public func connect(numberOfRetries: Int = 3) {
+        guard _connectionStatus.value != .Connecting && _connectionStatus.value != .Connected else {
             return
         }
-
-        self.connectionStatus = .Connecting
-        DispatchQueue.global(qos: .background).async {
-            var connection: OpaquePointer? = nil
-            var actualTries = 0
-            while actualTries < numberOfTries {
-                if connection != nil {
-                    self.mpd.connection_free(connection)
+        
+        connectToMPD()
+            .subscribeOn(serialScheduler)
+            .retry(numberOfRetries)
+            .subscribe(onNext: { connection in
+                self.mpdController.connection = connection
+            },
+                       onError: { _ in
+                        self._connectionStatus.value = .Disconnected
+            },
+                       onCompleted: {
+                        self._connectionStatus.value = .Connected
+            })
+            .addDisposableTo(bag)
+    }
+    
+    
+    /// Reactive connection function
+    ///
+    /// - Returns: An observable that will attempt to connect to mpd when triggered
+    private func connectToMPD() -> Observable<OpaquePointer?> {
+        return Observable<OpaquePointer?>.create { observer in
+            let connection = self.connect(host: self.host, port: self.port, password: self.password)
+            if connection != nil {
+                if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
+                    observer.onNext(connection)
+                    observer.onCompleted()
                 }
-
-                connection = self.connect(host: self.host, port: self.port, password: self.password)
-                if connection != nil {
-                    if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
-                        // Successfully connected, call connectedHandler.
-                        DispatchQueue.main.async {
-                            
-                            self.connectionStatus = .Connected
-                            self.mpdController.connection = connection
-                            if let connectedHandler = self.connectedHandler  {
-                                connectedHandler(self)
-                            }
-                            
-                            let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Connected.rawValue), object: nil, userInfo: ["player": self])
-                            NotificationCenter.default.post(notification)
-                        }
-                        return
-                    }
+                else {
+                    observer.onError(ConnectionError.internalError)
                 }
-                actualTries += 1
             }
             
-            // Didn't manage to connect after <numberOfTries>, call disconnectedHandler.
-            DispatchQueue.main.async {
-                self.connectionStatus = .Disconnected
-
-                if let disconnectedHandler = self.disconnectedHandler  {
-                    disconnectedHandler(self, Int(self.mpd.connection_get_error(connection).rawValue), self.mpd.connection_get_error_message(connection))
-                }
-                let notification = Notification.init(name: NSNotification.Name.init(ConnectionStatusChangeNotification.Disconnected.rawValue), object: nil, userInfo: ["player": self])
-                NotificationCenter.default.post(notification)
-
-                if connection != nil {
-                    self.mpd.connection_free(connection)
-                }
-            }
+            return Disposables.create()
         }
     }
 

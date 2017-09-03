@@ -135,6 +135,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_song_get_duration(song)
     }
 
+    public func song_get_uri(_ song: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_song_get_uri(song))
+    }
+    
     public func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         return mpd_send_list_queue_range_meta(connection, start, end)
     }

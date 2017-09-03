@@ -10,11 +10,14 @@ import XCTest
 import ConnectorProtocol
 import MPDConnector
 import libmpdclient
+import RxSwift
+import RxCocoa
 
-class MPDPlayerTests: XCTestCase {    
-    var mpdWrapper = MPDWrapperMock()
+class MPDPlayerTests: XCTestCase {
     var mpdPlayer: MPDPlayer?
+    var mpdWrapper = MPDWrapperMock()
     var mpdConnectedExpectation: XCTestExpectation?
+    let bag = DisposeBag()
     
     override func setUp() {
         super.setUp()
@@ -26,25 +29,6 @@ class MPDPlayerTests: XCTestCase {
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
-
-        self.mpdPlayer = nil
-    }
-    
-    func setupConnectionToPlayer(clearAllCalls: Bool = true) {
-        // Setup a mpdPlayer connection and wait until it's connected.
-        mpdConnectedExpectation = expectation(description: "Connected to MPD Player")
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
-                                   connectedHandler: { (mpdPlayer) in
-                                    self.mpdConnectedExpectation?.fulfill()
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
-        })
-        mpdPlayer?.connect()
-        waitForExpectations(timeout: 1.0, handler: nil)
-        
-        if clearAllCalls {
-            mpdWrapper.clearAllCalls()
-        }
     }
     
     func waitForCall(_ functionName: String, expectedCalls: Int = 1, waitTime: Float = 0.5) -> XCTestExpectation {
@@ -61,21 +45,37 @@ class MPDPlayerTests: XCTestCase {
     func testMPDPlayerInitializationAndCleanup() {
         // Given nothing
         
-        // When creating a new MPDPlayer object
-        setupConnectionToPlayer(clearAllCalls: false)
+        // When creating a new MPDPlayer object and connecting to it
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        var operation = BlockOperation(block: {
+            self.mpdPlayer?.connect(numberOfRetries: 1)
+        })
         
-        // Then a new connection to an mpd server is created
-        XCTAssert(self.mpdWrapper.callCount("connection_new") == 1, "connection_new not called once")
+        // Then the status is set to connected
+        var waitExpectation = XCTestExpectation(description: "Wait for connection")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Connected
+            })
+            .drive(onNext: { connectionStatus in
+                // Then a new connection to an mpd server is created
+                XCTAssert(self.mpdWrapper.callCount("connection_new") >= 1, "connection_new not called once")
+
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+
+        operation.start()
+        wait(for: [waitExpectation], timeout: 1.0)
+
         
-        // And the status is .Connected
-        XCTAssert(self.mpdPlayer!.connectionStatus == .Connected, "Expected connectionStatus \(ConnectionStatus.Connected), got '\(self.mpdPlayer!.connectionStatus)'")
-        
-        // Given an existing MPDPlayer object (created during setup)
+        // Given the just created player
         
         // When cleaning up the connection
-        let waitExpectation = expectation(description: "Waiting for cleanup")
-        let operation = BlockOperation(block: {
+        waitExpectation = XCTestExpectation(description: "Waiting for cleanup")
+        operation = BlockOperation(block: {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // Then the mpd connection is freed
                 if self.mpdWrapper.callCount("connection_free") == 1 {
                     waitExpectation.fulfill()
                 }
@@ -83,79 +83,105 @@ class MPDPlayerTests: XCTestCase {
             
             self.mpdPlayer = nil
         })
-        operation.start()
 
-        // Then the mpd connection is freed
-        waitForExpectations(timeout: 1.0, handler: nil)
+        operation.start()
+        wait(for: [waitExpectation], timeout: 1.0)
     }
     
     func testMPDPlayerCantConnect() {
         // Given nothing
-        mpdWrapper.connectionError = MPD_ERROR_RESOLVER
-        mpdWrapper.connectionErrorMessage = "An error"
+        mpdWrapper.connectionErrorCount = 5
         
         // When connecting to a player fails
-        
-        // Then the disconnectedHandler gets called
-        let mpdDisconnectedExpectation = expectation(description: "Not connected to MPD Player")
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
-                                   connectedHandler: { (mpdPlayer) in
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
-                                    mpdDisconnectedExpectation.fulfill()
-                                    XCTAssert(errorNumber == Int(MPD_ERROR_RESOLVER.rawValue), "Expected errorNumber \(MPD_ERROR_RESOLVER), got \(errorNumber)")
-                                    XCTAssert(errorMessage == "An error", "Expected errorMessage 'An error', got '\(errorMessage)'")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        let operation = BlockOperation(block: {
+            self.mpdPlayer?.connect(numberOfRetries: 1)
         })
-        mpdPlayer?.connect()
-        waitForExpectations(timeout: 1.0, handler: nil)
         
-        // And the status is .Disconnected
-        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+        // Then the status is set to disconnected
+        let waitExpectation = XCTestExpectation(description: "Waiting for cleanup")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Disconnected
+            })
+            .drive(onNext: { connectionStatus in
+                // Then a new connection to an mpd server is created
+                XCTAssert(self.mpdWrapper.callCount("connection_new") == 1, "connection_new not called once")
+                
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+        
+        operation.start()
+        wait(for: [waitExpectation], timeout: 1.0)
     }
 
-    func testMPDPlayerDisconnect() {
-        // Given an initialized MPDPlayer
-        let mpdConnectedExpectation = expectation(description: "Connected to MPD Player")
-        let mpdDisconnectedExpectation = expectation(description: "Not connected to MPD Player")
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
-                                   connectedHandler: { (mpdPlayer) in
-                                    mpdConnectedExpectation.fulfill()
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
-                                    mpdDisconnectedExpectation.fulfill()
-                                    XCTAssert(errorNumber == Int(MPD_ERROR_CLOSED.rawValue), "Expected errorNumber \(MPD_ERROR_CLOSED), got \(errorNumber)")
-                                    XCTAssert(errorMessage == "Connection lost", "Expected errorMessage 'Connection lost', got '\(errorMessage)'")
+    func testMPDPlayerRetryConnect() {
+        // Given nothing
+        mpdWrapper.connectionErrorCount = 2
+        
+        // When connecting to a player fails
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        let operation = BlockOperation(block: {
+            self.mpdPlayer?.connect(numberOfRetries: 3)
         })
-        mpdPlayer?.connect()
-        wait(for: [mpdConnectedExpectation], timeout: 1.0)
-        XCTAssert(mpdPlayer!.connectionStatus == .Connected, "Expected connectionStatus \(ConnectionStatus.Connected), got '\(mpdPlayer!.connectionStatus)'")
+        
+        // Then the status is set to disconnected
+        let waitExpectation = XCTestExpectation(description: "Waiting for cleanup")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Connected
+            })
+            .drive(onNext: { connectionStatus in
+                // Then a new connection to an mpd server is created
+                XCTAssert(self.mpdWrapper.callCount("connection_new") == 3, "connection_new called \(self.mpdWrapper.callCount("connection_new")) instead of expected 3")
+                
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+        
+        operation.start()
+        wait(for: [waitExpectation], timeout: 1.0)
+    }
+    
+    func testMPDPlayerDisconnect() {
+        // Given a connected MPDPlayer
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+
+        var waitExpectation = XCTestExpectation(description: "Wait for connection")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Connected
+            })
+            .drive(onNext: { connectionStatus in
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+        
+        self.mpdPlayer?.connect(numberOfRetries: 3)
+        wait(for: [waitExpectation], timeout: 1.0)
 
         mpdWrapper.clearAllCalls()
         
         // When a player looses its connection
         mpdWrapper.connectionError = MPD_ERROR_CLOSED
         mpdWrapper.connectionErrorMessage = "Connection lost"
-        mpdPlayer!.controller.pause()
 
-        // Then the disconnectedHandler gets called
-        wait(for: [mpdDisconnectedExpectation], timeout: 1.0)
+        waitExpectation = XCTestExpectation(description: "Wait for disconnect")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Disconnected
+            })
+            .drive(onNext: { connectionStatus in
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
         
-        // And the status is .Disconnected
-        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+        mpdPlayer!.controller.pause()
+        wait(for: [waitExpectation], timeout: 1.0)
 
         // And connection is freed is called with value "pwd"
         mpdWrapper.assertCall("connection_free")
-
-        mpdWrapper.clearAllCalls()
-
-        // When a subsequent call is made
-        mpdPlayer!.controller.pause()
-        
-        // Then the status remains .Disconnected
-        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
-
-        // And connection_free is not called this time
-        XCTAssert(mpdWrapper.callCount("connection_free") == 0, "mpd_connection_free called unexpectedly")
     }
     
     func testMPDPlayerValidPassword() {
@@ -163,50 +189,50 @@ class MPDPlayerTests: XCTestCase {
         let password = "pwd"
         
         // When connecting to a player with a valid password
-        
-        // Then the disconnectedHandler gets called
-        let mpdConnectedExpectation = expectation(description: "Not connected to MPD Player")
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password,
-                                   connectedHandler: { (mpdPlayer) in
-                                    mpdConnectedExpectation.fulfill()
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password)
+        let operation = BlockOperation(block: {
+            self.mpdPlayer?.connect(numberOfRetries: 1)
         })
-        mpdPlayer?.connect()
-        waitForExpectations(timeout: 1.0, handler: nil)
         
-        // And mpd_run_password is called with value "pwd"
-        mpdWrapper.assertCall("run_password", expectedParameters: ["password": "\(password)"])
-
-        // And the status is .Connected
-        XCTAssert(self.mpdPlayer!.connectionStatus == .Connected, "Expected connectionStatus \(ConnectionStatus.Connected), got '\(self.mpdPlayer!.connectionStatus)'")
+        // Then the status is set to disconnected
+        let waitExpectation = XCTestExpectation(description: "Waiting for connect")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Connected
+            })
+            .drive(onNext: { connectionStatus in
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+        
+        operation.start()
+        wait(for: [waitExpectation], timeout: 1.0)
     }
     
     func testMPDPlayerInvalidPassword() {
         // Given nothing
+        mpdWrapper.connectionErrorCount = 1
         mpdWrapper.passwordValid = false
-        mpdWrapper.connectionErrorMessage = "An error"
         let password = "pwd"
         
         // When connecting to a player with an invalid password
-        
-        // Then the disconnectedHandler gets called
-        let mpdDisconnectedExpectation = expectation(description: "Not connected to MPD Player")
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password,
-                                   connectedHandler: { (mpdPlayer) in
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
-                                    mpdDisconnectedExpectation.fulfill()
-                                    XCTAssert(errorNumber == Int(MPD_ERROR_SERVER.rawValue), "Expected errorNumber \(MPD_ERROR_SERVER), got \(errorNumber)")
-                                    XCTAssert(errorMessage == "An error", "Expected errorMessage 'An error', got '\(errorMessage)'")
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password)
+        let operation = BlockOperation(block: {
+            self.mpdPlayer?.connect(numberOfRetries: 1)
         })
-        mpdPlayer?.connect()
-        waitForExpectations(timeout: 1.0, handler: nil)
-
-        // And mpd_run_password is called with value "pwd"
-        mpdWrapper.assertCall("run_password", expectedParameters: ["password": "\(password)"])
         
-        // And the status is .Disconnected
-        XCTAssert(self.mpdPlayer!.connectionStatus == .Disconnected, "Expected connectionStatus \(ConnectionStatus.Disconnected), got '\(self.mpdPlayer!.connectionStatus)'")
+        // Then the status is set to disconnected
+        let waitExpectation = XCTestExpectation(description: "Waiting for disconnect")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Disconnected
+            })
+            .drive(onNext: { connectionStatus in
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+        
+        operation.start()
+        wait(for: [waitExpectation], timeout: 1.0)
     }
 }

@@ -10,11 +10,13 @@ import XCTest
 import ConnectorProtocol
 import MPDConnector
 import libmpdclient
+import RxSwift
 
 class MPDControllerTests: XCTestCase {
     var mpdWrapper = MPDWrapperMock()
     var mpdPlayer: MPDPlayer?
     var mpdConnectedExpectation: XCTestExpectation?
+    let bag = DisposeBag()
     
     override func setUp() {
         super.setUp()
@@ -27,27 +29,35 @@ class MPDControllerTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
         
-        if let player = self.mpdPlayer {
-            player.controller.stopListeningForStatusUpdates()
+        if self.mpdPlayer != nil {
             self.mpdPlayer = nil
         }
     }
     
     func setupConnectionToPlayer(clearAllCalls: Bool = true) {
         // Setup a mpdPlayer connection and wait until it's connected.
-        mpdConnectedExpectation = expectation(description: "Connected to MPD Player")
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
-                                   connectedHandler: { (mpdPlayer) in
-                                    self.mpdConnectedExpectation?.fulfill()
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
-        })
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+ 
+        let waitExpectation = XCTestExpectation(description: "Wait for connection")
+        mpdPlayer?.connectionStatus
+            .filter({ (connectionStatus) -> Bool in
+                return connectionStatus == .Connected
+            })
+            .distinctUntilChanged()
+            .drive(onNext: { connectionStatus in
+                // Then a new connection to an mpd server is created
+                XCTAssert(self.mpdWrapper.callCount("connection_new") == 1, "connection_new not called once")
+                
+                if clearAllCalls {
+                    self.mpdWrapper.clearAllCalls()
+                }
+
+                waitExpectation.fulfill()
+            })
+            .addDisposableTo(bag)
+
         mpdPlayer?.connect()
-        waitForExpectations(timeout: 1.0, handler: nil)
-        
-        if clearAllCalls {
-            mpdWrapper.clearAllCalls()
-        }
+        wait(for: [waitExpectation], timeout: 1.0)
     }
     
     func waitForCall(_ functionName: String, expectedCalls: Int = 1, waitTime: Float = 0.5) -> XCTestExpectation {
@@ -63,12 +73,7 @@ class MPDControllerTests: XCTestCase {
     
     func testCommandsWhenNotConnected() {
         // Given an initialized but not connected MPDPlayer
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600,
-                                   connectedHandler: { (mpdPlayer) in
-                                    self.mpdConnectedExpectation?.fulfill()
-        },
-                                   disconnectedHandler: { (mpdPlayer, errorNumber, errorMessage) in
-        })
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
         
         // When setting the volume to 0.6
         mpdPlayer?.controller.setVolume(volume: 0.6)
@@ -82,6 +87,14 @@ class MPDControllerTests: XCTestCase {
         
         // Then wait for 0.2 seconds and check if run_play is called
         waitForCallExpectation = waitForCall("run_play", expectedCalls: 0, waitTime: 0.2)
+        wait(for: [waitForCallExpectation], timeout: 0.3)
+        
+        // When giving a play(3) command
+        mpdWrapper.queueLength = 10
+        mpdPlayer?.controller.play(index: 3)
+        
+        // Then wait for 0.2 seconds and check if run_play_pos is called
+        waitForCallExpectation = waitForCall("run_play_pos", expectedCalls: 0, waitTime: 0.2)
         wait(for: [waitForCallExpectation], timeout: 0.3)
         
         // When giving a pause command
@@ -124,13 +137,6 @@ class MPDControllerTests: XCTestCase {
         
         // Then wait for 0.2 seconds and check if run_random is called
         waitForCallExpectation = waitForCall("run_random", expectedCalls: 0, waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
-        
-        // When giving a fetchStatus command
-        mpdPlayer?.controller.fetchStatus()
-        
-        // Then wait for 0.2 seconds and check if run_status is called
-        waitForCallExpectation = waitForCall("run_status", expectedCalls: 0, waitTime: 0.2)
         wait(for: [waitForCallExpectation], timeout: 0.3)
     }
     
@@ -175,19 +181,27 @@ class MPDControllerTests: XCTestCase {
         // Given an initialized MPDPlayer
         setupConnectionToPlayer()
         
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.playPauseMode != .Paused
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.playPauseMode = .Playing
+                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+            })
+            .addDisposableTo(bag)
+        
         // When giving a play command
         mpdPlayer?.controller.play()
         
-        // Then wait for 0.2 seconds and check if run_play is called
-        let waitForCallExpectation = waitForCall("run_play", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_play is called
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_play")
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testPlayWithIndexSentToMPD() {
@@ -198,215 +212,311 @@ class MPDControllerTests: XCTestCase {
         mpdWrapper.queueLength = 30
         mpdWrapper.queueVersion = 5
         setupConnectionToPlayer()
-        mpdPlayer?.controller.fetchStatus()
         
-        // Then wait for 0.2 seconds and check if run_status is called
-        var waitForCallExpectation = waitForCall("run_status", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
-        mpdWrapper.clearAllCalls()
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.playPauseMode != .Paused
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.playPauseMode = .Playing
+                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+            })
+            .addDisposableTo(bag)
         
         // When giving a play command
         mpdPlayer?.controller.play(index: 3)
         
-        // Then wait for 0.2 seconds and check if run_play is called
-        waitForCallExpectation = waitForCall("run_play_pos", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_play is called
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_play_pos")
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
-    }
+}
     
     func testPauseSentToMPD() {
-        // Given an initialized MPDPlayer
+        // Given an initialized MPDPlayer that is playing
+        mpdWrapper.state = MPD_STATE_PLAY
         setupConnectionToPlayer()
+        
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.playPauseMode != .Playing
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.playPauseMode = .Playing
+                XCTAssert(playing.playPauseMode == .Paused, "playing.playingStatus expected .Paused, got \(String(describing: playing.playPauseMode))")
+            })
+            .addDisposableTo(bag)
         
         // When giving a pause command
         mpdPlayer?.controller.pause()
         
-        // Then wait for 0.2 seconds and check if run_pause is called
-        let waitForCallExpectation = waitForCall("run_pause", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_pause", expectedParameters: ["mode": "\(true)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testTogglePauseSentToMPD() {
         // Given an initialized MPDPlayer
         setupConnectionToPlayer()
         
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.playPauseMode != .Paused
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.playPauseMode = .Playing
+                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+            })
+            .addDisposableTo(bag)
+        
         // When giving a pause command
         mpdPlayer?.controller.togglePlayPause()
-        
-        // Then wait for 0.2 seconds and check if run_toggle_pause is called
-        let waitForCallExpectation = waitForCall("run_toggle_pause", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
         // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_toggle_pause")
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testSkipSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.queueLength = 30
+        mpdWrapper.queueVersion = 5
+        mpdWrapper.songIndex = 2
         setupConnectionToPlayer()
         
-        // When giving a skip command
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playqueue
+            .filter({ (playqueue) -> Bool in
+                return playqueue.songIndex != 0 && playqueue.songIndex != 2
+            })
+            .drive(onNext: { playqueue in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playqueue.songIndex == 3
+                XCTAssert(playqueue.songIndex == 3, "playqueue.songIndex expected 3, got \(String(describing: playqueue.songIndex))")
+            })
+            .addDisposableTo(bag)
+        
+        // When giving a pause command
         mpdPlayer?.controller.skip()
         
-        // Then wait for 0.2 seconds and check if run_next is called
-        let waitForCallExpectation = waitForCall("run_next", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_next is called
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_next")
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testBackSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.queueLength = 30
+        mpdWrapper.queueVersion = 5
+        mpdWrapper.songIndex = 2
         setupConnectionToPlayer()
         
-        // When giving a back command
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playqueue
+            .filter({ (playqueue) -> Bool in
+                return playqueue.songIndex != 0 && playqueue.songIndex != 2
+            })
+            .drive(onNext: { playqueue in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playqueue.songIndex == 1
+                XCTAssert(playqueue.songIndex == 1, "playqueue.songIndex expected 1, got \(String(describing: playqueue.songIndex))")
+            })
+            .addDisposableTo(bag)
+        
+        // When giving a pause command
         mpdPlayer?.controller.back()
         
-        // Then wait for 0.2 seconds and check if run_previous is called
-        let waitForCallExpectation = waitForCall("run_previous", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_next is called
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_previous")
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testRepeatOffSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.repeatValue = true
         setupConnectionToPlayer()
+        
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.repeatMode != .All
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.repeatMode == .Off
+                XCTAssert(playing.repeatMode == .Off, "playing.repeatMode expected .Off, got \(String(describing: playing.repeatMode))")
+            })
+            .addDisposableTo(bag)
         
         // When giving a repeat:off command
         mpdPlayer?.controller.setRepeat(repeatMode: .Off)
         
-        // Then wait for 0.2 seconds and check if run_repeat is called
-        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_repeat is called with mode: false
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testRepeatSingleSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.repeatValue = false
         setupConnectionToPlayer()
+        
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.repeatMode != .Off
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.repeatMode == .All
+                XCTAssert(playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playing.repeatMode))")
+            })
+            .addDisposableTo(bag)
         
         // When giving a repeat:single command
         mpdPlayer?.controller.setRepeat(repeatMode: .Single)
         
-        // Then wait for 0.2 seconds and check if run_repeat is called
-        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_repeat is called with mode: true
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testRepeatAllSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.repeatValue = false
         setupConnectionToPlayer()
+        
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.repeatMode != .Off
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.repeatMode == .All
+                XCTAssert(playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playing.repeatMode))")
+            })
+            .addDisposableTo(bag)
         
         // When giving a repeat:all command
         mpdPlayer?.controller.setRepeat(repeatMode: .All)
         
-        // Then wait for 0.2 seconds and check if run_repeat is called
-        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_repeat is called with mode: true
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testRepeatAlbumSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.repeatValue = false
         setupConnectionToPlayer()
+        
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.repeatMode != .Off
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.repeatMode == .Allg
+                XCTAssert(playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playing.repeatMode))")
+            })
+            .addDisposableTo(bag)
         
         // When giving a repeat:album command
         mpdPlayer?.controller.setRepeat(repeatMode: .Album)
         
-        // Then wait for 0.2 seconds and check if run_repeat is called
-        let waitForCallExpectation = waitForCall("run_repeat", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_repeat is called with mode: true
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testShuffleOffSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.random = true
         setupConnectionToPlayer()
         
-        // When giving a repeat:off command
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.shuffleMode != .On
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.shuffleMode == .Off,
+                XCTAssert(playing.shuffleMode == .Off, "playing.shuffleMode expected .Off, got \(String(describing: playing.shuffleMode))")
+            })
+            .addDisposableTo(bag)
+        
+        // When giving a shuffle:off command
         mpdPlayer?.controller.setShuffle(shuffleMode: .Off)
         
-        // Then wait for 0.2 seconds and check if run_random is called
-        let waitForCallExpectation = waitForCall("run_random", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_random is called with mode: false
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testShuffleOnSentToMPD() {
         // Given an initialized MPDPlayer
+        mpdWrapper.random = false
         setupConnectionToPlayer()
         
-        // When giving a repeat:single command
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.shuffleMode != .Off
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.shuffleMode == .On
+                XCTAssert(playing.shuffleMode == .On, "playing.shuffleMode expected .On, got \(String(describing: playing.shuffleMode))")
+            })
+            .addDisposableTo(bag)
+        
+        // When giving a shuffle:on command
         mpdPlayer?.controller.setShuffle(shuffleMode: .On)
         
-        // Then wait for 0.2 seconds and check if run_random is called
-        let waitForCallExpectation = waitForCall("run_random", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for a status update
+        wait(for: [waitForStatusUpdate], timeout: 0.5)
         
-        // Then mpd_run_random is called with mode: true
+        // Then mpd_run_pause is called with mode = true
         mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
-        
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
     }
     
     func testFetchStatus() {
@@ -422,12 +532,72 @@ class MPDControllerTests: XCTestCase {
         mpdWrapper.state = MPD_STATE_PLAY
         setupConnectionToPlayer()
         
-        // When giving a fetchStatus command
-        mpdPlayer?.controller.fetchStatus()
-        
-        // Then wait for 0.2 seconds and check if run_status is called
-        let waitForCallExpectation = waitForCall("run_status", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
+        mpdPlayer?.controller.observablePlayerStatus.currentSong
+            .filter({ (song) -> Bool in
+                return song.title == "Creature Comfort"
+            })
+            .drive(onNext: { currentSong in
+                waitForStatusUpdate.fulfill()
+
+                // Then currentSong.song = "Creature Comfort"
+                XCTAssert(currentSong.title == "Creature Comfort", "currentSong.title expected 'Creature Comfort', got \(String(describing: currentSong.title))")
+
+                // Then currentSong.album = "Everything Now"
+                XCTAssert(currentSong.album == "Everything Now", "currentSong.album expected 'Everything Now', got \(String(describing: currentSong.album))")
+                
+                // Then currentSong.artist = "Arcade Fire"
+                XCTAssert(currentSong.artist == "Arcade Fire", "currentSong.artist expected 'Arcade Fire', got \(String(describing: currentSong.artist))")
+            })
+            .addDisposableTo(bag)
+
+        mpdPlayer?.controller.observablePlayerStatus.time
+            .filter({ (time) -> Bool in
+                return time.elapsedTime != 0
+            })
+            .drive(onNext: { time in
+                waitForStatusUpdate.fulfill()
+                
+                // Then time.elapsedTime = 20
+                XCTAssert(time.elapsedTime == 20, "time.elapsedTime expected 20, got \(String(describing: time.elapsedTime))")
+                
+                // Then time.trackTime = 30
+                XCTAssert(time.trackTime == 30, "time.trackTime expected 30, got \(String(describing: time.trackTime))")
+            })
+            .addDisposableTo(bag)
+
+        mpdPlayer?.controller.observablePlayerStatus.playing
+            .filter({ (playing) -> Bool in
+                return playing.playPauseMode != .Paused
+            })
+            .drive(onNext: { playing in
+                waitForStatusUpdate.fulfill()
+                
+                // Then playing.repeatMode = .All
+                XCTAssert(playing.repeatMode == .All, "playing.artist expected .All, got \(String(describing: playing.repeatMode))")
+                
+                // Then playing.shuffleMode = .On
+                XCTAssert(playing.shuffleMode == .On, "playing.artist expected .On, got \(String(describing: playing.shuffleMode))")
+                
+                // Then playing.playingStatus = .Playing
+                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+            })
+            .addDisposableTo(bag)
+
+        mpdPlayer?.controller.observablePlayerStatus.volume
+            .filter({ (volume) -> Bool in
+                return volume != 0.0
+            })
+            .drive(onNext: { volume in
+                waitForStatusUpdate.fulfill()
+                
+                // Then volume = 0.1
+                XCTAssert(volume == 0.1, "volume expected 0.1, got \(String(describing: volume))")
+            })
+            .addDisposableTo(bag)
+
+        // Then wait for 1.0 seconds and check if run_status is called
+        wait(for: [waitForStatusUpdate], timeout: 1.0)
         
         // Then mpd_run_status/mpd_status_free are called.
         mpdWrapper.assertCall("run_status")
@@ -436,35 +606,8 @@ class MPDControllerTests: XCTestCase {
         // Then mpd_run_current_song/mpd_song_free are called.
         mpdWrapper.assertCall("run_current_song")
         mpdWrapper.assertCall("song_free")
-        
-        // Then playerStatus.volume = 0.1
-        XCTAssert(mpdPlayer?.controller.playerStatus.volume == 0.1, "playerStatus.volume expected 0.1, got \(String(describing: mpdPlayer?.controller.playerStatus.volume))")
-        
-        // Then playerStatus.elapsedTime = 20
-        XCTAssert(mpdPlayer?.controller.playerStatus.elapsedTime == 20, "playerStatus.elapsedTime expected 10, got \(String(describing: mpdPlayer?.controller.playerStatus.elapsedTime))")
-        
-        // Then playerStatus.trackTime = 30
-        XCTAssert(mpdPlayer?.controller.playerStatus.trackTime == 30, "playerStatus.trackTime expected 20, got \(String(describing: mpdPlayer?.controller.playerStatus.trackTime))")
-        
-        // Then playerStatus.song = "Creature Comfort"
-        XCTAssert(mpdPlayer?.controller.playerStatus.song == "Creature Comfort", "playerStatus.songTitle expected 'Creature Comfort', got \(String(describing: mpdPlayer?.controller.playerStatus.song))")
-        
-        // Then playerStatus.album = "Everything Now"
-        XCTAssert(mpdPlayer?.controller.playerStatus.album == "Everything Now", "playerStatus.album expected 'Everything Now', got \(String(describing: mpdPlayer?.controller.playerStatus.album))")
-        
-        // Then playerStatus.artist = "Arcade Fire"
-        XCTAssert(mpdPlayer?.controller.playerStatus.artist == "Arcade Fire", "playerStatus.artist expected 'Arcade Fire', got \(String(describing: mpdPlayer?.controller.playerStatus.artist))")
-        
-        // Then playerStatus.repeatMode = .All
-        XCTAssert(mpdPlayer?.controller.playerStatus.repeatMode == .All, "playerStatus.artist expected .All, got \(String(describing: mpdPlayer?.controller.playerStatus.repeatMode))")
-        
-        // Then playerStatus.shuffleMode = .On
-        XCTAssert(mpdPlayer?.controller.playerStatus.shuffleMode == .On, "playerStatus.artist expected .On, got \(String(describing: mpdPlayer?.controller.playerStatus.shuffleMode))")
-        
-        // Then playerStatus.playingStatus = .Playing
-        XCTAssert(mpdPlayer?.controller.playerStatus.playingStatus == .Playing, "playerStatus.playingStatus expected .Playing, got \(String(describing: mpdPlayer?.controller.playerStatus.playingStatus))")
     }
-    
+ 
     func testFetchPlayqueue() {
         // Given an initialized MPDPlayer
         mpdWrapper.songTitle = "Creature Comfort"
@@ -472,37 +615,49 @@ class MPDControllerTests: XCTestCase {
         mpdWrapper.artist = "Arcade Fire"
         mpdWrapper.queueLength = 30
         mpdWrapper.queueVersion = 5
+        mpdWrapper.availableSongs = 5
         setupConnectionToPlayer()
         
-        // When giving a fetchStatus command
-        mpdPlayer?.controller.fetchStatus()
+        var waitForSongs = XCTestExpectation(description: "Wait for Songs")
+        mpdPlayer?.controller.playqueueSongs(start: 3, fetchSize: 5)
+            .subscribe(onNext: { songs in
+                XCTAssert(songs.count == 5, "songs.count expected 5, got \(songs.count)")
+                XCTAssert(songs[0].title == "Creature Comfort", "playerStatus.songTitle expected 'Creature Comfort', got \(String(describing: songs[0].title))")
+                XCTAssert(songs[0].album == "Everything Now", "playerStatus.album expected 'Everything Now', got \(String(describing: songs[0].album))")
+                XCTAssert(songs[0].artist == "Arcade Fire", "playerStatus.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
+                waitForSongs.fulfill()
+            })
+            .addDisposableTo(bag)
+
+        // Then wait for 1.0 seconds and check if run_status is called
+        wait(for: [waitForSongs], timeout: 1.0)
+
+        mpdWrapper.availableSongs = 3
+        waitForSongs = XCTestExpectation(description: "Wait for Songs")
+        mpdPlayer?.controller.playqueueSongs(start: 28, fetchSize: 5)
+            .subscribe(onNext: { songs in
+                XCTAssert(songs.count == 3, "songs.count expected 3, got \(songs.count)")
+                XCTAssert(songs[0].title == "Creature Comfort", "playerStatus.songTitle expected 'Creature Comfort', got \(String(describing: songs[0].title))")
+                XCTAssert(songs[0].album == "Everything Now", "playerStatus.album expected 'Everything Now', got \(String(describing: songs[0].album))")
+                XCTAssert(songs[0].artist == "Arcade Fire", "playerStatus.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
+                waitForSongs.fulfill()
+            })
+            .addDisposableTo(bag)
         
-        // Then wait for 0.2 seconds and check if run_status is called
-        var waitForCallExpectation = waitForCall("run_status", waitTime: 0.2)
-        wait(for: [waitForCallExpectation], timeout: 0.3)
+        // Then wait for 1.0 seconds and check if run_status is called
+        wait(for: [waitForSongs], timeout: 1.0)
+
+        mpdWrapper.availableSongs = 0
+        waitForSongs = XCTestExpectation(description: "Wait for Songs")
+        mpdPlayer?.controller.playqueueSongs(start: 2, fetchSize: 0)
+            .subscribe(onNext: { songs in
+                XCTAssert(songs.count == 0, "songs.count expected 0, got \(songs.count)")
+                waitForSongs.fulfill()
+            })
+            .addDisposableTo(bag)
         
-        // Then mpd_run_status/mpd_status_free are called.
-        mpdWrapper.assertCall("run_status")
-        mpdWrapper.assertCall("status_free")
-        
-        // Then playerStatus.playqueueLength = 30
-        XCTAssert(mpdPlayer?.controller.playqueueLength == 30, "player.playqueueLength expected 30, got \(String(describing: mpdPlayer?.controller.playqueueLength))")
-        
-        // Then playerStatus.playqueueVersion = 5
-        XCTAssert(mpdPlayer?.controller.playqueueVersion == 5, "player.playqueueVersion expected 5, got \(String(describing: mpdPlayer?.controller.playqueueVersion))")
-        
-        // When fetching the song at index 0
-        mpdWrapper.availableSongs = 5
-        waitForCallExpectation = expectation(description: "Songs Found")
-        mpdPlayer?.controller.getPlayqueueSongs(start: 3, end: 8,
-                                     songsFound: { (songs) in
-                                        XCTAssert(songs.count == 5, "songs.count expected 5, got \(songs.count)")
-                                        XCTAssert(songs[0].title == "Creature Comfort", "playerStatus.songTitle expected 'Creature Comfort', got \(String(describing: songs[0].title))")
-                                        XCTAssert(songs[0].album == "Everything Now", "playerStatus.album expected 'Everything Now', got \(String(describing: songs[0].album))")
-                                        XCTAssert(songs[0].artist == "Arcade Fire", "playerStatus.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
-                                        waitForCallExpectation.fulfill()
-        })
-        // Check that the songFound block is called
-        wait(for: [waitForCallExpectation], timeout: 0.2)
+        // Then wait for 1.0 seconds and check if run_status is called
+        wait(for: [waitForSongs], timeout: 1.0)
     }
+
 }
