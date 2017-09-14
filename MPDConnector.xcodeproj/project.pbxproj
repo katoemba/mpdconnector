@@ -507,7 +507,6 @@
 				C546B1EA1F37AFF9003C5B7E /* MPDConnector_tvOS */,
 				C546AFB41F35FAF0003C5B7E /* libmpdclient */,
 				C546B2791F3B0A8E003C5B7E /* MPDConnectorTests */,
-				C546AF3D1F35A824003C5B7E /* Products */,
 				C546B07A1F3742F8003C5B7E /* Frameworks */,
 				C5A0383A6A503E33A32154C9 /* Pods */,
 			);
@@ -522,6 +521,7 @@
 				C546B2781F3B0A8E003C5B7E /* MPDConnectorTests.xctest */,
 			);
 			name = Products;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		C546AF3E1F35A824003C5B7E /* MPDConnector */ = {
@@ -538,6 +538,7 @@
 		C546AFB41F35FAF0003C5B7E /* libmpdclient */ = {
 			isa = PBXGroup;
 			children = (
+				C546AF3D1F35A824003C5B7E /* Products */,
 				C546AFD01F35FAF0003C5B7E /* mpd */,
 				C546AFB51F35FAF0003C5B7E /* async.c */,
 				C546AFB61F35FAF0003C5B7E /* buffer.h */,

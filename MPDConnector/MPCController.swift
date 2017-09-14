@@ -10,6 +10,7 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
+import RxCocoa
 
 public class MPDController: ControlProtocol {
     /// Connection to a MPD Player
@@ -17,15 +18,24 @@ public class MPDController: ControlProtocol {
     private let mpd: MPDProtocol
 
     /// PlayerStatus object for the player
-    public var playerStatus = PlayerStatus()
-    private var playerStatusMonitor: Observable<Void>?
-    public var observablePlayerStatus = ObservablePlayerStatus()
+    private var reloadTrigger = PublishSubject<Int>()
+    private var _playerStatus = Variable<PlayerStatus>(PlayerStatus())
+    public var playerStatus : Driver<PlayerStatus> {
+        get {
+            return _playerStatus.asDriver()
+        }
+    }
     
-    private let serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdcontroller.controller")
-    private let commandQueue = DispatchQueue(label: "com.katoemba.mpdcontroller")
-    
+    private let _serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdcontroller.controller")
+    public var serialScheduler : SerialDispatchQueueScheduler {
+        get {
+            return _serialScheduler
+        }
+    }
     public var disconnectedHandler: ((_ connection: OpaquePointer, _ error: mpd_error) -> Void)?
-
+    
+    private let bag = DisposeBag()
+    
     public init(mpd: MPDProtocol? = nil,
                 connection: OpaquePointer? = nil,
                 disconnectedHandler: ((_ connection: OpaquePointer, _ error: mpd_error) -> Void)? = nil) {
@@ -33,19 +43,30 @@ public class MPDController: ControlProtocol {
         self.connection = connection
         self.disconnectedHandler = disconnectedHandler
         
-        playerStatusMonitor = Observable<Int>
+        let manualStatusUpdateStream = reloadTrigger.asObservable()
+        let timerStatusUpdateStream = Observable<Int>
             .timer(RxTimeInterval(0.1), period: RxTimeInterval(1.0), scheduler: serialScheduler)
-            .map { [weak self] _ in
-                self?.updateObservablePlayerStatus()
-        }
         
-        playerStatusMonitor?
-            .subscribe()
+        Observable.of(manualStatusUpdateStream, timerStatusUpdateStream)
+            .merge()
+            .subscribeOn(serialScheduler)
+            .map { [weak self] _ -> PlayerStatus in
+                guard let strongSelf = self else {
+                    return PlayerStatus.init()
+                }
+                
+                return strongSelf.getPlayerStatus()
+            }
+            .subscribe(onNext: { [weak self] playerStatus in
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                strongSelf._playerStatus.value = playerStatus
+            })
             .addDisposableTo(bag)
     }
     
-    private let bag = DisposeBag()
-
     /// Cleanup connection object
     deinit {
         if let connection = self.connection {
@@ -188,71 +209,41 @@ public class MPDController: ControlProtocol {
         }
     }
     
-    public func getPlayqueueSongs(start: Int, end: Int,
-                                  songsFound: @escaping (([Song]) -> Void)) {
+    /// Get an array of songs from the playqueue.
+    ///
+    /// - Parameters
+    ///   - start: the first song to fetch, zero-based.
+    ///   - end: the last song to fetch, zero-based.
+    /// Returns: an array of filled Songs objects.
+    public func getPlayqueueSongs(start: Int, end: Int) -> [Song] {
         guard start >= 0 else {
-            songsFound([])
-            return
+            return []
         }
         
         guard self.validateConnection() else {
-            songsFound([])
-            return
+            return []
         }
         
-        self.commandQueue.async {
-            var songs = [Song]()
-            if self.mpd.send_list_queue_range_meta(self.connection, start: UInt32(start), end: UInt32(end)) == true {
-                var mpdSong = self.mpd.get_song(self.connection)
-                while mpdSong != nil {
-                    if let song = self.songFromMpdSong(mpdSong: mpdSong) {
-                        songs.append(song)
-                    }
+        var songs = [Song]()
+        if self.mpd.send_list_queue_range_meta(self.connection, start: UInt32(start), end: UInt32(end)) == true {
+            var mpdSong = self.mpd.get_song(self.connection)
+            var position = start
+            while mpdSong != nil {
+                if var song = self.songFromMpdSong(mpdSong: mpdSong) {
+                    song.position = position
+                    songs.append(song)
                     
-                    self.mpd.song_free(mpdSong)
-                    mpdSong = self.mpd.get_song(self.connection)
+                    position += 1
                 }
                 
-                _ = self.mpd.response_finish(self.connection)
+                self.mpd.song_free(mpdSong)
+                mpdSong = self.mpd.get_song(self.connection)
             }
             
-            DispatchQueue.main.async {
-                songsFound(songs)
-            }
-        }
-    }
-    
-    public func playqueueSongs(start: Int = 0, fetchSize: Int = 30) -> Observable<[Song]> {
-        guard start >= 0 && fetchSize > 0 else {
-            return Observable
-                .just(1)
-                .subscribeOn(serialScheduler)
-                .map { _ in
-                    return [Song]()
-            }
+            _ = self.mpd.response_finish(self.connection)
         }
         
-        return Observable
-            .just(1)
-            .subscribeOn(serialScheduler)
-            .map { _ in
-                var songs = [Song]()
-                if self.mpd.send_list_queue_range_meta(self.connection, start: UInt32(start), end: UInt32(start + fetchSize)) == true {
-                    var mpdSong = self.mpd.get_song(self.connection)
-                    while mpdSong != nil {
-                        if let song = self.songFromMpdSong(mpdSong: mpdSong) {
-                            songs.append(song)
-                        }
-                        
-                        self.mpd.song_free(mpdSong)
-                        mpdSong = self.mpd.get_song(self.connection)
-                    }
-                    
-                    _ = self.mpd.response_finish(self.connection)
-                }
-                
-                return songs
-            }
+        return songs
     }
     
     /// Fill a generic Song object from an mpdSong
@@ -276,10 +267,10 @@ public class MPDController: ControlProtocol {
         return song
     }
     
-    /// Fetch the current status of a controller
+    /// Get the current status of a controller
     ///
     /// - Returns: a filled PlayerStatus struct
-    private func fetchPlayerStatus() -> PlayerStatus {
+    public func getPlayerStatus() -> PlayerStatus {
         var playerStatus = PlayerStatus()
         
         if self.validateConnection() {
@@ -315,20 +306,6 @@ public class MPDController: ControlProtocol {
         return playerStatus
     }
     
-    /// Update the ObservablePlayerStatus object. Data is fetched on the serialScheduler,
-    /// then the observable objects are updated on the main thread.
-    private func updateObservablePlayerStatus() {
-        _ = Observable
-            .just(1)
-            .subscribeOn(serialScheduler)
-            .map { [weak self] _ in
-                return self?.fetchPlayerStatus()
-            }
-            .subscribe(onNext: { [weak self] playerStatus in
-                self?.observablePlayerStatus.set(playerStatus: playerStatus!)
-            })
-    }
-    
     /// Run a command on the serialScheduler, then update the observable status
     ///
     /// - Parameters:
@@ -339,10 +316,15 @@ public class MPDController: ControlProtocol {
             .just(1)
             .subscribeOn(serialScheduler)
             .subscribe(onNext: { [weak self] _ in
+                guard let strongSelf = self else {
+                    return
+                }
+                
                 command()
                 if refreshStatus {
-                    self?.updateObservablePlayerStatus()
+                    strongSelf.reloadTrigger.onNext(1)
                 }
             })
+            //.addDisposableTo(bag)
     }
 }

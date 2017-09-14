@@ -182,15 +182,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.playPauseMode != .Paused
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.playPauseMode != .Paused
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.playPauseMode = .Playing
-                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+                XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
             .addDisposableTo(bag)
         
@@ -214,15 +214,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.playPauseMode != .Paused
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.playPauseMode != .Paused
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.playPauseMode = .Playing
-                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+                XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
             .addDisposableTo(bag)
         
@@ -242,15 +242,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.playPauseMode != .Playing
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.playPauseMode != .Playing
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.playPauseMode = .Playing
-                XCTAssert(playing.playPauseMode == .Paused, "playing.playingStatus expected .Paused, got \(String(describing: playing.playPauseMode))")
+                XCTAssert(playerStatus.playing.playPauseMode == .Paused, "playing.playingStatus expected .Paused, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
             .addDisposableTo(bag)
         
@@ -269,15 +269,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.playPauseMode != .Paused
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.playPauseMode != .Paused
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.playPauseMode = .Playing
-                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+                XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
             .addDisposableTo(bag)
         
@@ -299,15 +299,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playqueue
-            .filter({ (playqueue) -> Bool in
-                return playqueue.songIndex != 0 && playqueue.songIndex != 2
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playqueue.songIndex != 0 && playerStatus.playqueue.songIndex != 2
             })
-            .drive(onNext: { playqueue in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playqueue.songIndex == 3
-                XCTAssert(playqueue.songIndex == 3, "playqueue.songIndex expected 3, got \(String(describing: playqueue.songIndex))")
+                XCTAssert(playerStatus.playqueue.songIndex == 3, "playqueue.songIndex expected 3, got \(String(describing: playerStatus.playqueue.songIndex))")
             })
             .addDisposableTo(bag)
         
@@ -329,15 +329,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playqueue
-            .filter({ (playqueue) -> Bool in
-                return playqueue.songIndex != 0 && playqueue.songIndex != 2
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playqueue.songIndex != 0 && playerStatus.playqueue.songIndex != 2
             })
-            .drive(onNext: { playqueue in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playqueue.songIndex == 1
-                XCTAssert(playqueue.songIndex == 1, "playqueue.songIndex expected 1, got \(String(describing: playqueue.songIndex))")
+                XCTAssert(playerStatus.playqueue.songIndex == 1, "playqueue.songIndex expected 1, got \(String(describing: playerStatus.playqueue.songIndex))")
             })
             .addDisposableTo(bag)
         
@@ -357,15 +357,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.repeatMode != .All
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.repeatMode != .All
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.repeatMode == .Off
-                XCTAssert(playing.repeatMode == .Off, "playing.repeatMode expected .Off, got \(String(describing: playing.repeatMode))")
+                XCTAssert(playerStatus.playing.repeatMode == .Off, "playing.repeatMode expected .Off, got \(String(describing: playerStatus.playing.repeatMode))")
             })
             .addDisposableTo(bag)
         
@@ -385,15 +385,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.repeatMode != .Off
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.repeatMode != .Off
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.repeatMode == .All
-                XCTAssert(playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playing.repeatMode))")
+                XCTAssert(playerStatus.playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
             })
             .addDisposableTo(bag)
         
@@ -413,15 +413,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.repeatMode != .Off
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.repeatMode != .Off
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.repeatMode == .All
-                XCTAssert(playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playing.repeatMode))")
+                XCTAssert(playerStatus.playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
             })
             .addDisposableTo(bag)
         
@@ -441,15 +441,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.repeatMode != .Off
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.repeatMode != .Off
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.repeatMode == .Allg
-                XCTAssert(playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playing.repeatMode))")
+                XCTAssert(playerStatus.playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
             })
             .addDisposableTo(bag)
         
@@ -469,15 +469,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.shuffleMode != .On
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.shuffleMode != .On
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.shuffleMode == .Off,
-                XCTAssert(playing.shuffleMode == .Off, "playing.shuffleMode expected .Off, got \(String(describing: playing.shuffleMode))")
+                XCTAssert(playerStatus.playing.shuffleMode == .Off, "playing.shuffleMode expected .Off, got \(String(describing: playerStatus.playing.shuffleMode))")
             })
             .addDisposableTo(bag)
         
@@ -497,15 +497,15 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.shuffleMode != .Off
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.shuffleMode != .Off
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.shuffleMode == .On
-                XCTAssert(playing.shuffleMode == .On, "playing.shuffleMode expected .On, got \(String(describing: playing.shuffleMode))")
+                XCTAssert(playerStatus.playing.shuffleMode == .On, "playing.shuffleMode expected .On, got \(String(describing: playerStatus.playing.shuffleMode))")
             })
             .addDisposableTo(bag)
         
@@ -533,66 +533,66 @@ class MPDControllerTests: XCTestCase {
         setupConnectionToPlayer()
         
         let waitForStatusUpdate = XCTestExpectation(description: "Wait for Status Update")
-        mpdPlayer?.controller.observablePlayerStatus.currentSong
-            .filter({ (song) -> Bool in
-                return song.title == "Creature Comfort"
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.currentSong.title == "Creature Comfort"
             })
-            .drive(onNext: { currentSong in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
 
                 // Then currentSong.song = "Creature Comfort"
-                XCTAssert(currentSong.title == "Creature Comfort", "currentSong.title expected 'Creature Comfort', got \(String(describing: currentSong.title))")
+                XCTAssert(playerStatus.currentSong.title == "Creature Comfort", "currentSong.title expected 'Creature Comfort', got \(String(describing: playerStatus.currentSong.title))")
 
                 // Then currentSong.album = "Everything Now"
-                XCTAssert(currentSong.album == "Everything Now", "currentSong.album expected 'Everything Now', got \(String(describing: currentSong.album))")
+                XCTAssert(playerStatus.currentSong.album == "Everything Now", "currentSong.album expected 'Everything Now', got \(String(describing: playerStatus.currentSong.album))")
                 
                 // Then currentSong.artist = "Arcade Fire"
-                XCTAssert(currentSong.artist == "Arcade Fire", "currentSong.artist expected 'Arcade Fire', got \(String(describing: currentSong.artist))")
+                XCTAssert(playerStatus.currentSong.artist == "Arcade Fire", "currentSong.artist expected 'Arcade Fire', got \(String(describing: playerStatus.currentSong.artist))")
             })
             .addDisposableTo(bag)
 
-        mpdPlayer?.controller.observablePlayerStatus.time
-            .filter({ (time) -> Bool in
-                return time.elapsedTime != 0
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.time.elapsedTime != 0
             })
-            .drive(onNext: { time in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then time.elapsedTime = 20
-                XCTAssert(time.elapsedTime == 20, "time.elapsedTime expected 20, got \(String(describing: time.elapsedTime))")
+                XCTAssert(playerStatus.time.elapsedTime == 20, "time.elapsedTime expected 20, got \(String(describing: playerStatus.time.elapsedTime))")
                 
                 // Then time.trackTime = 30
-                XCTAssert(time.trackTime == 30, "time.trackTime expected 30, got \(String(describing: time.trackTime))")
+                XCTAssert(playerStatus.time.trackTime == 30, "time.trackTime expected 30, got \(String(describing: playerStatus.time.trackTime))")
             })
             .addDisposableTo(bag)
 
-        mpdPlayer?.controller.observablePlayerStatus.playing
-            .filter({ (playing) -> Bool in
-                return playing.playPauseMode != .Paused
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.playing.playPauseMode != .Paused
             })
-            .drive(onNext: { playing in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then playing.repeatMode = .All
-                XCTAssert(playing.repeatMode == .All, "playing.artist expected .All, got \(String(describing: playing.repeatMode))")
+                XCTAssert(playerStatus.playing.repeatMode == .All, "playing.artist expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
                 
                 // Then playing.shuffleMode = .On
-                XCTAssert(playing.shuffleMode == .On, "playing.artist expected .On, got \(String(describing: playing.shuffleMode))")
+                XCTAssert(playerStatus.playing.shuffleMode == .On, "playing.artist expected .On, got \(String(describing: playerStatus.playing.shuffleMode))")
                 
                 // Then playing.playingStatus = .Playing
-                XCTAssert(playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playing.playPauseMode))")
+                XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
             .addDisposableTo(bag)
 
-        mpdPlayer?.controller.observablePlayerStatus.volume
-            .filter({ (volume) -> Bool in
-                return volume != 0.0
+        mpdPlayer?.controller.playerStatus
+            .filter({ (playerStatus) -> Bool in
+                return playerStatus.volume != 0.0
             })
-            .drive(onNext: { volume in
+            .drive(onNext: { playerStatus in
                 waitForStatusUpdate.fulfill()
                 
                 // Then volume = 0.1
-                XCTAssert(volume == 0.1, "volume expected 0.1, got \(String(describing: volume))")
+                XCTAssert(playerStatus.volume == 0.1, "volume expected 0.1, got \(String(describing: playerStatus.volume))")
             })
             .addDisposableTo(bag)
 
@@ -617,47 +617,29 @@ class MPDControllerTests: XCTestCase {
         mpdWrapper.queueVersion = 5
         mpdWrapper.availableSongs = 5
         setupConnectionToPlayer()
+
+        // When asking for 5 songs
+        var songs = mpdPlayer!.controller.getPlayqueueSongs(start: 3, end: 8)
+
+        // Then 5 songs are returned
+        XCTAssert(songs.count == 5, "songs.count expected 6, got \(songs.count)")
+        XCTAssert(songs[0].title == "Creature Comfort", "song.title expected 'Creature Comfort', got \(String(describing: songs[0].title))")
+        XCTAssert(songs[0].album == "Everything Now", "song.album expected 'Everything Now', got \(String(describing: songs[0].album))")
+        XCTAssert(songs[0].artist == "Arcade Fire", "song.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
+        XCTAssert(songs[0].position == 3, "song.position expected 3, got \(songs[0].position)")
+        XCTAssert(songs[4].position == 7, "song.position expected 8, got \(songs[4].position)")
         
-        var waitForSongs = XCTestExpectation(description: "Wait for Songs")
-        mpdPlayer?.controller.playqueueSongs(start: 3, fetchSize: 5)
-            .subscribe(onNext: { songs in
-                XCTAssert(songs.count == 5, "songs.count expected 5, got \(songs.count)")
-                XCTAssert(songs[0].title == "Creature Comfort", "playerStatus.songTitle expected 'Creature Comfort', got \(String(describing: songs[0].title))")
-                XCTAssert(songs[0].album == "Everything Now", "playerStatus.album expected 'Everything Now', got \(String(describing: songs[0].album))")
-                XCTAssert(songs[0].artist == "Arcade Fire", "playerStatus.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
-                waitForSongs.fulfill()
-            })
-            .addDisposableTo(bag)
-
-        // Then wait for 1.0 seconds and check if run_status is called
-        wait(for: [waitForSongs], timeout: 1.0)
-
+        // When asking for 5 songs but only 3 are available
         mpdWrapper.availableSongs = 3
-        waitForSongs = XCTestExpectation(description: "Wait for Songs")
-        mpdPlayer?.controller.playqueueSongs(start: 28, fetchSize: 5)
-            .subscribe(onNext: { songs in
-                XCTAssert(songs.count == 3, "songs.count expected 3, got \(songs.count)")
-                XCTAssert(songs[0].title == "Creature Comfort", "playerStatus.songTitle expected 'Creature Comfort', got \(String(describing: songs[0].title))")
-                XCTAssert(songs[0].album == "Everything Now", "playerStatus.album expected 'Everything Now', got \(String(describing: songs[0].album))")
-                XCTAssert(songs[0].artist == "Arcade Fire", "playerStatus.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
-                waitForSongs.fulfill()
-            })
-            .addDisposableTo(bag)
-        
-        // Then wait for 1.0 seconds and check if run_status is called
-        wait(for: [waitForSongs], timeout: 1.0)
+        songs = mpdPlayer!.controller.getPlayqueueSongs(start: 28, end: 32)
 
-        mpdWrapper.availableSongs = 0
-        waitForSongs = XCTestExpectation(description: "Wait for Songs")
-        mpdPlayer?.controller.playqueueSongs(start: 2, fetchSize: 0)
-            .subscribe(onNext: { songs in
-                XCTAssert(songs.count == 0, "songs.count expected 0, got \(songs.count)")
-                waitForSongs.fulfill()
-            })
-            .addDisposableTo(bag)
-        
-        // Then wait for 1.0 seconds and check if run_status is called
-        wait(for: [waitForSongs], timeout: 1.0)
+        // Then 3 songs are returned
+        XCTAssert(songs.count == 3, "songs.count expected 3, got \(songs.count)")
+        XCTAssert(songs[0].title == "Creature Comfort", "song.title expected 'Creature Comfort', got \(String(describing: songs[0].title))")
+        XCTAssert(songs[0].album == "Everything Now", "song.album expected 'Everything Now', got \(String(describing: songs[0].album))")
+        XCTAssert(songs[0].artist == "Arcade Fire", "song.artist expected 'Arcade Fire', got \(String(describing: songs[0].artist))")
+        XCTAssert(songs[0].position == 28, "song.position expected 28, got \(songs[0].position)")
+        XCTAssert(songs[2].position == 30, "song.position expected 30, got \(songs[2].position)")
     }
 
 }
