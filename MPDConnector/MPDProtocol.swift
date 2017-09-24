@@ -24,7 +24,9 @@ public protocol MPDProtocol {
     func run_next(_ connection: OpaquePointer!) -> Bool
     func run_previous(_ connection: OpaquePointer!) -> Bool
     func run_random(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
+    func run_shuffle(_ connection: OpaquePointer!) -> Bool
     func run_repeat(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
+    func run_single(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
     func run_set_volume(_ connection: OpaquePointer!, _ volume: UInt32) -> Bool
     func run_status(_ connection: OpaquePointer!) -> OpaquePointer!
     func status_free(_ status: OpaquePointer!)
@@ -32,6 +34,7 @@ public protocol MPDProtocol {
     func song_free(_ song: OpaquePointer!)
     func status_get_volume(_ status: OpaquePointer!) -> Int32
     func status_get_repeat(_ status: OpaquePointer!) -> Bool
+    func status_get_single(_ status: OpaquePointer!) -> Bool
     func status_get_random(_ status: OpaquePointer!) -> Bool
     func status_get_state(_ status: OpaquePointer!) -> mpd_state
     func status_get_song_pos(_ status: OpaquePointer!) -> Int32
@@ -45,4 +48,6 @@ public protocol MPDProtocol {
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool
     func get_song(_ connection: OpaquePointer!) -> OpaquePointer!
     func response_finish(_ connection: OpaquePointer!) -> Bool
+    func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
+    func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
 }

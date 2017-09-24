@@ -48,6 +48,7 @@
 #  include <netdb.h>
 #  include <sys/un.h>
 #  include <errno.h>
+#  include <sys/time.h>
 #endif
 
 #ifndef MSG_DONTWAIT

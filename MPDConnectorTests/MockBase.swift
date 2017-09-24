@@ -55,10 +55,10 @@ class MockBase {
                 let actualValue = callInfo[expectedParameter]
                 
                 if actualValue != nil {
-                    XCTAssert(expectedValue == actualValue, "Expected \(expectedValue!) for parameter \(expectedParameter), got \(actualValue!)")
+                    XCTAssert(expectedValue == actualValue, "\(functionName): expected \(expectedValue!) for parameter \(expectedParameter), got \(actualValue!)")
                 }
                 else {
-                    XCTAssert(true == false, "No value found for parameter \(expectedParameter)")
+                    XCTAssert(true == false, "\(functionName): no value found for parameter \(expectedParameter)")
                 }
             }
 

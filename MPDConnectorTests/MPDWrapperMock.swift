@@ -10,7 +10,7 @@ import Foundation
 import MPDConnector
 import libmpdclient
 
-class MPDWrapperMock: MockBase, MPDProtocol {
+class MPDWrapperMock: MockBase, MPDProtocol {    
     /// Dictionary of calls (functionName as key) and parameters as value.
     /// Values is an array of dictionaries, where key=parameter-name, value=parameter-value
     var volume = Int32(0)
@@ -20,6 +20,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var album = ""
     var artist = ""
     var repeatValue = false
+    var singleValue = false
     var random = false
     var state = MPD_STATE_UNKNOWN
     var connectionErrorCount = 0
@@ -132,9 +133,21 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return true
     }
     
+    func run_shuffle(_ connection: OpaquePointer!) -> Bool {
+        registerCall("run_shuffle", [:])
+        self.queueVersion += 1
+        return true
+    }
+    
     func run_repeat(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         registerCall("run_repeat", ["mode": "\(mode)"])
         self.repeatValue = mode
+        return true
+    }
+    
+    func run_single(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
+        registerCall("run_single", ["mode": "\(mode)"])
+        self.singleValue = mode
         return true
     }
     
@@ -169,6 +182,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func status_get_repeat(_ status: OpaquePointer!) -> Bool {
         registerCall("status_get_repeat", ["status": "\(status)"])
         return repeatValue
+    }
+    
+    func status_get_single(_ status: OpaquePointer!) -> Bool {
+        registerCall("status_get_single", ["status": "\(status)"])
+        return singleValue
     }
     
     func status_get_random(_ status: OpaquePointer!) -> Bool {
@@ -249,6 +267,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func response_finish(_ connection: OpaquePointer!) -> Bool {
         registerCall("response_finish", [:])
+        return true
+    }
+
+    func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        registerCall("run_save", ["name": stringFromMPDString(name)])
+        return true
+    }
+    
+    func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        registerCall("run_load", ["name": stringFromMPDString(name)])
         return true
     }
 

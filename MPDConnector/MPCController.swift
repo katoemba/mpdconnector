@@ -49,7 +49,7 @@ public class MPDController: ControlProtocol {
         
         Observable.of(manualStatusUpdateStream, timerStatusUpdateStream)
             .merge()
-            .subscribeOn(serialScheduler)
+            .observeOn(serialScheduler)
             .map { [weak self] _ -> PlayerStatus in
                 guard let strongSelf = self else {
                     return PlayerStatus.init()
@@ -91,6 +91,9 @@ public class MPDController: ControlProtocol {
             self.connection = nil
             
             return false
+        }
+        else if error != MPD_ERROR_SUCCESS {
+            print("Error when validating connection: \(self.mpd.connection_get_error_message(connection))")
         }
         
         return true
@@ -168,14 +171,28 @@ public class MPDController: ControlProtocol {
     
     /// Set the shuffle mode of the player.
     ///
-    /// - Parameter shuffleMode: The shuffle mode to use.
-    public func setShuffle(shuffleMode: ShuffleMode) {
+    /// - Parameter randomMode: The shuffle mode to use.
+    public func setRandom(randomMode: RandomMode) {
+        guard validateConnection() else {
+            return
+        }
+        guard randomMode != _playerStatus.value.playing.randomMode else {
+            return
+        }
+        
+        self.runCommand {
+            _ = self.mpd.run_random(self.connection, (randomMode == .On) ? true : false)
+        }
+    }
+    
+    /// Toggle the random mode (off -> on -> off)
+    public func toggleRandom() {
         guard validateConnection() else {
             return
         }
         
-        self.runCommand  {
-            _ = self.mpd.run_random(self.connection, (shuffleMode == .On) ? true : false)
+        self.runCommand {
+            _ = self.mpd.run_random(self.connection, (self._playerStatus.value.playing.randomMode == .On) ? false : true)
         }
     }
     
@@ -188,11 +205,41 @@ public class MPDController: ControlProtocol {
         }
         
         self.runCommand  {
-            _ = self.mpd.run_repeat(self.connection, (repeatMode == .Off) ? false : true)
+            switch repeatMode {
+                case .Off:
+                    _ = self.mpd.run_single(self.connection, false)
+                    _ = self.mpd.run_repeat(self.connection, false)
+                case .All:
+                    _ = self.mpd.run_repeat(self.connection, true)
+                    _ = self.mpd.run_single(self.connection, false)
+                case .Single:
+                    _ = self.mpd.run_single(self.connection, true)
+                    _ = self.mpd.run_repeat(self.connection, true)
+                case .Album:
+                    _ = self.mpd.run_repeat(self.connection, true)
+                    _ = self.mpd.run_single(self.connection, false)
+            }
         }
     }
     
-    /// Set the volume of the player.((shuffleMode == .On)?,true:false)
+    /// Toggle the repeat mode (off -> all -> single -> off)
+    public func toggleRepeat() {
+        guard validateConnection() else {
+            return
+        }
+        
+        if self._playerStatus.value.playing.repeatMode == .Off {
+            self.setRepeat(repeatMode: .All)
+        }
+        else if self._playerStatus.value.playing.repeatMode == .All {
+            self.setRepeat(repeatMode: .Single)
+        }
+        else if self._playerStatus.value.playing.repeatMode == .Single {
+            self.setRepeat(repeatMode: .Off)
+        }
+    }
+    
+    /// Set the volume of the player.((randomMode == .On)?,true:false)
     ///
     /// - Parameter volume: The volume to set. Must be a value between 0.0 and 1.0, values outside this range will be ignored.
     public func setVolume(volume: Float) {
@@ -204,9 +251,9 @@ public class MPDController: ControlProtocol {
             return
         }
         
-        self.runCommand  {
+        self.runCommand(refreshStatus: false)  {
             _ = self.mpd.run_set_volume(self.connection, UInt32(roundf(volume * 100.0)))
-        }
+            }
     }
     
     /// Get an array of songs from the playqueue.
@@ -284,8 +331,10 @@ public class MPDController: ControlProtocol {
                 playerStatus.time.trackTime = Int(self.mpd.status_get_total_time(status))
                 
                 playerStatus.playing.playPauseMode = (self.mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
-                playerStatus.playing.shuffleMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
-                playerStatus.playing.repeatMode = (self.mpd.status_get_repeat(status) == true) ? .All : .Off
+                playerStatus.playing.randomMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
+                let repeatStatus = self.mpd.status_get_repeat(status)
+                let singleStatus = self.mpd.status_get_single(status)
+                playerStatus.playing.repeatMode = (repeatStatus == true && singleStatus == true) ? .Single : ((repeatStatus == true) ? .All : .Off)
                 
                 playerStatus.playqueue.length = Int(self.mpd.status_get_queue_length(status))
                 playerStatus.playqueue.version = Int(self.mpd.status_get_queue_version(status))
@@ -314,7 +363,7 @@ public class MPDController: ControlProtocol {
     private func runCommand(refreshStatus: Bool = true, command: @escaping () -> Void) {
         _ = Observable
             .just(1)
-            .subscribeOn(serialScheduler)
+            .observeOn(serialScheduler)
             .subscribe(onNext: { [weak self] _ in
                 guard let strongSelf = self else {
                     return

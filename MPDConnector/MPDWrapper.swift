@@ -67,8 +67,16 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_random(connection, mode)
     }
 
+    public func run_shuffle(_ connection: OpaquePointer!) -> Bool {
+        return mpd_run_shuffle(connection)
+    }
+    
     public func run_repeat(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
         return mpd_run_repeat(connection, mode)
+    }
+    
+    public func run_single(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
+        return mpd_run_single(connection, mode)
     }
     
     public func run_set_volume(_ connection: OpaquePointer!, _ volume: UInt32) -> Bool {
@@ -101,6 +109,10 @@ public class MPDWrapper: MPDProtocol {
 
     public func status_get_random(_ status: OpaquePointer!) -> Bool {
         return mpd_status_get_random(status)
+    }
+    
+    public func status_get_single(_ status: OpaquePointer!) -> Bool {
+        return mpd_status_get_single(status)
     }
     
     public func status_get_state(_ status: OpaquePointer!) -> mpd_state {
@@ -149,6 +161,14 @@ public class MPDWrapper: MPDProtocol {
     
     public func response_finish(_ connection: OpaquePointer!) -> Bool {
         return mpd_response_finish(connection)
+    }
+    
+    public func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        return mpd_run_save(connection, name)
+    }
+    
+    public func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        return mpd_run_load(connection, name)
     }
     
     /// Convert a raw mpd-string to a standard Swift string.
