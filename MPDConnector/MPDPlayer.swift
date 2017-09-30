@@ -17,6 +17,11 @@ enum ConnectionError: Error {
 }
 
 public class MPDPlayer: PlayerProtocol {
+    private var _name: String
+    public var name: String {
+        return _name
+    }
+    
     private var host: String
     private var port: Int
     private var password: String
@@ -37,13 +42,13 @@ public class MPDPlayer: PlayerProtocol {
     
     public var uniqueID: String {
         get {
-            return "mpd:\(host):\(port)"
+            return "\(_name)"
         }
     }
     
     public var connectionProperties: [String: Any] {
         get {
-            return ["host": host, "port": port, "password": password]
+            return ["name": name, "host": host, "port": port, "password": password]
         }
     }
     
@@ -55,19 +60,20 @@ public class MPDPlayer: PlayerProtocol {
     /// Initialize a new player object
     ///
     /// - Parameters:
+    ///   - mpd: MPDProtocol object used to run commands against the player
     ///   - host: Host ip-address to connect to.
     ///   - port: Port to connect to.
     ///   - password: Password to use when connection, default is ""
-    ///   - connectedHandler: Optional handler that is called when a successful (re)connection is made
-    ///   - disconnectedHandler: Optional handler that is called when a connection can't be made or is lost
     public init(mpd: MPDProtocol? = nil,
-                host: String, port: Int, password: String = "") {
+                name: String, host: String, port: Int, password: String = "") {
         self.mpd = mpd ?? MPDWrapper()
+        self._name = name
         self.host = host
         self.port = port
         self.password = password
         self.mpdController = MPDController.init(mpd: self.mpd,
                                                 connection: nil,
+                                                identification: "\(host):\(port)",
                                                 disconnectedHandler: nil)
         
         self.mpdController.disconnectedHandler = { [weak self] (connection, error) in
@@ -80,6 +86,30 @@ public class MPDPlayer: PlayerProtocol {
                 self?.mpd.connection_free(connection)
             }
         }
+    }
+    
+    /// Init an instance of a MPDPlayer based on a connectionProperties dictionary
+    ///
+    /// - Parameters:
+    ///   - mpd: MPDProtocol object used to run commands against the player
+    ///   - connectionProperties: dictionary of properties
+    public convenience init(mpd: MPDProtocol? = nil, connectionProperties: [String: Any]) {
+        guard let name = connectionProperties["name"] as? String,
+            let host = connectionProperties["host"] as? String,
+            let port = connectionProperties["port"] as? Int else {
+                self.init(mpd: mpd,
+                          name: "",
+                          host: "",
+                          port: 6600,
+                          password: "")
+                return
+        }
+        
+        self.init(mpd: mpd,
+                  name: name,
+                  host: host,
+                  port: port,
+                  password: (connectionProperties["password"] as? String) ?? "")
     }
     
     // MARK: - PlayerProtocol Implementations
@@ -144,5 +174,12 @@ public class MPDPlayer: PlayerProtocol {
         }
         
         return connection
+    }
+    
+}
+
+extension MPDPlayer : Equatable {
+    public static func ==(lhs: MPDPlayer, rhs: MPDPlayer) -> Bool {
+        return lhs.uniqueID == rhs.uniqueID
     }
 }

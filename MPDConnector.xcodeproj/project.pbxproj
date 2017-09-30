@@ -10,6 +10,7 @@
 		0723B6C659107F196E8F19A7 /* Pods_MPDConnectorTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B669CC2955694C3B62603CCE /* Pods_MPDConnectorTests.framework */; };
 		2888ADB7A617890773BC1D3D /* Pods_MPDConnector_MacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97100CCD8849A7762F0655EF /* Pods_MPDConnector_MacOS.framework */; };
 		7B0C4A1FE1E4025BA52FF306 /* Pods_MPDConnector_tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62A245B138BF0F64B427F38B /* Pods_MPDConnector_tvOS.framework */; };
+		C52878281F77F5FA009D6CC4 /* NetService+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */; };
 		C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
 		C546B0101F35FAF0003C5B7E /* async.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB51F35FAF0003C5B7E /* async.c */; };
 		C546B0111F35FAF0003C5B7E /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFB61F35FAF0003C5B7E /* buffer.h */; };
@@ -291,6 +292,8 @@
 		C546B2841F3B158C003C5B7E /* MPDConnector.framework in Resources */ = {isa = PBXBuildFile; fileRef = C546AF3C1F35A824003C5B7E /* MPDConnector.framework */; };
 		C546B2861F3B6CCB003C5B7E /* MPDWrapperMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */; };
 		C546B2BD1F3C34BE003C5B7E /* MockBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2BC1F3C34BE003C5B7E /* MockBase.swift */; };
+		C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */; };
+		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C585B3661F519A5D00D7B784 /* MPCController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPCController.swift */; };
 		C585B36C1F51BB4E00D7B784 /* MPDControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */; };
 		E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */; };
@@ -344,6 +347,7 @@
 		B669CC2955694C3B62603CCE /* Pods_MPDConnectorTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnectorTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B998B96EBFCB040EB2B230E7 /* Pods-MPDConnector_MacOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.debug.xcconfig"; sourceTree = "<group>"; };
 		BA20A4973F3D35D38F4AECF2 /* Pods-MPDConnectorTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnectorTests.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests.release.xcconfig"; sourceTree = "<group>"; };
+		C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetService+Rx.swift"; sourceTree = "<group>"; };
 		C546AF3C1F35A824003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDPlayer.swift; sourceTree = "<group>"; };
 		C546AFB51F35FAF0003C5B7E /* async.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = async.c; sourceTree = "<group>"; };
@@ -452,6 +456,8 @@
 		C546B27C1F3B0A8E003C5B7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDWrapperMock.swift; sourceTree = "<group>"; };
 		C546B2BC1F3C34BE003C5B7E /* MockBase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockBase.swift; sourceTree = "<group>"; };
+		C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetServiceBrowser+Rx.swift"; sourceTree = "<group>"; };
+		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPCController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPCController.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControllerTests.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
@@ -531,6 +537,9 @@
 				C585B3651F519A5D00D7B784 /* MPCController.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
+				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
+				C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */,
+				C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */,
 			);
 			path = MPDConnector;
 			sourceTree = "<group>";
@@ -1175,11 +1184,13 @@
 			inputPaths = (
 				"${SRCROOT}/../Pods/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/RxCocoa/RxCocoa.framework",
+				"${BUILT_PRODUCTS_DIR}/RxDataSources/RxDataSources.framework",
 				"${BUILT_PRODUCTS_DIR}/RxSwift/RxSwift.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxCocoa.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxDataSources.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxSwift.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1258,6 +1269,8 @@
 				C546B0501F35FAF0003C5B7E /* player.c in Sources */,
 				C546B0511F35FAF0003C5B7E /* playlist.c in Sources */,
 				C546B04F1F35FAF0003C5B7E /* password.c in Sources */,
+				C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */,
+				C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */,
 				C546B0531F35FAF0003C5B7E /* quote.c in Sources */,
 				C546B0641F35FAF0003C5B7E /* status.c in Sources */,
 				C546B05B1F35FAF0003C5B7E /* run.c in Sources */,
@@ -1282,6 +1295,7 @@
 				C546B0211F35FAF0003C5B7E /* idle.c in Sources */,
 				C546B01D1F35FAF0003C5B7E /* example.c in Sources */,
 				C546B0601F35FAF0003C5B7E /* socket.c in Sources */,
+				C52878281F77F5FA009D6CC4 /* NetService+Rx.swift in Sources */,
 				C546B01C1F35FAF0003C5B7E /* error.c in Sources */,
 				C546B05F1F35FAF0003C5B7E /* settings.c in Sources */,
 				C546B0221F35FAF0003C5B7E /* ierror.c in Sources */,

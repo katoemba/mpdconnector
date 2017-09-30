@@ -16,6 +16,7 @@ public class MPDController: ControlProtocol {
     /// Connection to a MPD Player
     public var connection: OpaquePointer?
     private let mpd: MPDProtocol
+    private var identification = ""
 
     /// PlayerStatus object for the player
     private var reloadTrigger = PublishSubject<Int>()
@@ -38,9 +39,11 @@ public class MPDController: ControlProtocol {
     
     public init(mpd: MPDProtocol? = nil,
                 connection: OpaquePointer? = nil,
+                identification: String = "NoID",
                 disconnectedHandler: ((_ connection: OpaquePointer, _ error: mpd_error) -> Void)? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self.connection = connection
+        self.identification = identification
         self.disconnectedHandler = disconnectedHandler
         
         let manualStatusUpdateStream = reloadTrigger.asObservable()

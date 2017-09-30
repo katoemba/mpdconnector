@@ -36,7 +36,7 @@ class MPDControllerTests: XCTestCase {
     
     func setupConnectionToPlayer(clearAllCalls: Bool = true) {
         // Setup a mpdPlayer connection and wait until it's connected.
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600)
  
         let waitExpectation = XCTestExpectation(description: "Wait for connection")
         mpdPlayer?.connectionStatus
@@ -73,7 +73,7 @@ class MPDControllerTests: XCTestCase {
     
     func testCommandsWhenNotConnected() {
         // Given an initialized but not connected MPDPlayer
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600)
         
         // When setting the volume to 0.6
         mpdPlayer?.controller.setVolume(volume: 0.6)

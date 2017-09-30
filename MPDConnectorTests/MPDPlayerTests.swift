@@ -46,7 +46,7 @@ class MPDPlayerTests: XCTestCase {
         // Given nothing
         
         // When creating a new MPDPlayer object and connecting to it
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600)
         var operation = BlockOperation(block: {
             self.mpdPlayer?.connect(numberOfRetries: 1)
         })
@@ -93,7 +93,7 @@ class MPDPlayerTests: XCTestCase {
         mpdWrapper.connectionErrorCount = 5
         
         // When connecting to a player fails
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600)
         let operation = BlockOperation(block: {
             self.mpdPlayer?.connect(numberOfRetries: 1)
         })
@@ -121,7 +121,7 @@ class MPDPlayerTests: XCTestCase {
         mpdWrapper.connectionErrorCount = 2
         
         // When connecting to a player fails
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600)
         let operation = BlockOperation(block: {
             self.mpdPlayer?.connect(numberOfRetries: 3)
         })
@@ -146,7 +146,7 @@ class MPDPlayerTests: XCTestCase {
     
     func testMPDPlayerDisconnect() {
         // Given a connected MPDPlayer
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600)
 
         var waitExpectation = XCTestExpectation(description: "Wait for connection")
         mpdPlayer?.connectionStatus
@@ -189,7 +189,7 @@ class MPDPlayerTests: XCTestCase {
         let password = "pwd"
         
         // When connecting to a player with a valid password
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: password)
         let operation = BlockOperation(block: {
             self.mpdPlayer?.connect(numberOfRetries: 1)
         })
@@ -216,7 +216,7 @@ class MPDPlayerTests: XCTestCase {
         let password = "pwd"
         
         // When connecting to a player with an invalid password
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, host: "localhost", port: 6600, password: password)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: password)
         let operation = BlockOperation(block: {
             self.mpdPlayer?.connect(numberOfRetries: 1)
         })
