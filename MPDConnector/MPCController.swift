@@ -27,7 +27,7 @@ public class MPDController: ControlProtocol {
         }
     }
     
-    private let _serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdcontroller.controller")
+    private let _serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdconnector.controller")
     public var serialScheduler : SerialDispatchQueueScheduler {
         get {
             return _serialScheduler
@@ -279,7 +279,7 @@ public class MPDController: ControlProtocol {
             var mpdSong = self.mpd.get_song(self.connection)
             var position = start
             while mpdSong != nil {
-                if var song = self.songFromMpdSong(mpdSong: mpdSong) {
+                if var song = MPDController.songFromMpdSong(mpd: mpd, mpdSong: mpdSong) {
                     song.position = position
                     songs.append(song)
                     
@@ -300,20 +300,48 @@ public class MPDController: ControlProtocol {
     ///
     /// - Parameter mpdSong: pointer to a mpdSong data structire
     /// - Returns: the filled Song object
-    private func songFromMpdSong(mpdSong: OpaquePointer!) -> Song? {
+    public static func songFromMpdSong(mpd: MPDProtocol, mpdSong: OpaquePointer!) -> Song? {
         guard mpdSong != nil else  {
             return nil
         }
         
         var song = Song()
         
-        song.id = self.mpd.song_get_uri(mpdSong)
-        song.title = self.mpd.song_get_tag(mpdSong, MPD_TAG_TITLE, 0)
-        song.album = self.mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM, 0)
-        song.artist = self.mpd.song_get_tag(mpdSong, MPD_TAG_ARTIST, 0)
-        song.composer = self.mpd.song_get_tag(mpdSong, MPD_TAG_COMPOSER, 0)
-        song.length = Int(self.mpd.song_get_duration(mpdSong))
-                
+        song.id = mpd.song_get_uri(mpdSong)
+        if song.id.starts(with: "spotify:") {
+            song.source = .Spotify
+        }
+        else if song.id.starts(with: "tunein:") {
+            song.source = .TuneIn
+        }
+        else if song.id.starts(with: "podcast+") {
+            song.source = .Podcast
+        }
+        else {
+            song.source = .Local
+        }
+        song.title = mpd.song_get_tag(mpdSong, MPD_TAG_TITLE, 0)
+        song.album = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM, 0)
+        song.artist = mpd.song_get_tag(mpdSong, MPD_TAG_ARTIST, 0)
+        song.albumartist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST, 0)
+        song.composer = mpd.song_get_tag(mpdSong, MPD_TAG_COMPOSER, 0)
+        song.genre = mpd.song_get_tag(mpdSong, MPD_TAG_GENRE, 0)
+        song.length = Int(mpd.song_get_duration(mpdSong))
+        song.name = mpd.song_get_tag(mpdSong, MPD_TAG_NAME, 0)
+        song.date = mpd.song_get_tag(mpdSong, MPD_TAG_DATE, 0)
+        song.performer = mpd.song_get_tag(mpdSong, MPD_TAG_PERFORMER, 0)
+        song.comment = mpd.song_get_tag(mpdSong, MPD_TAG_COMMENT, 0)
+        song.disc = mpd.song_get_tag(mpdSong, MPD_TAG_DISC, 0)
+        song.musicbrainzArtistId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_ARTISTID, 0)
+        song.musicbrainzAlbumId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_ALBUMID, 0)
+        song.musicbrainzAlbumArtistId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_ALBUMARTISTID, 0)
+        song.musicbrainzTrackId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_TRACKID, 0)
+        song.musicbrainzReleaseId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_RELEASETRACKID, 0)
+        song.originalDate = mpd.song_get_tag(mpdSong, MPD_TAG_ORIGINAL_DATE, 0)
+        song.sortArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ARTIST_SORT, 0)
+        song.sortAlbumArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST_SORT, 0)
+        song.sortAlbum = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_SORT, 0)
+
         return song
     }
     
@@ -349,7 +377,7 @@ public class MPDController: ControlProtocol {
                     self.mpd.song_free(song)
                 }
                 
-                if let song = songFromMpdSong(mpdSong: song) {
+                if let song = MPDController.songFromMpdSong(mpd: mpd, mpdSong: song) {
                     playerStatus.currentSong = song
                 }
             }

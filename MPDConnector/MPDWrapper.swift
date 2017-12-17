@@ -35,6 +35,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_connection_get_server_error(connection)
     }
     
+    public func connection_clear_error(_ connection: OpaquePointer!) -> Bool {
+        return mpd_connection_clear_error(connection)
+    }
+    
     public func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool {
         return mpd_run_password(connection, password)
     }
@@ -169,6 +173,60 @@ public class MPDWrapper: MPDProtocol {
     
     public func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         return mpd_run_load(connection, name)
+    }
+    
+    public func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws {
+        if mpd_search_db_songs(connection, exact) == false {
+            throw MPDError.commandFailed
+        }
+    }
+    
+    public func search_db_tags(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
+        if mpd_search_db_tags(connection, tagType) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
+    public func search_add_tag_constraint(_ connection: OpaquePointer!, oper: mpd_operator, tagType: mpd_tag_type, value: UnsafePointer<Int8>!) throws {
+        if mpd_search_add_tag_constraint(connection, oper, tagType, value) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
+    public func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
+        if mpd_search_add_sort_tag(connection, tagType, false) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
+    public func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws {
+        if mpd_search_add_window(connection, start, end) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
+    public func search_commit(_ connection: OpaquePointer!) throws {
+        if mpd_search_commit(connection) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
+    public func search_cancel(_ connection: OpaquePointer!) {
+        mpd_search_cancel(connection)
+    }
+    
+    public func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
+        let mpd_pair = mpd_recv_pair_tag(connection, tagType)
+        
+        guard let pointee = mpd_pair?.pointee else {
+            return nil
+        }
+        
+        defer {
+            mpd_return_pair(connection, mpd_pair)
+        }
+
+        return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
     }
     
     /// Convert a raw mpd-string to a standard Swift string.

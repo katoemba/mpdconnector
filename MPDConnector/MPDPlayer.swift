@@ -39,7 +39,12 @@ public class MPDPlayer: PlayerProtocol {
     public var controller: ControlProtocol {
         return mpdController
     }
-    
+
+    private var mpdLibrary: MPDLibrary
+    public var library: LibraryProtocol {
+        return mpdLibrary
+    }
+
     public var uniqueID: String {
         get {
             return "\(_name)"
@@ -75,6 +80,9 @@ public class MPDPlayer: PlayerProtocol {
                                                 connection: nil,
                                                 identification: "\(host):\(port)",
                                                 disconnectedHandler: nil)
+        self.mpdLibrary = MPDLibrary.init(mpd: self.mpd,
+                                          connection: nil,
+                                          identification: "\(host):\(port)")
         
         self.mpdController.disconnectedHandler = { [weak self] (connection, error) in
             if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
@@ -135,6 +143,18 @@ public class MPDPlayer: PlayerProtocol {
                         self._connectionStatus.value = .Connected
             })
             .addDisposableTo(bag)
+
+        connectToMPD()
+            .subscribeOn(serialScheduler)
+            .retry(numberOfRetries)
+            .subscribe(onNext: { connection in
+                self.mpdLibrary.connection = connection
+            },
+                       onError: { _ in
+            },
+                       onCompleted: {
+            })
+            .addDisposableTo(bag)
     }
     
     
@@ -166,7 +186,7 @@ public class MPDPlayer: PlayerProtocol {
     ///   - password: Password to use after connecting, default = "".
     /// - Returns: A mpd_connection object.
     private func connect(host: String, port: Int, password: String = "") -> OpaquePointer? {
-        let connection = self.mpd.connection_new(host, UInt32(port), 1000)
+        let connection = self.mpd.connection_new(host, UInt32(port), 5000)
         if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
             if password != "" {
                 _ = self.mpd.run_password(connection, password: password)

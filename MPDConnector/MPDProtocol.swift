@@ -9,6 +9,11 @@
 import Foundation
 import libmpdclient
 
+enum MPDError: Error {
+    case commandFailed
+    case noDataFound
+}
+
 /// MPDProtocol created to support unit testing on the MPDPlayer object.
 public protocol MPDProtocol {
     func connection_new(_ host: UnsafePointer<Int8>!, _ port: UInt32, _ timeout_ms: UInt32) -> OpaquePointer!
@@ -16,6 +21,7 @@ public protocol MPDProtocol {
     func connection_get_error(_ connection: OpaquePointer!) -> mpd_error
     func connection_get_error_message(_ connection: OpaquePointer!) -> String
     func connection_get_server_error(_ connection: OpaquePointer!) -> mpd_server_error
+    func connection_clear_error(_ connection: OpaquePointer!) -> Bool
     func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool
     func run_play(_ connection: OpaquePointer!) -> Bool
     func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool
@@ -50,4 +56,12 @@ public protocol MPDProtocol {
     func response_finish(_ connection: OpaquePointer!) -> Bool
     func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
+    func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws
+    func search_db_tags(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
+    func search_add_tag_constraint(_ connection: OpaquePointer!, oper: mpd_operator, tagType: mpd_tag_type, value: UnsafePointer<Int8>!) throws
+    func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
+    func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws
+    func search_commit(_ connection: OpaquePointer!) throws
+    func search_cancel(_ connection: OpaquePointer!)
+    func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
 }

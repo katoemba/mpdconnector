@@ -34,6 +34,8 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var availableSongs = 0
     var songDuration = UInt32(0)
     var songUri = ""
+    var searchName = ""
+    var searchValue = ""
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -76,6 +78,15 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     public func connection_get_server_error(_ connection: OpaquePointer!) -> mpd_server_error {
         registerCall("connection_get_server_error", [:])
         return connectionServerError
+    }
+    
+    public func connection_clear_error(_ connection: OpaquePointer!) -> Bool {
+        registerCall("connection_clear_error", [:])
+        
+        connectionError = MPD_ERROR_SUCCESS
+        connectionErrorMessage = ""
+
+        return true
     }
     
     public func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool {
@@ -278,6 +289,35 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         registerCall("run_load", ["name": stringFromMPDString(name)])
         return true
+    }
+
+    func search_db_tags(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
+        registerCall("search_db_tags", ["tagType": "\(tagType)"])
+    }
+    
+    func search_add_tag_constraint(_ connection: OpaquePointer!, oper: mpd_operator, tagType: mpd_tag_type, value: UnsafePointer<Int8>!) throws {
+        registerCall("search_add_tag_constraint", ["oper": "\(oper)", "tagType": "\(tagType)", "value": stringFromMPDString(value)])
+    }
+    
+    func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
+        registerCall("search_add_sort_tag", ["tagType": "\(tagType)"])
+    }
+    
+    func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws {
+        registerCall("search_add_window", ["start": "\(start)", "end": "\(end)"])
+    }
+    
+    func search_commit(_ connection: OpaquePointer!) throws  {
+        registerCall("search_add_window", [:])
+    }
+    
+    func search_cancel(_ connection: OpaquePointer!) {
+        registerCall("search_cancel", [:])
+    }
+    
+    func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
+        registerCall("recv_pair_tag", ["tagType": "\(tagType)"])
+        return (searchName, searchValue)
     }
 
 }

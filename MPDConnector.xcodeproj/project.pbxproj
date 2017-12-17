@@ -296,6 +296,7 @@
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C585B3661F519A5D00D7B784 /* MPCController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPCController.swift */; };
 		C585B36C1F51BB4E00D7B784 /* MPDControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */; };
+		C5F569451F7FC7CA00D53500 /* MPDLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDLibrary.swift */; };
 		E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -460,6 +461,7 @@
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPCController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPCController.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControllerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControllerTests.swift; sourceTree = "<group>"; };
+		C5F569441F7FC7CA00D53500 /* MPDLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDLibrary.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
 		F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnector_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC8E36039F8211E29E843D2B /* Pods-MPDConnector_tvOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_tvOS.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_tvOS/Pods-MPDConnector_tvOS.debug.xcconfig"; sourceTree = "<group>"; };
@@ -536,6 +538,7 @@
 				C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */,
 				C585B3651F519A5D00D7B784 /* MPCController.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
+				C5F569441F7FC7CA00D53500 /* MPDLibrary.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
 				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
 				C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */,
@@ -1267,6 +1270,7 @@
 				C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */,
 				C546B02A1F35FAF0003C5B7E /* mixer.c in Sources */,
 				C546B0501F35FAF0003C5B7E /* player.c in Sources */,
+				C5F569451F7FC7CA00D53500 /* MPDLibrary.swift in Sources */,
 				C546B0511F35FAF0003C5B7E /* playlist.c in Sources */,
 				C546B04F1F35FAF0003C5B7E /* password.c in Sources */,
 				C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */,
