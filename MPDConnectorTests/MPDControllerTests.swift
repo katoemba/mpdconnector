@@ -46,7 +46,7 @@ class MPDControllerTests: XCTestCase {
             .distinctUntilChanged()
             .drive(onNext: { connectionStatus in
                 // Then a new connection to an mpd server is created
-                XCTAssert(self.mpdWrapper.callCount("connection_new") == 1, "connection_new not called once")
+                XCTAssert(self.mpdWrapper.callCount("connection_new") >= 1, "connection_new not called")
                 
                 if clearAllCalls {
                     self.mpdWrapper.clearAllCalls()

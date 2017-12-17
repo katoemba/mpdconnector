@@ -10,7 +10,7 @@ import Foundation
 import MPDConnector
 import libmpdclient
 
-class MPDWrapperMock: MockBase, MPDProtocol {    
+class MPDWrapperMock: MockBase, MPDProtocol {
     /// Dictionary of calls (functionName as key) and parameters as value.
     /// Values is an array of dictionaries, where key=parameter-name, value=parameter-value
     var volume = Int32(0)
@@ -318,6 +318,10 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
         registerCall("recv_pair_tag", ["tagType": "\(tagType)"])
         return (searchName, searchValue)
+    }
+
+    func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws {
+        registerCall("search_db_songs", ["exact": "\(exact)"])
     }
 
 }
