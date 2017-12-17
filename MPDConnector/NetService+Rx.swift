@@ -10,43 +10,45 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-public class RxNetServiceDelegateProxy
-    : DelegateProxy
-    , NetServiceDelegate
-    , DelegateProxyType {
-    
-    /// For more information take a look at `DelegateProxyType`.
-    public class func currentDelegateFor(_ object: AnyObject) -> AnyObject? {
-        let netService: NetService = object as! NetService
-        return netService.delegate
-    }
-    
-    /// For more information take a look at `DelegateProxyType`.
-    public class func setCurrentDelegate(_ delegate: AnyObject?, toObject object: AnyObject) {
-        let netService: NetService = object as! NetService
-        netService.delegate = delegate as? NetServiceDelegate
-    }
-    
-    /// For more information take a look at `DelegateProxyType`.
-    public override class func createProxyForObject(_ object: AnyObject) -> AnyObject {
-        let netService: NetService = object as! NetService
-        return netService.createRxDelegateProxy()
-    }
+extension NetService: HasDelegate {
+    public typealias Delegate = NetServiceDelegate
 }
 
-extension NetService {
-    /// Factory method that enables subclasses to implement their own `delegate`.
-    ///
-    /// - returns: Instance of delegate proxy that wraps `delegate`.
-    public func createRxDelegateProxy() -> RxNetServiceDelegateProxy {
-        return RxNetServiceDelegateProxy(parentObject: self)
+public class RxNetServiceDelegateProxy
+    : DelegateProxy<NetService, NetServiceDelegate>
+    , DelegateProxyType
+    , NetServiceDelegate {
+    
+    /// Typed parent object.
+    public weak private(set) var netService: NetService?
+    
+    /// - parameter pickerView: Parent object for delegate proxy.
+    public init(netService: ParentObject) {
+        self.netService = netService
+        super.init(parentObject: netService, delegateProxy: RxNetServiceDelegateProxy.self)
     }
     
+    // Register known implementationss
+    public static func registerKnownImplementations() {
+        self.register { RxNetServiceDelegateProxy(netService: $0) }
+    }
 }
 
 extension Reactive where Base: NetService {
-    public var delegate: DelegateProxy {
-        return RxNetServiceDelegateProxy.proxyForObject(base)
+    public var delegate: DelegateProxy<NetService, NetServiceDelegate> {
+        return RxNetServiceDelegateProxy.proxy(for: base)
+    }
+    
+    /// Installs delegate as forwarding delegate on `delegate`.
+    /// Delegate won't be retained.
+    ///
+    /// It enables using normal delegate mechanism with reactive delegate mechanism.
+    ///
+    /// - parameter delegate: Delegate object.
+    /// - returns: Disposable object that can be used to unbind the delegate.
+    public func setDelegate(_ delegate: NetServiceDelegate)
+        -> Disposable {
+            return RxNetServiceDelegateProxy.installForwardDelegate(delegate, retainDelegate: false, onProxyForObject: self.base)
     }
     
     public var didResolveAddress: Observable<NetService> {

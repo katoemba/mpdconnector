@@ -54,7 +54,7 @@ class MPDControllerTests: XCTestCase {
 
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         mpdPlayer?.connect()
         wait(for: [waitExpectation], timeout: 1.0)
@@ -206,7 +206,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.playPauseMode = .Playing
                 XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a play command
         mpdPlayer?.controller.play()
@@ -238,7 +238,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.playPauseMode = .Playing
                 XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a play command
         mpdPlayer?.controller.play(index: 3)
@@ -266,7 +266,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.playPauseMode = .Playing
                 XCTAssert(playerStatus.playing.playPauseMode == .Paused, "playing.playingStatus expected .Paused, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a pause command
         mpdPlayer?.controller.pause()
@@ -293,7 +293,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.playPauseMode = .Playing
                 XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a pause command
         mpdPlayer?.controller.togglePlayPause()
@@ -323,7 +323,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playqueue.songIndex == 3
                 XCTAssert(playerStatus.playqueue.songIndex == 3, "playqueue.songIndex expected 3, got \(String(describing: playerStatus.playqueue.songIndex))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a pause command
         mpdPlayer?.controller.skip()
@@ -353,7 +353,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playqueue.songIndex == 1
                 XCTAssert(playerStatus.playqueue.songIndex == 1, "playqueue.songIndex expected 1, got \(String(describing: playerStatus.playqueue.songIndex))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a pause command
         mpdPlayer?.controller.back()
@@ -382,7 +382,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .Off
                 XCTAssert(playerStatus.playing.repeatMode == .Off, "playing.repeatMode expected .Off, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:off command
         mpdPlayer?.controller.setRepeat(repeatMode: .Off)
@@ -412,7 +412,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .Single
                 XCTAssert(playerStatus.playing.repeatMode == .Single, "playing.repeatMode expected .Single, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:single command
         mpdPlayer?.controller.setRepeat(repeatMode: .Single)
@@ -442,7 +442,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .All
                 XCTAssert(playerStatus.playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:all command
         mpdPlayer?.controller.setRepeat(repeatMode: .All)
@@ -471,7 +471,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .Allg
                 XCTAssert(playerStatus.playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:album command
         mpdPlayer?.controller.setRepeat(repeatMode: .Album)
@@ -500,7 +500,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .Allg
                 XCTAssert(playerStatus.playing.repeatMode == .All, "playing.repeatMode expected .All, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:album command
         mpdPlayer?.controller.toggleRepeat()
@@ -524,7 +524,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .Allg
                 XCTAssert(playerStatus.playing.repeatMode == .Single, "playing.repeatMode expected .Single, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:album command
         mpdPlayer?.controller.toggleRepeat()
@@ -548,7 +548,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.repeatMode == .Allg
                 XCTAssert(playerStatus.playing.repeatMode == .Off, "playing.repeatMode expected .Off, got \(String(describing: playerStatus.playing.repeatMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a repeat:album command
         mpdPlayer?.controller.toggleRepeat()
@@ -577,7 +577,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.randomMode == .On
                 XCTAssert(playerStatus.playing.randomMode == .On, "playing.randomMode expected .On, got \(String(describing: playerStatus.playing.randomMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a shuffle:on command
         mpdPlayer?.controller.setRandom(randomMode: .On)
@@ -600,7 +600,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.randomMode == .Off,
                 XCTAssert(playerStatus.playing.randomMode == .Off, "playing.randomMode expected .Off, got \(String(describing: playerStatus.playing.randomMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a shuffle:off command
         mpdPlayer?.controller.setRandom(randomMode: .Off)
@@ -628,7 +628,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.randomMode == .On
                 XCTAssert(playerStatus.playing.randomMode == .On, "playing.randomMode expected .On, got \(String(describing: playerStatus.playing.randomMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a shuffle:on command
         mpdPlayer?.controller.toggleRandom()
@@ -651,7 +651,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.randomMode == .Off,
                 XCTAssert(playerStatus.playing.randomMode == .On, "playing.randomMode expected .On, got \(String(describing: playerStatus.playing.randomMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         // When giving a shuffle:off command
         mpdPlayer?.controller.toggleRandom()
@@ -693,7 +693,7 @@ class MPDControllerTests: XCTestCase {
                 // Then currentSong.artist = "Arcade Fire"
                 XCTAssert(playerStatus.currentSong.artist == "Arcade Fire", "currentSong.artist expected 'Arcade Fire', got \(String(describing: playerStatus.currentSong.artist))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         mpdPlayer?.controller.playerStatus
             .filter({ (playerStatus) -> Bool in
@@ -708,7 +708,7 @@ class MPDControllerTests: XCTestCase {
                 // Then time.trackTime = 30
                 XCTAssert(playerStatus.time.trackTime == 30, "time.trackTime expected 30, got \(String(describing: playerStatus.time.trackTime))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         mpdPlayer?.controller.playerStatus
             .filter({ (playerStatus) -> Bool in
@@ -726,7 +726,7 @@ class MPDControllerTests: XCTestCase {
                 // Then playing.playingStatus = .Playing
                 XCTAssert(playerStatus.playing.playPauseMode == .Playing, "playing.playingStatus expected .Playing, got \(String(describing: playerStatus.playing.playPauseMode))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         mpdPlayer?.controller.playerStatus
             .filter({ (playerStatus) -> Bool in
@@ -738,7 +738,7 @@ class MPDControllerTests: XCTestCase {
                 // Then volume = 0.1
                 XCTAssert(playerStatus.volume == 0.1, "volume expected 0.1, got \(String(describing: playerStatus.volume))")
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         // Then wait for 1.0 seconds and check if run_status is called
         wait(for: [waitForStatusUpdate], timeout: 1.0)

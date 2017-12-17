@@ -10,43 +10,45 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-public class RxNetServiceBrowserDelegateProxy
-    : DelegateProxy
-    , NetServiceBrowserDelegate
-    , DelegateProxyType {
-    
-    /// For more information take a look at `DelegateProxyType`.
-    public static func currentDelegateFor(_ object: AnyObject) -> AnyObject? {
-        let netServiceBrowser: NetServiceBrowser = object as! NetServiceBrowser
-        return netServiceBrowser.delegate
-    }
-    
-    /// For more information take a look at `DelegateProxyType`.
-    public static func setCurrentDelegate(_ delegate: AnyObject?, toObject object: AnyObject) {
-        let netServiceBrowser: NetServiceBrowser = object as! NetServiceBrowser
-        netServiceBrowser.delegate = delegate as? NetServiceBrowserDelegate
-    }
-    
-    /// For more information take a look at `DelegateProxyType`.
-    public override class func createProxyForObject(_ object: AnyObject) -> AnyObject {
-        let netServiceBrowser: NetServiceBrowser = object as! NetServiceBrowser
-        return netServiceBrowser.createRxDelegateProxy()
-    }
-
+extension NetServiceBrowser: HasDelegate {
+    public typealias Delegate = NetServiceBrowserDelegate
 }
 
-extension NetServiceBrowser {
-    /// Factory method that enables subclasses to implement their own `delegate`.
-    ///
-    /// - returns: Instance of delegate proxy that wraps `delegate`.
-    public func createRxDelegateProxy() -> RxNetServiceBrowserDelegateProxy {
-        return RxNetServiceBrowserDelegateProxy(parentObject: self)
+public class RxNetServiceBrowserDelegateProxy
+    : DelegateProxy<NetServiceBrowser, NetServiceBrowserDelegate>
+    , DelegateProxyType
+    , NetServiceBrowserDelegate {
+    
+    /// Typed parent object.
+    public weak private(set) var netServiceBrowser: NetServiceBrowser?
+    
+    /// - parameter pickerView: Parent object for delegate proxy.
+    public init(netServiceBrowser: ParentObject) {
+        self.netServiceBrowser = netServiceBrowser
+        super.init(parentObject: netServiceBrowser, delegateProxy: RxNetServiceBrowserDelegateProxy.self)
+    }
+    
+    // Register known implementationss
+    public static func registerKnownImplementations() {
+        self.register { RxNetServiceBrowserDelegateProxy(netServiceBrowser: $0) }
     }
 }
 
 extension Reactive where Base: NetServiceBrowser {
-    public var delegate: DelegateProxy {
-        return RxNetServiceBrowserDelegateProxy.proxyForObject(base)
+    public var delegate: DelegateProxy<NetServiceBrowser, NetServiceBrowserDelegate> {
+        return RxNetServiceBrowserDelegateProxy.proxy(for: base)
+    }
+    
+    /// Installs delegate as forwarding delegate on `delegate`.
+    /// Delegate won't be retained.
+    ///
+    /// It enables using normal delegate mechanism with reactive delegate mechanism.
+    ///
+    /// - parameter delegate: Delegate object.
+    /// - returns: Disposable object that can be used to unbind the delegate.
+    public func setDelegate(_ delegate: NetServiceBrowserDelegate)
+        -> Disposable {
+            return RxNetServiceBrowserDelegateProxy.installForwardDelegate(delegate, retainDelegate: false, onProxyForObject: self.base)
     }
     
     public var serviceAdded: Observable<NetService> {

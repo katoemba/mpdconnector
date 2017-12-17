@@ -67,7 +67,7 @@ public class MPDController: ControlProtocol {
                 
                 strongSelf._playerStatus.value = playerStatus
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
     }
     
     /// Cleanup connection object
@@ -405,6 +405,6 @@ public class MPDController: ControlProtocol {
                     strongSelf.reloadTrigger.onNext(1)
                 }
             })
-            //.addDisposableTo(bag)
+            //.disposed(by: bag)
     }
 }

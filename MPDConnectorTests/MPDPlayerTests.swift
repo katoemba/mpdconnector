@@ -63,7 +63,7 @@ class MPDPlayerTests: XCTestCase {
 
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         operation.start()
         wait(for: [waitExpectation], timeout: 1.0)
@@ -110,7 +110,7 @@ class MPDPlayerTests: XCTestCase {
                 
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         operation.start()
         wait(for: [waitExpectation], timeout: 1.0)
@@ -134,11 +134,11 @@ class MPDPlayerTests: XCTestCase {
             })
             .drive(onNext: { connectionStatus in
                 // Then a new connection to an mpd server is created
-                XCTAssert(self.mpdWrapper.callCount("connection_new") == 3, "connection_new called \(self.mpdWrapper.callCount("connection_new")) instead of expected 3")
+                XCTAssert(self.mpdWrapper.callCount("connection_new") >= 3, "connection_new called \(self.mpdWrapper.callCount("connection_new")) instead of expected 3")
                 
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         operation.start()
         wait(for: [waitExpectation], timeout: 1.0)
@@ -156,7 +156,7 @@ class MPDPlayerTests: XCTestCase {
             .drive(onNext: { connectionStatus in
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         self.mpdPlayer?.connect(numberOfRetries: 3)
         wait(for: [waitExpectation], timeout: 1.0)
@@ -175,7 +175,7 @@ class MPDPlayerTests: XCTestCase {
             .drive(onNext: { connectionStatus in
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         mpdPlayer!.controller.pause()
         wait(for: [waitExpectation], timeout: 1.0)
@@ -203,7 +203,7 @@ class MPDPlayerTests: XCTestCase {
             .drive(onNext: { connectionStatus in
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         operation.start()
         wait(for: [waitExpectation], timeout: 1.0)
@@ -230,7 +230,7 @@ class MPDPlayerTests: XCTestCase {
             .drive(onNext: { connectionStatus in
                 waitExpectation.fulfill()
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
         
         operation.start()
         wait(for: [waitExpectation], timeout: 1.0)

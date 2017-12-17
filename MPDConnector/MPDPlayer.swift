@@ -142,7 +142,7 @@ public class MPDPlayer: PlayerProtocol {
                        onCompleted: {
                         self._connectionStatus.value = .Connected
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
 
         connectToMPD()
             .subscribeOn(serialScheduler)
@@ -154,7 +154,7 @@ public class MPDPlayer: PlayerProtocol {
             },
                        onCompleted: {
             })
-            .addDisposableTo(bag)
+            .disposed(by: bag)
     }
     
     
