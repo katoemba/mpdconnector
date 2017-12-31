@@ -16,6 +16,11 @@ enum ConnectionError: Error {
     case internalError
 }
 
+enum MPDType: String {
+    case Classic = "Classic"
+    case Mopidy = "Mopidy"
+}
+
 public class MPDPlayer: PlayerProtocol {
     private var _name: String
     public var name: String {
@@ -40,11 +45,6 @@ public class MPDPlayer: PlayerProtocol {
         return mpdController
     }
 
-    private var mpdLibrary: MPDLibrary
-    public var library: LibraryProtocol {
-        return mpdLibrary
-    }
-
     public var uniqueID: String {
         get {
             return "\(_name)"
@@ -53,7 +53,10 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
-            return ["name": name, "host": host, "port": port, "password": password]
+            return [ConnectionProperties.Name.rawValue: name,
+                    ConnectionProperties.Host.rawValue: host,
+                    ConnectionProperties.Port.rawValue: port,
+                    ConnectionProperties.Password.rawValue: password]
         }
     }
     
@@ -80,9 +83,6 @@ public class MPDPlayer: PlayerProtocol {
                                                 connection: nil,
                                                 identification: "\(host):\(port)",
                                                 disconnectedHandler: nil)
-        self.mpdLibrary = MPDLibrary.init(mpd: self.mpd,
-                                          connection: nil,
-                                          identification: "\(host):\(port)")
         
         self.mpdController.disconnectedHandler = { [weak self] (connection, error) in
             if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
@@ -102,9 +102,9 @@ public class MPDPlayer: PlayerProtocol {
     ///   - mpd: MPDProtocol object used to run commands against the player
     ///   - connectionProperties: dictionary of properties
     public convenience init(mpd: MPDProtocol? = nil, connectionProperties: [String: Any]) {
-        guard let name = connectionProperties["name"] as? String,
-            let host = connectionProperties["host"] as? String,
-            let port = connectionProperties["port"] as? Int else {
+        guard let name = connectionProperties[ConnectionProperties.Name.rawValue] as? String,
+            let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String,
+            let port = connectionProperties[ConnectionProperties.Port.rawValue] as? Int else {
                 self.init(mpd: mpd,
                           name: "",
                           host: "",
@@ -117,7 +117,7 @@ public class MPDPlayer: PlayerProtocol {
                   name: name,
                   host: host,
                   port: port,
-                  password: (connectionProperties["password"] as? String) ?? "")
+                  password: (connectionProperties[ConnectionProperties.Password.rawValue] as? String) ?? "")
     }
     
     // MARK: - PlayerProtocol Implementations
@@ -143,30 +143,17 @@ public class MPDPlayer: PlayerProtocol {
                         self._connectionStatus.value = .Connected
             })
             .disposed(by: bag)
-
-        connectToMPD()
-            .subscribeOn(serialScheduler)
-            .retry(numberOfRetries)
-            .subscribe(onNext: { connection in
-                self.mpdLibrary.connection = connection
-            },
-                       onError: { _ in
-            },
-                       onCompleted: {
-            })
-            .disposed(by: bag)
     }
-    
     
     /// Reactive connection function
     ///
-    /// - Returns: An observable that will attempt to connect to mpd when triggered
-    private func connectToMPD() -> Observable<OpaquePointer?> {
-        return Observable<OpaquePointer?>.create { observer in
+    /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
+    public func connectToMPD() -> Observable<OpaquePointer> {
+        return Observable<OpaquePointer>.create { observer in
             let connection = self.connect(host: self.host, port: self.port, password: self.password)
             if connection != nil {
                 if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
-                    observer.onNext(connection)
+                    observer.onNext(connection!)
                     observer.onCompleted()
                 }
                 else {
@@ -177,7 +164,16 @@ public class MPDPlayer: PlayerProtocol {
             return Disposables.create()
         }
     }
-
+    
+    public func libraryAccess() -> LibraryProtocol? {
+        let connection = self.connect(host: self.host, port: self.port, password: self.password)
+        if connection != nil, self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
+            return MPDLibrary.init(mpd: self.mpd, connection: connection, identification: "\(self.host):\(self.port)")
+        }
+        
+        return nil
+    }
+    
     /// Connect to a MPD Player
     ///
     /// - Parameters:

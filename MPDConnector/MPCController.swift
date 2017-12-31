@@ -256,7 +256,7 @@ public class MPDController: ControlProtocol {
         
         self.runCommand(refreshStatus: false)  {
             _ = self.mpd.run_set_volume(self.connection, UInt32(roundf(volume * 100.0)))
-            }
+        }
     }
     
     /// Get an array of songs from the playqueue.
@@ -341,6 +341,20 @@ public class MPDController: ControlProtocol {
         song.sortArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ARTIST_SORT, 0)
         song.sortAlbumArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST_SORT, 0)
         song.sortAlbum = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_SORT, 0)
+        
+        let sections = song.id.split(separator: ":")
+        guard let path = sections.last else {
+            return song
+        }
+        let pathSections = path.split(separator: "/")
+        
+        var newPath = ""
+        for index in 0..<(pathSections.count - 1) {
+            newPath.append(contentsOf: pathSections[index])
+            newPath.append(contentsOf: "/")
+        }
+        
+        song.coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
 
         return song
     }
@@ -384,6 +398,33 @@ public class MPDController: ControlProtocol {
         }
         
         return playerStatus
+    }
+    
+    /// Add a song to the play queue
+    ///
+    /// - Parameters:
+    ///   - song: the song to add
+    public func addSong(_ song: Song) {
+        guard validateConnection() else {
+            return
+        }
+        
+        self.runCommand()  {
+            _ = self.mpd.run_add(self.connection, uri: song.id)
+        }
+    }
+    
+    /// Add an album to the play queue
+    ///
+    /// - Parameters:
+    ///   - album: the album to add
+    public func addAlbum(_ album: Album) {
+        guard validateConnection() else {
+            return
+        }
+        
+        self.runCommand()  {
+        }
     }
     
     /// Run a command on the serialScheduler, then update the observable status

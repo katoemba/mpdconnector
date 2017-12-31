@@ -27,13 +27,6 @@ public class MPDLibrary: LibraryProtocol {
     private let mpd: MPDProtocol
     private var identification = ""
 
-    private let _serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdconnector.library")
-    public var serialScheduler : SerialDispatchQueueScheduler {
-        get {
-            return _serialScheduler
-        }
-    }
-
     public init(mpd: MPDProtocol? = nil,
                 connection: OpaquePointer? = nil,
                 identification: String = "NoID") {
@@ -42,6 +35,14 @@ public class MPDLibrary: LibraryProtocol {
         self.identification = identification
     }
     
+    /// Cleanup connection object
+    deinit {
+        if let connection = self.connection {
+            self.mpd.connection_free(connection)
+            self.connection = nil
+        }
+    }
+
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> SearchResult {
         let artistSearchResult = searchType(search, tagType: MPD_TAG_ARTIST, filter: filter)
         let albumSearchResult = searchType(search, tagType: MPD_TAG_ALBUM, filter: filter)
@@ -73,7 +74,9 @@ public class MPDLibrary: LibraryProtocol {
                 else if song.id.contains("spotify") {
                     if filter.count == 0 || filter.contains(.Spotify) == true {
                         if song.id.contains(":album:") {
-                            albums.append(Album(id: song.id, source: song.source, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: song.length))
+                            var album = Album(id: song.id, source: song.source, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: song.length)
+                            album.coverURI = song.coverURI
+                            albums.append(album)
                         }
                         else if song.id.contains(":artist:") {
                             artists.append(Artist(id: song.id, source: song.source, name: song.artist))
@@ -89,7 +92,8 @@ public class MPDLibrary: LibraryProtocol {
                             songs.append(song)
                         }
                         else if (tagType == MPD_TAG_ALBUM) {
-                            let album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
+                            var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
+                            album.coverURI = song.coverURI
                             if albums.contains(album) == false {
                                 albums.append(album)
                             }
