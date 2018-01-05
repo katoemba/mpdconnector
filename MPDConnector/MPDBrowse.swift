@@ -1,5 +1,5 @@
 //
-//  MPDLibrary.swift
+//  MPDBrowse.swift
 //  MPDConnector_iOS
 //
 //  Created by Berrie Kremers on 30-09-17.
@@ -21,18 +21,21 @@ extension Array where Element:Hashable {
     }
 }
 
-public class MPDLibrary: LibraryProtocol {
+public class MPDBrowse: BrowseProtocol {
     /// Connection to a MPD Player
-    public var connection: OpaquePointer?
+    private var connection: OpaquePointer?
     private let mpd: MPDProtocol
     private var identification = ""
+    private var connectionProperties: [String: Any]
 
     public init(mpd: MPDProtocol? = nil,
-                connection: OpaquePointer? = nil,
+                connectionProperties: [String: Any],
                 identification: String = "NoID") {
         self.mpd = mpd ?? MPDWrapper()
-        self.connection = connection
         self.identification = identification
+        self.connectionProperties = connectionProperties
+
+        HelpMePlease.allocUp(name: "MPDBrowse")
     }
     
     /// Cleanup connection object
@@ -41,8 +44,10 @@ public class MPDLibrary: LibraryProtocol {
             self.mpd.connection_free(connection)
             self.connection = nil
         }
+        HelpMePlease.allocDown(name: "MPDBrowse")
     }
 
+    /*
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> SearchResult {
         let artistSearchResult = searchType(search, tagType: MPD_TAG_ARTIST, filter: filter)
         let albumSearchResult = searchType(search, tagType: MPD_TAG_ALBUM, filter: filter)
@@ -55,8 +60,26 @@ public class MPDLibrary: LibraryProtocol {
 
         return searchResult
     }
+     */
     
-    public func searchType(_ search: String, tagType: mpd_tag_type, filter: [SourceType] = []) -> SearchResult {
+    public func searchrx(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
+            .flatMap({ (connection) -> Observable<SearchResult> in
+                let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
+                let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
+                let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
+                
+                var searchResult = SearchResult()
+                searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
+                searchResult.albums = (albumSearchResult.albums + artistSearchResult.albums + songSearchResult.albums).orderedSet
+                searchResult.songs = (songSearchResult.songs + artistSearchResult.songs + albumSearchResult.songs).orderedSet
+                
+                return Observable.just(searchResult)
+            })
+    }
+    
+    private func searchType(_ search: String, connection: OpaquePointer, tagType: mpd_tag_type, filter: [SourceType] = []) -> SearchResult {
         var songs = [Song]()
         var albums = [Album]()
         var artists = [Artist]()
@@ -65,7 +88,7 @@ public class MPDLibrary: LibraryProtocol {
             try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: search)
             try mpd.search_commit(connection)
             
-            while let song = MPDController.songFromMpdSong(mpd: mpd, mpdSong: mpd.get_song(connection)) {
+            while let song = MPDHelper.songFromMpdSong(mpd: mpd, mpdSong: mpd.get_song(connection)) {
                 if song.id.starts(with: "podcast+") {
                     if filter.count == 0 || filter.contains(.Podcast) == true {
                         // Process podcast

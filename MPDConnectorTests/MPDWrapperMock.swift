@@ -27,7 +27,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var connectionError = MPD_ERROR_SUCCESS
     var connectionErrorMessage = ""
     var connectionServerError = MPD_SERVER_ERROR_UNK
-    var passwordValid = true
+    var password = ""
     var queueLength = UInt32(0)
     var queueVersion = UInt32(0)
     var songIndex = Int32(0)
@@ -91,12 +91,12 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     public func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool {
         registerCall("run_password", ["password": stringFromMPDString(password)])
-        if passwordValid == false {
-            connectionError = MPD_ERROR_SERVER
-            connectionServerError = MPD_SERVER_ERROR_PASSWORD
+        if self.password == stringFromMPDString(password) {
+            connectionError = MPD_ERROR_SUCCESS
         }
         else {
-            connectionError = MPD_ERROR_SUCCESS
+            connectionError = MPD_ERROR_SERVER
+            connectionServerError = MPD_SERVER_ERROR_PASSWORD
         }
         return true
     }
@@ -324,4 +324,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("search_db_songs", ["exact": "\(exact)"])
     }
 
+    func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
+        return true
+    }
 }

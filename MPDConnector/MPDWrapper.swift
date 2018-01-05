@@ -7,12 +7,18 @@
 //
 
 import Foundation
+import ConnectorProtocol
 import libmpdclient
 
 /// The functions provided by MPDWrapper will directly call the matching mpd_xxx function. The only conversion
 /// that takes places is from UnsafePointer<Int8> to String for return values.
 public class MPDWrapper: MPDProtocol {
     public init() {
+        HelpMePlease.allocUp(name: "MPDWrapper")
+    }
+    
+    deinit {
+        HelpMePlease.allocDown(name: "MPDWrapper")
     }
     
     public func connection_new(_ host: UnsafePointer<Int8>!, _ port: UInt32, _ timeout_ms: UInt32) -> OpaquePointer! {
