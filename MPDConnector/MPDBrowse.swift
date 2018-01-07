@@ -23,7 +23,6 @@ extension Array where Element:Hashable {
 
 public class MPDBrowse: BrowseProtocol {
     /// Connection to a MPD Player
-    private var connection: OpaquePointer?
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
@@ -40,35 +39,18 @@ public class MPDBrowse: BrowseProtocol {
     
     /// Cleanup connection object
     deinit {
-        if let connection = self.connection {
-            self.mpd.connection_free(connection)
-            self.connection = nil
-        }
         HelpMePlease.allocDown(name: "MPDBrowse")
     }
 
-    /*
-    public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> SearchResult {
-        let artistSearchResult = searchType(search, tagType: MPD_TAG_ARTIST, filter: filter)
-        let albumSearchResult = searchType(search, tagType: MPD_TAG_ALBUM, filter: filter)
-        let songSearchResult = searchType(search, tagType: MPD_TAG_TITLE, filter: filter)
-        
-        var searchResult = SearchResult()
-        searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
-        searchResult.albums = (albumSearchResult.albums + artistSearchResult.albums + songSearchResult.albums).orderedSet
-        searchResult.songs = (songSearchResult.songs + artistSearchResult.songs + albumSearchResult.songs).orderedSet
-
-        return searchResult
-    }
-     */
-    
-    public func searchrx(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
+    public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
             .flatMap({ (connection) -> Observable<SearchResult> in
                 let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
                 let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
                 let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
+                
+                self.mpd.connection_free(connection)
                 
                 var searchResult = SearchResult()
                 searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
@@ -145,12 +127,38 @@ public class MPDBrowse: BrowseProtocol {
         searchResult.albums = albums
         searchResult.artists = artists
 
-        print("tagType = \(tagType)")
-        print(searchResult)
-        
         return searchResult
     }
+    
+    public func songsOnAlbum(_ album: Album) -> Observable<[Song]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
+            .flatMap({ (connection) -> Observable<[Song]> in
+                var songs = [Song]()
+                do {
+                    try self.mpd.search_db_songs(connection, exact: true)
+                    try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                    try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: album.artist)
+                    try self.mpd.search_commit(connection)
+                    
+                    while let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: self.mpd.get_song(connection)) {
+                        songs.append(song)
+                    }
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                }
+                
+                // Cleanup
+                _ = self.mpd.response_finish(connection)
+                self.mpd.connection_free(connection)
+                
+                return Observable.just(songs)
+            })
+    }
 
+    /*
     private func getAllAlbumNames(artist: String = "", genre: String = "") -> [String] {
         var albumNames = [String]()
         do {
@@ -233,4 +241,5 @@ public class MPDBrowse: BrowseProtocol {
         return artistNames.sorted
             { $0.caseInsensitiveCompare($1) == .orderedAscending }
     }
+     */
 }

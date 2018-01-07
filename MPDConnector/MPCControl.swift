@@ -204,8 +204,17 @@ public class MPDControl: ControlProtocol {
     /// - Parameters:
     ///   - album: the album to add
     public func addAlbum(_ album: Album) {
-        runCommand()  { connection in
-        }
+        // First we need to get all the songs on an album, then add them one by one
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        browse.songsOnAlbum(album)
+            .subscribe(onNext: { (songs) in
+                self.runCommand()  { connection in
+                    for song in songs {
+                        _ = self.mpd.run_add(connection, uri: song.id)
+                    }
+                }
+            })
+            .disposed(by: bag)
     }
     
     /// Run a command on a background thread, then optionally trigger an update to the player status
