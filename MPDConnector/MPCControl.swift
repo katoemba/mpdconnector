@@ -82,7 +82,7 @@ public class MPDControl: ControlProtocol {
         }
     }
     
-    /// Set the shuffle mode of the player.
+    /// Set the random mode of the player.
     ///
     /// - Parameter randomMode: The random mode to use.
     public func setRandom(randomMode: RandomMode) {
@@ -97,6 +97,13 @@ public class MPDControl: ControlProtocol {
     public func toggleRandom(from: RandomMode) {
         runCommand()  { connection in
             _ = self.mpd.run_random(connection, (from == .On) ? false : true)
+        }
+    }
+    
+    /// Shuffle the current playqueue
+    public func shufflePlayqueue() {
+        runCommand()  { connection in
+            _ = self.mpd.run_shuffle(connection)
         }
     }
     

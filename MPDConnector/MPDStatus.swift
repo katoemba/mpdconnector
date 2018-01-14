@@ -30,9 +30,9 @@ public class MPDStatus: StatusProtocol {
     /// PlayerStatus object for the player
     private var reloadTrigger = PublishSubject<Int>()
     private var _playerStatus = Variable<PlayerStatus>(PlayerStatus())
-    public var playerStatusObservable : Driver<PlayerStatus> {
+    public var playerStatusObservable : Observable<PlayerStatus> {
         get {
-            return _playerStatus.asDriver()
+            return _playerStatus.asObservable()
         }
     }
     
@@ -177,7 +177,16 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
             }
             
-            // Note: it's possible that here the connection is gone! Need a mutex or check.
+            if let song = self.mpd.run_current_song(self.connection) {
+                defer {
+                    self.mpd.song_free(song)
+                }
+                
+                if let song = MPDHelper.songFromMpdSong(mpd: mpd, mpdSong: song) {
+                    playerStatus.currentSong = song
+                }
+            }
+
             if let song = self.mpd.run_current_song(self.connection) {
                 defer {
                     self.mpd.song_free(song)
