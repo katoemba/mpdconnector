@@ -65,4 +65,5 @@ public protocol MPDProtocol {
     func search_cancel(_ connection: OpaquePointer!)
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool
+    func run_clear(_ connection: OpaquePointer!) -> Bool
 }

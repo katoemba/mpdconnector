@@ -239,6 +239,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_add(connection, uri)
     }
     
+    public func run_clear(_ connection: OpaquePointer!) -> Bool {
+        return mpd_run_clear(connection)
+    }
+    
     /// Convert a raw mpd-string to a standard Swift string.
     ///
     /// - Parameter mpdString: Pointer to a null-terminated (unsigned char) string.

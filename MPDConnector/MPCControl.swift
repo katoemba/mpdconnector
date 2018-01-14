@@ -200,9 +200,14 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameters:
     ///   - song: the song to add
-    public func addSong(_ song: Song) {
+    public func addSong(_ song: Song, addMode: AddMode) {
         runCommand()  { connection in
+            if addMode == .replace {
+                _ = self.mpd.run_clear(connection)
+            }
+
             _ = self.mpd.run_add(connection, uri: song.id)
+            _ = self.mpd.run_play(connection)
         }
     }
     
@@ -210,15 +215,22 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameters:
     ///   - album: the album to add
-    public func addAlbum(_ album: Album) {
+    public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool) {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
         browse.songsOnAlbum(album)
             .subscribe(onNext: { (songs) in
                 self.runCommand()  { connection in
-                    for song in songs {
+                    if addMode == .replace {
+                        _ = self.mpd.run_clear(connection)
+                    }
+                    
+                    let songsToAdd = shuffle ? songs.shuffled() : songs
+                    for song in songsToAdd {
                         _ = self.mpd.run_add(connection, uri: song.id)
                     }
+                    
+                    _ = self.mpd.run_play(connection)
                 }
             })
             .disposed(by: bag)
