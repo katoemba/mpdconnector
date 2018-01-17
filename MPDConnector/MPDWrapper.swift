@@ -243,6 +243,14 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_clear(connection)
     }
     
+    public func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle {
+        return mpd_run_idle_mask(connection, mask)
+    }
+
+    public func send_noidle(_ connection: OpaquePointer!) -> Bool {
+        return mpd_send_noidle(connection)
+    }
+
     /// Convert a raw mpd-string to a standard Swift string.
     ///
     /// - Parameter mpdString: Pointer to a null-terminated (unsigned char) string.

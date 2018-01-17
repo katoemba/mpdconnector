@@ -122,6 +122,8 @@ public class MPDPlayer: PlayerProtocol {
     }
     
     deinit {
+        mpdStatus.stop()
+
         print("Cleaning up player \(name)")
         HelpMePlease.allocDown(name: "MPDPlayer")
     }

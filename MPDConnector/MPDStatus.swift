@@ -14,34 +14,32 @@ import RxCocoa
 
 public class MPDStatus: StatusProtocol {
     /// Connection to a MPD Player
-    public var connection: OpaquePointer?
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
     
     /// ConectionStatus for the player
-    private var _connectionStatus = Variable<ConnectionStatus>(.unknown)
+    private var _connectionStatus = BehaviorRelay<ConnectionStatus>(value: .unknown)
     public var connectionStatusObservable : Driver<ConnectionStatus> {
         get {
             return _connectionStatus.asDriver()
         }
     }
-    
+    private var connecting = false
+
     /// PlayerStatus object for the player
-    private var reloadTrigger = PublishSubject<Int>()
-    private var _playerStatus = Variable<PlayerStatus>(PlayerStatus())
+    private var _playerStatus = BehaviorRelay<PlayerStatus>(value: PlayerStatus())
     public var playerStatusObservable : Observable<PlayerStatus> {
         get {
             return _playerStatus.asObservable()
         }
     }
+    let disconnectHandler = PublishSubject<Int>()
     
-    // Dispatch queue to serialize starting / stopping, thereby preventing multiple connections
-    private let startStopDispatchQueue = DispatchQueue(label: "com.katoemba.mpdconnector.status.startstop")
-    private var connecting = false
     
-    private let serialScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "com.katoemba.mpdconnector.status")
-    private let bag = DisposeBag()
+    private let statusScheduler = SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdconnector.status")
+    private let elapsedTimeScheduler = SerialDispatchQueueScheduler.init(internalSerialQueueName: "com.katoemba.mpdconnector.elapsedtime")
+    private var bag = DisposeBag()
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
@@ -55,92 +53,97 @@ public class MPDStatus: StatusProtocol {
     
     /// Cleanup connection object
     deinit {
-        if let connection = self.connection {
-            mpd.connection_free(connection)
-            self.connection = nil
-        }
         HelpMePlease.allocDown(name: "MPDStatus")
     }
     
     /// Start monitoring status changes on a player
     public func start() {
-        startStopDispatchQueue.sync {
-            guard _connectionStatus.value != .online,
-                    connecting == false else {
-                return
+        assert(Thread.isMainThread, "MPDStatus.start can only be called from the main thread")
+        guard _connectionStatus.value != .online,
+                connecting == false else {
+            return
+        }
+        
+        connecting = true
+        MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties)
+            .subscribeOn(statusScheduler)
+            .subscribe(onNext: { [weak self] (connection) in
+                self?._connectionStatus.accept(.online)
+                self?.connecting = false
+                self?.startMonitoring(connection: connection)
+            },
+                       onError: { [weak self] _ in
+                        self?._connectionStatus.accept(.offline)
+                        self?.connecting = false
+            })
+            .disposed(by: bag)
+    }
+    
+    private func startMonitoring(connection: OpaquePointer) {
+        let timerObservable = Observable<Int>
+            .timer(RxTimeInterval(1.0), period: RxTimeInterval(1.0), scheduler: elapsedTimeScheduler)
+            .map({ [weak self] (_) -> PlayerStatus? in
+                if let weakSelf = self {
+                    var newPlayerStatus = PlayerStatus.init(weakSelf._playerStatus.value)
+                    newPlayerStatus.time.elapsedTime = newPlayerStatus.time.elapsedTime + 1
+                    return newPlayerStatus
+                }
+                else {
+                    return nil
+                }
+            })
+        
+        let changeStatusUpdateStream = Observable<PlayerStatus?>.create { [weak self] observer in
+            while true {
+                if self?.mpd.connection_get_error(connection) != MPD_ERROR_SUCCESS {
+                    break
+                }
+                
+                let mask = self?.mpd.run_idle_mask(connection, mask: mpd_idle(rawValue: mpd_idle.RawValue(UInt8(MPD_IDLE_QUEUE.rawValue) | UInt8(MPD_IDLE_PLAYER.rawValue) | UInt8(MPD_IDLE_MIXER.rawValue) | UInt8(MPD_IDLE_OPTIONS.rawValue))))
+                if mask?.rawValue == 0 {
+                    break
+                }
+                
+                observer.onNext(self?.fetchPlayerStatus(connection))
             }
             
-            connecting = true
-            MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties)
-                .subscribe(onNext: { (connection) in
-                    self.connection = connection
-                    self._connectionStatus.value = .online
-                    self.connecting = false
-                }, onError: { (error) in
-                    self._connectionStatus.value = .offline
-                    self.connecting = false
-                })
-                .disposed(by: bag)
+            self?.mpd.connection_free(connection)
+            observer.on(.completed)
 
-            let manualStatusUpdateStream = reloadTrigger.asObservable()
-            let timerStatusUpdateStream = Observable<Int>
-                .timer(RxTimeInterval(1.0), period: RxTimeInterval(1.0), scheduler: serialScheduler)
+            self?._connectionStatus.accept(.offline)
             
-            Observable.of(manualStatusUpdateStream, timerStatusUpdateStream)
-                .merge()
-                .observeOn(serialScheduler)
-                .map { [weak self] _ -> PlayerStatus in
-                    guard let weakSelf = self else {
-                        return PlayerStatus.init()
-                    }
-                    
-                    return weakSelf.fetchPlayerStatus()
-                }
-                .subscribe(onNext: { [weak self] playerStatus in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    
-                    weakSelf._playerStatus.value = playerStatus
-                })
-                .disposed(by: bag)
-            
-            // Force a first status load
-            reloadTrigger.onNext(1)
+            return Disposables.create()
         }
+        
+        Observable.of(timerObservable, changeStatusUpdateStream)
+            .merge()
+            .subscribe(onNext: { [weak self] playerStatus in
+                guard let weakSelf = self, let playerStatus = playerStatus else {
+                    return
+                }
+                
+                weakSelf._playerStatus.accept(playerStatus)
+            })
+            .disposed(by: bag)
+        
+        disconnectHandler.asObservable()
+            .subscribe(onNext: { [weak self] (_) in
+                _ = self?.mpd.send_noidle(connection)
+            })
+            .disposed(by: bag)
     }
     
     /// Stop monitoring status changes on a player, and close the active connection
     public func stop() {
-        connectionCleanup()
-    }
-    
-    private func connectionCleanup() {
-        startStopDispatchQueue.sync {
-            if connection != nil {
-                mpd.connection_free(connection)
-                connection = nil
-            }
-            _connectionStatus.value = .offline
-            connecting = false
-        }
+        disconnectHandler.onNext(1)
     }
     
     /// Validate if the current connection is valid.
     ///
     /// - Returns: true if the connection is active and has no error, false otherwise.
-    private func validateConnection() -> Bool {
-        guard connection != nil else {
-            connectionCleanup()
-            return false
-        }
-        
+    private func validateConnection(_ connection: OpaquePointer) -> Bool {
         let error = self.mpd.connection_get_error(connection)
         if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
-            mpd.connection_free(connection)
-            connection = nil
-            _connectionStatus.value = .offline
-            
             return false
         }
         else if error != MPD_ERROR_SUCCESS {
@@ -153,11 +156,11 @@ public class MPDStatus: StatusProtocol {
     /// Get the current status of a controller
     ///
     /// - Returns: a filled PlayerStatus struct
-    private func fetchPlayerStatus() -> PlayerStatus {
+    private func fetchPlayerStatus(_ connection: OpaquePointer) -> PlayerStatus {
         var playerStatus = PlayerStatus()
         
-        if self.validateConnection() {
-            if let status = self.mpd.run_status(self.connection) {
+        if validateConnection(connection) {
+            if let status = self.mpd.run_status(connection) {
                 defer {
                     self.mpd.status_free(status)
                 }
@@ -177,7 +180,7 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
             }
             
-            if let song = self.mpd.run_current_song(self.connection) {
+            if let song = self.mpd.run_current_song(connection) {
                 defer {
                     self.mpd.song_free(song)
                 }
@@ -187,7 +190,7 @@ public class MPDStatus: StatusProtocol {
                 }
             }
 
-            if let song = self.mpd.run_current_song(self.connection) {
+            if let song = self.mpd.run_current_song(connection) {
                 defer {
                     self.mpd.song_free(song)
                 }
@@ -246,6 +249,5 @@ public class MPDStatus: StatusProtocol {
     
     /// Force a refresh of the status.
     public func forceStatusRefresh() {
-        reloadTrigger.onNext(1)
     }
 }
