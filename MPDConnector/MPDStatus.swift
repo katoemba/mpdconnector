@@ -84,16 +84,19 @@ public class MPDStatus: StatusProtocol {
             .timer(RxTimeInterval(1.0), period: RxTimeInterval(1.0), scheduler: elapsedTimeScheduler)
             .map({ [weak self] (_) -> PlayerStatus? in
                 if let weakSelf = self {
-                    var newPlayerStatus = PlayerStatus.init(weakSelf._playerStatus.value)
-                    newPlayerStatus.time.elapsedTime = newPlayerStatus.time.elapsedTime + 1
-                    return newPlayerStatus
+                    if weakSelf._playerStatus.value.playing.playPauseMode == .Playing {
+                        var newPlayerStatus = PlayerStatus.init(weakSelf._playerStatus.value)
+                        newPlayerStatus.time.elapsedTime = newPlayerStatus.time.elapsedTime + 1
+                        return newPlayerStatus
+                    }
                 }
-                else {
-                    return nil
-                }
+
+                return nil
             })
         
         let changeStatusUpdateStream = Observable<PlayerStatus?>.create { [weak self] observer in
+            observer.onNext(self?.fetchPlayerStatus(connection))
+
             while true {
                 if self?.mpd.connection_get_error(connection) != MPD_ERROR_SUCCESS {
                     break
@@ -136,6 +139,7 @@ public class MPDStatus: StatusProtocol {
     /// Stop monitoring status changes on a player, and close the active connection
     public func stop() {
         disconnectHandler.onNext(1)
+        disconnectHandler.onCompleted()
     }
     
     /// Validate if the current connection is valid.
