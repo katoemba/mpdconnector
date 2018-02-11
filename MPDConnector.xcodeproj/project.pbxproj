@@ -298,7 +298,8 @@
 		C548EF4F1FFE36A200FBE535 /* MPDStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C548EF4E1FFE36A200FBE535 /* MPDStatusTests.swift */; };
 		C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
-		C585B3661F519A5D00D7B784 /* MPCControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPCControl.swift */; };
+		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
+		C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */; };
 		C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */; };
 		E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */; };
 /* End PBXBuildFile section */
@@ -466,7 +467,7 @@
 		C548EF4E1FFE36A200FBE535 /* MPDStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDStatusTests.swift; sourceTree = "<group>"; };
 		C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetServiceBrowser+Rx.swift"; sourceTree = "<group>"; };
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
-		C585B3651F519A5D00D7B784 /* MPCControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPCControl.swift; sourceTree = "<group>"; };
+		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControlTests.swift; sourceTree = "<group>"; };
 		C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowse.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
@@ -545,7 +546,7 @@
 				C548EF421FFCE21900FBE535 /* MPDHelper.swift */,
 				C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */,
 				C548EF401FFCDCC500FBE535 /* MPDStatus.swift */,
-				C585B3651F519A5D00D7B784 /* MPCControl.swift */,
+				C585B3651F519A5D00D7B784 /* MPDControl.swift */,
 				C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
@@ -1203,6 +1204,7 @@
 				"${BUILT_PRODUCTS_DIR}/RxDataSources/RxDataSources.framework",
 				"${BUILT_PRODUCTS_DIR}/RxSwift/RxSwift.framework",
 				"${BUILT_PRODUCTS_DIR}/RxBlocking/RxBlocking.framework",
+				"${BUILT_PRODUCTS_DIR}/RxTest/RxTest.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1211,6 +1213,7 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxDataSources.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxSwift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxBlocking.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxTest.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1308,7 +1311,7 @@
 				C548EF411FFCDCC500FBE535 /* MPDStatus.swift in Sources */,
 				C546B0651F35FAF0003C5B7E /* sticker.c in Sources */,
 				C546B01B1F35FAF0003C5B7E /* entity.c in Sources */,
-				C585B3661F519A5D00D7B784 /* MPCControl.swift in Sources */,
+				C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */,
 				C546B0151F35FAF0003C5B7E /* coutput.c in Sources */,
 				C546B0161F35FAF0003C5B7E /* cplaylist.c in Sources */,
 				C546B0281F35FAF0003C5B7E /* list.c in Sources */,
@@ -1443,6 +1446,7 @@
 				C548EF4F1FFE36A200FBE535 /* MPDStatusTests.swift in Sources */,
 				C548EF4D1FFE352800FBE535 /* MPDPlayerTests.swift in Sources */,
 				C546B2861F3B6CCB003C5B7E /* MPDWrapperMock.swift in Sources */,
+				C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */,
 				C546B2BD1F3C34BE003C5B7E /* MockBase.swift in Sources */,
 				C548EF451FFE22A700FBE535 /* MPDHelperTests.swift in Sources */,
 			);

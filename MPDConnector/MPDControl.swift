@@ -12,20 +12,62 @@ import libmpdclient
 import RxSwift
 import RxCocoa
 
-public class MPDControl: ControlProtocol {    
+public class MPDControl: ControlProtocol {
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
     
     private let bag = DisposeBag()
+    private var serialScheduler: SchedulerType
+    
+    private let songIndex = Variable<Int>(0)
+    private let endIndex = Variable<Int>(0)
+    private let repeatMode = Variable<RepeatMode>(.Off)
+    private let randomMode = Variable<RandomMode>(.Off)
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
-                identification: String = "NoID") {
+                identification: String = "NoID",
+                scheduler: SchedulerType? = nil,
+                playerStatusObservable: Observable<PlayerStatus>) {
         self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
         
+        self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdcontrol")
+        
+        playerStatusObservable
+            .map { (playerStatus) -> Int in
+                playerStatus.playqueue.songIndex
+            }
+            .distinctUntilChanged()
+            .bind(to: songIndex)
+            .disposed(by: bag)
+
+        playerStatusObservable
+            .map { (playerStatus) -> Int in
+                playerStatus.playqueue.length
+            }
+            .distinctUntilChanged()
+            .bind(to: endIndex)
+            .disposed(by: bag)
+
+        playerStatusObservable
+            .map { (playerStatus) -> RepeatMode in
+                playerStatus.playing.repeatMode
+            }
+            .distinctUntilChanged()
+            .bind(to: repeatMode)
+            .disposed(by: bag)
+        
+        playerStatusObservable
+            .map { (playerStatus) -> RandomMode in
+                playerStatus.playing.randomMode
+            }
+            .distinctUntilChanged()
+            .bind(to: randomMode)
+            .disposed(by: bag)
+
         HelpMePlease.allocUp(name: "MPDControl")
     }
     
@@ -94,9 +136,9 @@ public class MPDControl: ControlProtocol {
     /// Toggle the random mode (off -> on -> off)
     ///
     /// - Parameter from: The current random mode.
-    public func toggleRandom(from: RandomMode) {
+    public func toggleRandom() {
         runCommand()  { connection in
-            _ = self.mpd.run_random(connection, (from == .On) ? false : true)
+            _ = self.mpd.run_random(connection, (self.randomMode.value == .On) ? false : true)
         }
     }
     
@@ -132,7 +174,8 @@ public class MPDControl: ControlProtocol {
     /// Toggle the repeat mode (off -> all -> single -> off)
     ///
     /// - Parameter from: The current repeat mode.
-    public func toggleRepeat(from: RepeatMode) {
+    public func toggleRepeat() {
+        let from = self.repeatMode.value
         if from == .Off {
             self.setRepeat(repeatMode: .All)
         }
@@ -157,81 +200,90 @@ public class MPDControl: ControlProtocol {
         }
     }
     
-    /*
-    /// Get an array of songs from the playqueue.
+    /// add an array of songs to the playqueue
     ///
-    /// - Parameters
-    ///   - start: the first song to fetch, zero-based.
-    ///   - end: the last song to fetch, zero-based.
-    /// Returns: an array of filled Songs objects.
-    public func getPlayqueueSongs(start: Int, end: Int) -> [Song] {
-        guard start >= 0, start < end else {
-            return []
-        }
-        
-        guard self.validateConnection() else {
-            return []
-        }
-        
-        var songs = [Song]()
-        if self.mpd.send_list_queue_range_meta(self.connection, start: UInt32(start), end: UInt32(end)) == true {
-            var mpdSong = self.mpd.get_song(self.connection)
-            var position = start
-            while mpdSong != nil {
-                if var song = MPDController.songFromMpdSong(mpd: mpd, mpdSong: mpdSong) {
-                    song.position = position
-                    songs.append(song)
-                    
-                    position += 1
-                }
-                
-                self.mpd.song_free(mpdSong)
-                mpdSong = self.mpd.get_song(self.connection)
+    /// - Parameters:
+    ///   - songs: an array of Song objects
+    ///   - addMode: how to add the songs to the playqueue
+    ///   - shuffle: whether or not to shuffle the songs before adding them
+    private func addSongs(_ songs: [Song], addMode: AddMode, shuffle: Bool) {
+        runCommand()  { connection in
+            var pos = UInt32(0)
+            
+            switch addMode {
+            case .replace:
+                _ = self.mpd.run_clear(connection)
+            case .addNext:
+                pos = UInt32(self.songIndex.value + 1)
+            case .addNextAndPlay:
+                pos = UInt32(self.songIndex.value + 1)
+            case .addAtEnd:
+                pos = UInt32(self.endIndex.value)
             }
             
-            _ = self.mpd.response_finish(self.connection)
+            let songsToAdd = shuffle ? songs.shuffled() : songs
+            
+            for song in songsToAdd {
+                print("Adding \(song.id) at position \(pos)")
+                _ = self.mpd.run_add_id_to(connection, uri: song.id, to: pos)
+                pos = pos + 1
+            }
+
+            if addMode == .replace {
+                _ = self.mpd.run_play_pos(connection, 0)
+            }
+            else if addMode == .addNextAndPlay {
+                _ = self.mpd.run_play_pos(connection, UInt32(self.songIndex.value + 1))
+            }
         }
-        
-        return songs
     }
-     */
-    
+
     /// Add a song to the play queue
     ///
     /// - Parameters:
     ///   - song: the song to add
+    ///   - addMode: how to add the songs to the playqueue
     public func addSong(_ song: Song, addMode: AddMode) {
-        runCommand()  { connection in
-            if addMode == .replace {
-                _ = self.mpd.run_clear(connection)
-            }
-
-            _ = self.mpd.run_add(connection, uri: song.id)
-            _ = self.mpd.run_play(connection)
-        }
+        addSongs([song], addMode: addMode, shuffle: false)
+    }
+    
+    /// Add a batch of songs to the play queue
+    ///
+    /// - Parameters:
+    ///   - songs: array of songs to add
+    ///   - addMode: how to add the song to the playqueue
+    public func addSongs(_ songs: [Song], addMode: AddMode) {
+        addSongs(songs, addMode: addMode, shuffle: false)
     }
     
     /// Add an album to the play queue
     ///
     /// - Parameters:
     ///   - album: the album to add
+    ///   - addMode: how to add the songs to the playqueue
+    ///   - shuffle: whether or not to shuffle the songs before adding them
     public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool) {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
         browse.songsOnAlbum(album)
             .subscribe(onNext: { (songs) in
-                self.runCommand()  { connection in
-                    if addMode == .replace {
-                        _ = self.mpd.run_clear(connection)
-                    }
-                    
-                    let songsToAdd = shuffle ? songs.shuffled() : songs
-                    for song in songsToAdd {
-                        _ = self.mpd.run_add(connection, uri: song.id)
-                    }
-                    
-                    _ = self.mpd.run_play(connection)
-                }
+                self.addSongs(songs, addMode: addMode, shuffle: shuffle)
+            })
+            .disposed(by: bag)
+    }
+    
+    /// Add an artist to the play queue
+    ///
+    /// - Parameters:
+    ///   - artist: the artist to add
+    ///   - addMode: how to add the songs to the playqueue
+    ///   - shuffle: whether or not to shuffle the songs before adding them
+    public func addArtist(_ artist: Artist, addMode: AddMode, shuffle: Bool) {
+        // First we need to get all the songs on an album, then add them one by one
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        browse.songsByArtist(artist)
+            .subscribe(onNext: { (songs) in
+                self.addSongs(songs, addMode: addMode, shuffle: shuffle)
             })
             .disposed(by: bag)
     }
@@ -245,7 +297,7 @@ public class MPDControl: ControlProtocol {
         let mpd = self.mpd
         
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
-            .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
+            .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
                 command(connection)
                 mpd.connection_free(connection)

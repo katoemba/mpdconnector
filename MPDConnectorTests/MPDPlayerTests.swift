@@ -136,36 +136,34 @@ class MPDPlayerTests: XCTestCase {
                                     ConnectionProperties.Host.rawValue: "host",
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
-        self.mpdWrapper.volume = 20
+        self.mpdWrapper.songIndex = 5
         
         // When creating a new MPDStatus object and starting it
         let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         mpdPlayer.activate()
         
-        // And changing the volume, stopping and changing the volume again
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.mpdWrapper.volume = 30
-            mpdPlayer.status.forceStatusRefresh()
+        // And changing the songIndex, stopping and changing the songIndex again
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.mpdWrapper.songIndex = 6
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             mpdPlayer.deactivate()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            self.mpdWrapper.volume = 40
-            mpdPlayer.status.forceStatusRefresh()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            self.mpdWrapper.songIndex = 7
         }
         
-        // Then only the volume values before the 'stop' are reported.
+        // Then only the songIndex values before the 'stop' are reported.
         let playerStatusResults = mpdPlayer.status.playerStatusObservable
-            .toBlocking(timeout: 0.2)
+            .toBlocking(timeout: 0.8)
             .materialize()
         
         switch playerStatusResults {
         case .failed(let playerStatusArray, _):
-            let volumeArray = playerStatusArray.map({ (status) -> Float in
-                status.volume
+            let songIndexArray = playerStatusArray.map({ (status) -> Int in
+                status.playqueue.songIndex
             })
-            XCTAssert(volumeArray == [0.0, 0.2, 0.3], "Expected reported volumes [0.0, 0.2, 0.3], got \(volumeArray)")
+            XCTAssert(songIndexArray == [0, 5, 6], "Expected reported song indexes [0, 5, 6], got \(songIndexArray)")
         default:
             print("Default")
         }

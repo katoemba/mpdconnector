@@ -26,14 +26,18 @@ public class MPDBrowse: BrowseProtocol {
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
+    
+    private var scheduler: SchedulerType
 
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
-                identification: String = "NoID") {
+                identification: String = "NoID",
+                scheduler: SchedulerType? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
 
+        self.scheduler = scheduler ?? ConcurrentDispatchQueueScheduler(qos: .background)
         HelpMePlease.allocUp(name: "MPDBrowse")
     }
     
@@ -44,7 +48,7 @@ public class MPDBrowse: BrowseProtocol {
 
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
-            .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
+            .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<SearchResult> in
                 let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
                 let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
@@ -132,7 +136,7 @@ public class MPDBrowse: BrowseProtocol {
     
     public func songsOnAlbum(_ album: Album) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
-            .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
+            .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
                 var songs = [Song]()
                 do {
@@ -141,8 +145,14 @@ public class MPDBrowse: BrowseProtocol {
                     try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: album.artist)
                     try self.mpd.search_commit(connection)
                     
-                    while let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: self.mpd.get_song(connection)) {
-                        songs.append(song)
+                    var mpdSong = self.mpd.get_song(connection)
+                    while mpdSong != nil {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: mpdSong) {
+                            songs.append(song)
+                        }
+                        
+                        self.mpd.song_free(mpdSong)
+                        mpdSong = self.mpd.get_song(connection)
                     }
                 }
                 catch {
@@ -155,6 +165,128 @@ public class MPDBrowse: BrowseProtocol {
                 self.mpd.connection_free(connection)
                 
                 return Observable.just(songs)
+            })
+    }
+
+    private func songsByArtist(_ artist: Artist, albumArtist: Bool) -> Observable<[Song]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[Song]> in
+                var songs = [Song]()
+                do {
+                    try self.mpd.search_db_songs(connection, exact: true)
+                    if albumArtist {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist.name)
+                    }
+                    else {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist.name)
+                    }
+                    try self.mpd.search_commit(connection)
+                    
+                    var mpdSong = self.mpd.get_song(connection)
+                    while mpdSong != nil {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: mpdSong) {
+                            print("Adding \(song.title) - \(song.album) at position \(songs.count)")
+                            songs.append(song)
+                        }
+                        
+                        self.mpd.song_free(mpdSong)
+                        mpdSong = self.mpd.get_song(connection)
+                    }
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                }
+                
+                // Cleanup
+                _ = self.mpd.response_finish(connection)
+                self.mpd.connection_free(connection)
+                
+                return Observable.just(songs)
+            })
+    }
+    
+    public func songsByArtist(_ artist: Artist) -> Observable<[Song]> {
+        return songsByArtist(artist, albumArtist: false)
+    }
+
+    private func albumFromSong(_ song: Song) -> Album {
+        var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
+        album.coverURI = song.coverURI
+    
+        return album
+    }
+    
+    private func albumsFromSongs(_ songs: [Song]) -> [Album] {
+        var albums = [Album]()
+        for song in songs {
+            let album = albumFromSong(song)
+            if albums.contains(album) == false {
+                albums.append(album)
+            }
+        }
+        
+        return albums
+    }
+    
+    private func lookupAlbumsForArtist(_ artist: Artist, albumArtist: Bool) -> Observable<[Album]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[Album]> in
+                var albums = [Album]()
+                do {
+                    try self.mpd.search_db_songs(connection, exact: true)
+                    if albumArtist {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist.name)
+                    }
+                    else {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist.name)
+                    }
+                    try self.mpd.search_commit(connection)
+                    
+                    var mpdSong = self.mpd.get_song(connection)
+                    while mpdSong != nil {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: mpdSong) {
+                            var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
+                            album.coverURI = song.coverURI
+                            if albums.contains(album) == false {
+                                albums.append(album)
+                            }
+                        }
+                        
+                        self.mpd.song_free(mpdSong)
+                        mpdSong = self.mpd.get_song(connection)
+                    }
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                }
+                
+                // Cleanup
+                _ = self.mpd.response_finish(connection)
+                self.mpd.connection_free(connection)
+                
+                return Observable.just(albums)
+            })
+    }
+    
+    public func albumsByArtist(_ artist: Artist) -> Observable<[Album]> {
+        return songsByArtist(artist, albumArtist: true)
+            .flatMap({ [weak self] (songs) -> Observable<[Album]> in
+                guard let weakself = self else { return Observable.empty() }
+                
+                return Observable.just(weakself.albumsFromSongs(songs))
+            })
+    }
+
+    public func albumsOnWhichArtistAppears(_ artist: Artist) -> Observable<[Album]> {
+        return songsByArtist(artist, albumArtist: false)
+            .flatMap({ [weak self] (songs) -> Observable<[Album]> in
+                guard let weakself = self else { return Observable.empty() }
+                
+                return Observable.just(weakself.albumsFromSongs(songs))
             })
     }
 

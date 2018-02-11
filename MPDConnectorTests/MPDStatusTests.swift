@@ -43,20 +43,20 @@ class MPDStatusTests: XCTestCase {
         status.start()
         
         // And then stop, start and stop again
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             status.stop()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             status.start()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             status.stop()
         }
 
         // Then the statuses .online, .offline, .online, .offline are reported
         let connectionResults = status.connectionStatusObservable
             .distinctUntilChanged()
-            .toBlocking(timeout: 0.2)
+            .toBlocking(timeout: 1.0)
             .materialize()
 
         switch connectionResults {
@@ -73,92 +73,41 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.Host.rawValue: "host",
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
-        self.mpdWrapper.volume = 20
+        self.mpdWrapper.songIndex = 2
         
         // When creating a new MPDStatus object and starting it
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         status.start()
         
-        // And changing the volume, stopping and changing the volume again
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.mpdWrapper.volume = 30
+        // And changing the songIndex, stopping and changing the songIndex again
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.mpdWrapper.songIndex = 3
             status.forceStatusRefresh()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             status.stop()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            self.mpdWrapper.volume = 40
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            self.mpdWrapper.songIndex = 4
             status.forceStatusRefresh()
         }
         
-        // Then only the volume values before the 'stop' are reported.
+        // Then only the songIndex values before the 'stop' are reported.
         let playerStatusResults = status.playerStatusObservable
-            .toBlocking(timeout: 0.2)
+            .toBlocking(timeout: 1.0)
             .materialize()
         
         switch playerStatusResults {
         case .failed(let playerStatusArray, _):
-            let volumeArray = playerStatusArray.map({ (status) -> Float in
-                status.volume
+            let songIndexArray = playerStatusArray.map({ (status) -> Int in
+                status.playqueue.songIndex
             })
-            XCTAssert(volumeArray == [0.0, 0.2, 0.3], "Expected reported volumes [0.0, 0.2, 0.3], got \(volumeArray)")
+            XCTAssert(songIndexArray == [0, 2, 3], "Expected reported song indexes [0, 2, 3], got \(songIndexArray)")
         default:
             print("Default")
         }
     }
     
-    func testDisconnect() {
-        // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
-        
-        // When creating a new MPDStatus object and starting it
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
-        status.start()
-        
-        // And then force a disconnect
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.mpdWrapper.connectionError = MPD_ERROR_TIMEOUT
-            status.forceStatusRefresh()
-        }
-        
-        // Then the statuses .online, .offline are reported
-        let connectionResults = status.connectionStatusObservable
-            .distinctUntilChanged()
-            .toBlocking(timeout: 0.1)
-            .materialize()
-        
-        switch connectionResults {
-        case .failed(let connectionStatusArray, _):
-            XCTAssert(connectionStatusArray == [.online, .offline], "Expected reported statuses [.online, .offline], got \(connectionStatusArray)")
-        default:
-            print("Default")
-        }
-
-        // And when we start again and disconnect again on the same object
-        status.start()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.mpdWrapper.connectionError = MPD_ERROR_TIMEOUT
-            status.forceStatusRefresh()
-        }
-        
-        // Then the statuses .online, .offline are reported
-        let connectionResults2ndTime = status.connectionStatusObservable
-            .distinctUntilChanged()
-            .toBlocking(timeout: 0.1)
-            .materialize()
-        
-        switch connectionResults2ndTime {
-        case .failed(let connectionStatusArray, _):
-            XCTAssert(connectionStatusArray == [.online, .offline], "Expected reported statuses [.online, .offline], got \(connectionStatusArray)")
-        default:
-            print("Default")
-        }
-    }
-
     func testMultipleStarts() {
         // Given a mpd player
         let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
@@ -173,46 +122,135 @@ class MPDStatusTests: XCTestCase {
 
         // Then the statuses .online is reported once
         let connectionResults = status.connectionStatusObservable
-            .toBlocking(timeout: 0.1)
+            .toBlocking(timeout: 0.4)
             .materialize()
         
         switch connectionResults {
         case .failed(let connectionStatusArray, _):
-            XCTAssert(connectionStatusArray == [.online], "Expected reported statuses [.online], got \(connectionStatusArray)")
+            let count = connectionStatusArray.filter({ (status) -> Bool in
+                status == .online
+            }).count
+            
+            XCTAssert(count == 1, "Expected reported 1 online status, got \(count)")
         default:
             print("Default")
         }
     }
 
-    func testImmediateStartStop() {
+    func testPlayerStatus() {
         // Given a mpd player
         let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
                                     ConnectionProperties.Host.rawValue: "host",
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
-        // When creating a new MPDStatus object and starting/stopping it twice
+        // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            status.start()
-            status.stop()
-            status.start()
-            status.stop()
+        status.start()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.mpdWrapper.songIndex = 3
+            self.mpdWrapper.album = "Everything Now"
+            self.mpdWrapper.artist = "Arcade Fire"
+            self.mpdWrapper.songTitle = "Creature Comfort"
+            self.mpdWrapper.queueVersion = 10
+            self.mpdWrapper.queueLength = 15
+            self.mpdWrapper.volume = 75
+            self.mpdWrapper.random = true
+            self.mpdWrapper.singleValue = true
+            self.mpdWrapper.repeatValue = true
+            self.mpdWrapper.songDuration = 330
+            self.mpdWrapper.songIndex = 5
+            self.mpdWrapper.state = MPD_STATE_PLAY
+            
+            self.mpdWrapper.statusChanged()
         }
 
-        // Then the statuses .unknown, .online, .offline, .online, .offline are reported
-        let connectionResults = status.connectionStatusObservable
-            .distinctUntilChanged()
-            .toBlocking(timeout: 0.1)
+        // Then the statuses .online is reported once
+        let playerStatuses = status.playerStatusObservable
+            .toBlocking(timeout: 0.4)
             .materialize()
+        
+        switch playerStatuses {
+        case .failed(let playerStatusArray, _):
+            let playerStatus = playerStatusArray.last!
+            
+            XCTAssert(playerStatus.playing.playPauseMode == .Playing, "Expected .Playing, got \(playerStatus.playing.playPauseMode)")
+            XCTAssert(playerStatus.playing.randomMode == .On, "Expected .On, got \(playerStatus.playing.randomMode)")
+            XCTAssert(playerStatus.playing.repeatMode == .Single, "Expected .Single, got \(playerStatus.playing.repeatMode)")
+            XCTAssert(playerStatus.volume == 0.75, "Expected volume 0.75, got \(playerStatus.volume)")
+            XCTAssert(playerStatus.playqueue.version == 10, "Expected version 10, got \(playerStatus.playqueue.version)")
+            XCTAssert(playerStatus.playqueue.length == 15, "Expected length 15, got \(playerStatus.playqueue.length)")
+            XCTAssert(playerStatus.playqueue.songIndex == 5, "Expected songIndex 5, got \(playerStatus.playqueue.songIndex)")
+            XCTAssert(playerStatus.currentSong.title == "Creature Comfort", "Expected Creature Comfort, got \(playerStatus.currentSong.title)")
+            XCTAssert(playerStatus.currentSong.artist == "Arcade Fire", "Expected Arcade Fire, got \(playerStatus.currentSong.artist)")
+            XCTAssert(playerStatus.currentSong.album == "Everything Now", "Expected Everything Now, got \(playerStatus.currentSong.album)")
 
-        switch connectionResults {
-        case .failed(let connectionStatusArray, _):
-            XCTAssert(connectionStatusArray == [.unknown, .online, .offline, .online, .offline], "Expected reported statuses [.unknown,.online, .offline, .online, .offline], got \(connectionStatusArray)")
+            // Check that all song data is freed
+            let songCount = self.mpdWrapper.callCount("run_current_song") +
+                            self.mpdWrapper.callCount("get_song")
+            let songFreeCount = self.mpdWrapper.callCount("song_free")
+            XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
+
+            // Check that all status data is freed
+            let statusCount = self.mpdWrapper.callCount("run_status")
+            let statusFreeCount = self.mpdWrapper.callCount("status_free")
+            XCTAssert(statusCount == statusFreeCount, "Expected \(statusCount) for statusFreeCount, got \(statusFreeCount)")
         default:
             print("Default")
         }
+        
+    }
+    
+    func testPlayqueuSongs() {
+        // Given a mpd player
+        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
+                                    ConnectionProperties.Host.rawValue: "host",
+                                    ConnectionProperties.Port.rawValue: 1000,
+                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        
+        // When creating a new MPDStatus object and starting it twice
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        
+        // Get a range of 3 songs
+        let songs = status.playqueueSongs(start: 2, end: 5)
+        
+        XCTAssert(songs.count == 5 - 2, "Expected \(5 - 2) songs, got \(songs.count)")
+
+        let songCount = self.mpdWrapper.callCount("run_current_song") +
+            self.mpdWrapper.callCount("get_song") - 1
+        let songFreeCount = self.mpdWrapper.callCount("song_free")
+        XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
+    }
+    
+    func testEmptyRangePlayqueuSongs() {
+        // Given a mpd player
+        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
+                                    ConnectionProperties.Host.rawValue: "host",
+                                    ConnectionProperties.Port.rawValue: 1000,
+                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        
+        // Get an empty list of songs
+        let songs = status.playqueueSongs(start: 3, end: 3)
+        
+        XCTAssert(songs.count == 0, "Expected \(0) songs, got \(songs.count)")
     }
 
+    func testInvalidRangePlayqueuSongs() {
+        // Given a mpd player
+        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
+                                    ConnectionProperties.Host.rawValue: "host",
+                                    ConnectionProperties.Port.rawValue: 1000,
+                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        
+        // Get an invalid range of songs
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        
+        let songs = status.playqueueSongs(start: 5, end: 3)
+        
+        XCTAssert(songs.count == 0, "Expected \(0) songs, got \(songs.count)")
+    }
 }
 

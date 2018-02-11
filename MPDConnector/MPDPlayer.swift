@@ -57,16 +57,21 @@ public class MPDPlayer: PlayerProtocol {
     /// Create a unique object for every request for a control object
     public var control: ControlProtocol {
         get {
-            return MPDControl.init(connectionProperties: connectionProperties, identification: uniqueID)
+            // Use serialScheduler to synchronize commands across multiple MPDControl instances.
+            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, playerStatusObservable: mpdStatus.playerStatusObservable)
         }
     }
     /// Create a unique object for every request for a browse object
     public var browse: BrowseProtocol {
         get {
-            return MPDBrowse.init(connectionProperties: connectionProperties, identification: uniqueID)
+            return MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: scheduler)
         }
     }
 
+    // Test scheduler that can be passed down to mpdstatus, mpdcontrol, and mpdbrowse
+    private var scheduler: SchedulerType?
+    // Serial scheduler that is used to synchronize commands sent via mpdcontrol
+    private var serialScheduler: SchedulerType?
     private let bag = DisposeBag()
 
     // MARK: - Initialization and connecting
@@ -81,18 +86,23 @@ public class MPDPlayer: PlayerProtocol {
                 name: String,
                 host: String,
                 port: Int,
-                password: String = "") {
+                password: String = "",
+                scheduler: SchedulerType? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self._name = name
         self.host = host
         self.port = port
         self.password = password
+        self.scheduler = scheduler
+        self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
         
         let connectionProperties = [ConnectionProperties.Name.rawValue: name,
                                     ConnectionProperties.Host.rawValue: host,
                                     ConnectionProperties.Port.rawValue: port,
                                     ConnectionProperties.Password.rawValue: password] as [String: Any]
-        self.mpdStatus = MPDStatus.init(mpd: mpd, connectionProperties: connectionProperties)
+        self.mpdStatus = MPDStatus.init(mpd: mpd,
+                                        connectionProperties: connectionProperties,
+                                        scheduler: scheduler)
         
         HelpMePlease.allocUp(name: "MPDPlayer")
     }
@@ -102,7 +112,8 @@ public class MPDPlayer: PlayerProtocol {
     /// - Parameters:
     ///   - connectionProperties: dictionary of properties
     public convenience init(mpd: MPDProtocol? = nil,
-                            connectionProperties: [String: Any]) {
+                            connectionProperties: [String: Any],
+                            scheduler: SchedulerType? = nil) {
         guard let name = connectionProperties[ConnectionProperties.Name.rawValue] as? String,
             let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String,
             let port = connectionProperties[ConnectionProperties.Port.rawValue] as? Int else {
@@ -110,7 +121,8 @@ public class MPDPlayer: PlayerProtocol {
                           name: "",
                           host: "",
                           port: 6600,
-                          password: "")
+                          password: "",
+                          scheduler: scheduler)
                 return
         }
         
@@ -118,7 +130,8 @@ public class MPDPlayer: PlayerProtocol {
                   name: name,
                   host: host,
                   port: port,
-                  password: (connectionProperties[ConnectionProperties.Password.rawValue] as? String) ?? "")
+                  password: (connectionProperties[ConnectionProperties.Password.rawValue] as? String) ?? "",
+                  scheduler: scheduler)
     }
     
     deinit {
@@ -144,7 +157,7 @@ public class MPDPlayer: PlayerProtocol {
     ///
     /// - Returns: copy of the this player
     public func copy() -> PlayerProtocol {
-        return MPDPlayer.init(mpd: mpd, connectionProperties: connectionProperties)
+        return MPDPlayer.init(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
     }
 }
 

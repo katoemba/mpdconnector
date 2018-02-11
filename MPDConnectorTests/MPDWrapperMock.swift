@@ -9,6 +9,8 @@
 import Foundation
 import MPDConnector
 import libmpdclient
+import RxSwift
+import RxTest
 
 class MPDWrapperMock: MockBase, MPDProtocol {
     /// Dictionary of calls (functionName as key) and parameters as value.
@@ -36,6 +38,8 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var songUri = ""
     var searchName = ""
     var searchValue = ""
+    var testScheduler: TestScheduler?
+    var noidle: PublishSubject<Int>?
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -262,6 +266,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
 
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         registerCall("send_list_queue_range_meta", ["start": "\(start)", "end": "\(end)"])
+        availableSongs = Int(end) - Int(start)
         return true
     }
     
@@ -325,6 +330,63 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
 
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
+        registerCall("run_add", ["uri": "\(uri)"])
         return true
+    }
+    
+    func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32 {
+        registerCall("run_add_id_to", ["uri": "\(uri)", "to": "\(to)"])
+        return Int32(to)
+    }
+    
+    func run_clear(_ connection: OpaquePointer!) -> Bool {
+        registerCall("run_clear", [:])
+        return true
+    }
+    
+    func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle {
+        registerCall("run_idle_mask", ["mask": "\(mask)"])
+        let _volume = volume
+        let _songTitle = songTitle
+        let _album = album
+        let _artist = artist
+        let _repeatValue = repeatValue
+        let _singleValue = singleValue
+        let _random = random
+        let _state = state
+        let _queueLength = queueLength
+        let _queueVersion = queueVersion
+        let _songIndex = songIndex
+        
+        
+        noidle = PublishSubject<Int>()
+        _ = try! noidle!.asObservable().toBlocking().first()
+        
+        if _volume != volume ||
+            _songTitle != songTitle ||
+            _album != album ||
+            _artist != artist ||
+            _repeatValue != repeatValue ||
+            _singleValue != singleValue ||
+            _random != random ||
+            _state != state ||
+            _queueLength != queueLength ||
+            _queueVersion != queueVersion ||
+            _songIndex != songIndex {
+            return MPD_IDLE_QUEUE
+        }
+
+        return mpd_idle(rawValue: 0)
+    }
+    
+    func send_noidle(_ connection: OpaquePointer!) -> Bool {
+        registerCall("send_noidle", [:])
+        noidle?.onNext(1)
+
+        return true
+    }
+    
+    func statusChanged() {
+        noidle?.onNext(1)
     }
 }

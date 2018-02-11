@@ -239,6 +239,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_add(connection, uri)
     }
     
+    public func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32 {
+        return mpd_run_add_id_to(connection, uri, to)
+    }
+    
     public func run_clear(_ connection: OpaquePointer!) -> Bool {
         return mpd_run_clear(connection)
     }

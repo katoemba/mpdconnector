@@ -37,16 +37,26 @@ public class MPDStatus: StatusProtocol {
     let disconnectHandler = PublishSubject<Int>()
     
     
-    private let statusScheduler = SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdconnector.status")
-    private let elapsedTimeScheduler = SerialDispatchQueueScheduler.init(internalSerialQueueName: "com.katoemba.mpdconnector.elapsedtime")
+    private var statusScheduler: SchedulerType
+    private var elapsedTimeScheduler: SchedulerType
     private var bag = DisposeBag()
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
-                identification: String = "NoID") {
+                identification: String = "NoID",
+                scheduler: SchedulerType? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self.connectionProperties = connectionProperties
         self.identification = identification
+        
+        if scheduler == nil {
+            self.statusScheduler = SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdconnector.status")
+            self.elapsedTimeScheduler = SerialDispatchQueueScheduler.init(internalSerialQueueName: "com.katoemba.mpdconnector.elapsedtime")
+        }
+        else {
+            self.statusScheduler = scheduler!
+            self.elapsedTimeScheduler = scheduler!
+        }
         
         HelpMePlease.allocUp(name: "MPDStatus")
     }
@@ -139,7 +149,7 @@ public class MPDStatus: StatusProtocol {
     /// Stop monitoring status changes on a player, and close the active connection
     public func stop() {
         disconnectHandler.onNext(1)
-        disconnectHandler.onCompleted()
+        //disconnectHandler.onCompleted()
     }
     
     /// Validate if the current connection is valid.
@@ -184,16 +194,6 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
             }
             
-            if let song = self.mpd.run_current_song(connection) {
-                defer {
-                    self.mpd.song_free(song)
-                }
-                
-                if let song = MPDHelper.songFromMpdSong(mpd: mpd, mpdSong: song) {
-                    playerStatus.currentSong = song
-                }
-            }
-
             if let song = self.mpd.run_current_song(connection) {
                 defer {
                     self.mpd.song_free(song)
@@ -250,8 +250,12 @@ public class MPDStatus: StatusProtocol {
         return songs
     }
 
-    
     /// Force a refresh of the status.
     public func forceStatusRefresh() {
+    }
+    
+    /// Manually set a status for test purposes
+    public func testSetPlayerStatus(playerStatus: PlayerStatus) {
+        _playerStatus.accept(playerStatus)
     }
 }
