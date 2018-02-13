@@ -206,7 +206,7 @@ public class MPDControl: ControlProtocol {
     ///   - songs: an array of Song objects
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
-    private func addSongs(_ songs: [Song], addMode: AddMode, shuffle: Bool) {
+    private func addSongs(_ songs: [Song], addMode: AddMode, shuffle: Bool, startWithSong: UInt32 = 0) {
         runCommand()  { connection in
             var pos = UInt32(0)
             
@@ -230,7 +230,7 @@ public class MPDControl: ControlProtocol {
             }
 
             if addMode == .replace {
-                _ = self.mpd.run_play_pos(connection, 0)
+                _ = self.mpd.run_play_pos(connection, startWithSong)
             }
             else if addMode == .addNextAndPlay {
                 _ = self.mpd.run_play_pos(connection, UInt32(self.songIndex.value + 1))
@@ -262,12 +262,12 @@ public class MPDControl: ControlProtocol {
     ///   - album: the album to add
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
-    public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool) {
+    public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
         browse.songsOnAlbum(album)
             .subscribe(onNext: { (songs) in
-                self.addSongs(songs, addMode: addMode, shuffle: shuffle)
+                self.addSongs(songs, addMode: addMode, shuffle: shuffle, startWithSong: startWithSong)
             })
             .disposed(by: bag)
     }
