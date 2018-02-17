@@ -33,13 +33,14 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var queueLength = UInt32(0)
     var queueVersion = UInt32(0)
     var songIndex = Int32(0)
-    var availableSongs = 0
     var songDuration = UInt32(0)
     var songUri = ""
     var searchName = ""
     var searchValue = ""
     var testScheduler: TestScheduler?
     var noidle: PublishSubject<Int>?
+    var currentSong: [String:String]?
+    var songs = [[String:String]]()
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -182,6 +183,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_current_song(_ connection: OpaquePointer!) -> OpaquePointer! {
         registerCall("run_current_song", [:])
+        currentSong = ["title": songTitle, "album": album, "artist": artist]
         return OpaquePointer.init(bitPattern: 5)
     }
     
@@ -243,11 +245,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("song_get_tag", ["song": "\(song)", "type": "\(type)", "idx": "\(idx)"])
         switch type {
         case MPD_TAG_TITLE:
-            return songTitle
+            return currentSong!["title"]!
         case MPD_TAG_ALBUM:
-            return album
+            return currentSong!["album"]!
         case MPD_TAG_ARTIST:
-            return artist
+            return currentSong!["artist"]!
         default:
             return "Unknown"
         }
@@ -266,17 +268,18 @@ class MPDWrapperMock: MockBase, MPDProtocol {
 
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         registerCall("send_list_queue_range_meta", ["start": "\(start)", "end": "\(end)"])
-        availableSongs = Int(end) - Int(start)
         return true
     }
     
     func get_song(_ connection: OpaquePointer!) -> OpaquePointer! {
         registerCall("get_song", [:])
-        if availableSongs > 0 {
-            availableSongs -= 1
+        if songs.count > 0 {
+            currentSong = songs[0]
+            songs.removeFirst()
             return OpaquePointer.init(bitPattern: 6)
         }
         else {
+            currentSong = nil
             return nil
         }
     }
@@ -313,7 +316,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
     
     func search_commit(_ connection: OpaquePointer!) throws  {
-        registerCall("search_add_window", [:])
+        registerCall("search_commit", [:])
     }
     
     func search_cancel(_ connection: OpaquePointer!) {
@@ -330,12 +333,12 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
 
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
-        registerCall("run_add", ["uri": "\(uri)"])
+        registerCall("run_add", ["uri": "\(stringFromMPDString(uri))"])
         return true
     }
     
     func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32 {
-        registerCall("run_add_id_to", ["uri": "\(uri)", "to": "\(to)"])
+        registerCall("run_add_id_to", ["uri": "\(stringFromMPDString(uri))", "to": "\(to)"])
         return Int32(to)
     }
     

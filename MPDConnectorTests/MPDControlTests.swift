@@ -282,4 +282,93 @@ class MPDControlTests: XCTestCase {
         
         testScheduler.start()
     }
+    
+    func testAddOneSongReplace() {
+        testScheduler.scheduleAt(50) {
+            var song = Song()
+            song.title = "Title"
+            song.id = "1"
+            self.mpdPlayer?.control.addSong(song, addMode: .replace)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_clear")
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "0"])
+            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
+        }
+        
+        testScheduler.start()
+    }
+
+    func testAddOneSongNext() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+
+        testScheduler.scheduleAt(10) {
+            playerStatus.playqueue.length = 10
+            playerStatus.playqueue.songIndex = 4
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            var song = Song()
+            song.title = "Title"
+            song.id = "1"
+            self.mpdPlayer?.control.addSong(song, addMode: .addNext)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
+            self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
+        }
+        
+        testScheduler.start()
+    }
+
+    func testAddOneSongAtEnd() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            playerStatus.playqueue.length = 10
+            playerStatus.playqueue.songIndex = 4
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            var song = Song()
+            song.title = "Title"
+            song.id = "1"
+            self.mpdPlayer?.control.addSong(song, addMode: .addAtEnd)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "10"])
+            self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testAddOneSongNextAndPlay() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            playerStatus.playqueue.length = 10
+            playerStatus.playqueue.songIndex = 4
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            var song = Song()
+            song.title = "Title"
+            song.id = "1"
+            self.mpdPlayer?.control.addSong(song, addMode: .addNextAndPlay)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
+            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "5"])
+        }
+        
+        testScheduler.start()
+    }
+    
 }

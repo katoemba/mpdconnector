@@ -65,4 +65,26 @@ class MockBase {
         }
         XCTAssert(callCount == expectedCallCount, "Expected \(expectedCallCount) calls to '\(functionName)', actual number of calls is \(callCount)")
     }    
+
+    func assertCall(_ functionName: String, callInstance: Int, expectedParameters: [String: String] = [:]) {
+        if let callInfos = calls[functionName], callInstance < callInfos.count {
+            let callInfo = callInfos[callInstance]
+
+            for expectedParameter in expectedParameters.keys {
+                let expectedValue = expectedParameters[expectedParameter]
+                let actualValue = callInfo[expectedParameter]
+                
+                if actualValue != nil {
+                    XCTAssert(expectedValue == actualValue, "\(functionName): expected \(expectedValue!) for parameter \(expectedParameter), got \(actualValue!)")
+                }
+                else {
+                    XCTAssert(false, "\(functionName): no value found for parameter \(expectedParameter)")
+                }
+            }
+            
+        }
+        else {
+            XCTAssert(false, "Call(\(callInstance) to '\(functionName)' not found")
+        }
+    }
 }

@@ -209,17 +209,23 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
+        mpdWrapper.songs = [["title": "t1", "album": "alb1", "artist": "art1"],
+                            ["title": "t2", "album": "alb2", "artist": "art2"],
+                            ["title": "t3", "album": "alb3", "artist": "art3"]]
+
         // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         
         // Get a range of 3 songs
         let songs = status.playqueueSongs(start: 2, end: 5)
         
-        XCTAssert(songs.count == 5 - 2, "Expected \(5 - 2) songs, got \(songs.count)")
+        XCTAssert(songs.count == 3, "Expected 3 songs, got \(songs.count)")
 
         let songCount = self.mpdWrapper.callCount("run_current_song") +
             self.mpdWrapper.callCount("get_song") - 1
         let songFreeCount = self.mpdWrapper.callCount("song_free")
+        XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
+        mpdWrapper.assertCall("send_list_queue_range_meta", expectedParameters: ["start": "\(2)", "end": "\(5)"])
         XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
     }
     
