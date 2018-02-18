@@ -74,7 +74,7 @@ public class MPDBrowse: BrowseProtocol {
             try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: search)
             try mpd.search_commit(connection)
             
-            while let song = MPDHelper.songFromMpdSong(mpd: mpd, mpdSong: mpd.get_song(connection)) {
+            while let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpd.get_song(connection)) {
                 if song.id.starts(with: "podcast+") {
                     if filter.count == 0 || filter.contains(.Podcast) == true {
                         // Process podcast
@@ -147,7 +147,7 @@ public class MPDBrowse: BrowseProtocol {
                     
                     var mpdSong = self.mpd.get_song(connection)
                     while mpdSong != nil {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: mpdSong) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
                             songs.append(song)
                         }
                         
@@ -185,7 +185,7 @@ public class MPDBrowse: BrowseProtocol {
                     
                     var mpdSong = self.mpd.get_song(connection)
                     while mpdSong != nil {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: mpdSong) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
                             print("Adding \(song.title) - \(song.album) at position \(songs.count)")
                             songs.append(song)
                         }
@@ -247,7 +247,7 @@ public class MPDBrowse: BrowseProtocol {
                     
                     var mpdSong = self.mpd.get_song(connection)
                     while mpdSong != nil {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, mpdSong: mpdSong) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
                             var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
                             album.coverURI = song.coverURI
                             if albums.contains(album) == false {
@@ -289,7 +289,7 @@ public class MPDBrowse: BrowseProtocol {
                 return Observable.just(weakself.albumsFromSongs(songs))
             })
     }
-
+    
     /*
     private func getAllAlbumNames(artist: String = "", genre: String = "") -> [String] {
         var albumNames = [String]()

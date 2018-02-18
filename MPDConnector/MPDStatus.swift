@@ -199,7 +199,7 @@ public class MPDStatus: StatusProtocol {
                     self.mpd.song_free(song)
                 }
                 
-                if let song = MPDHelper.songFromMpdSong(mpd: mpd, mpdSong: song) {
+                if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: song) {
                     playerStatus.currentSong = song
                 }
             }
@@ -232,7 +232,7 @@ public class MPDStatus: StatusProtocol {
             var mpdSong = mpd.get_song(connection)
             var position = start
             while mpdSong != nil {
-                if var song = MPDHelper.songFromMpdSong(mpd: mpd, mpdSong: mpdSong) {
+                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
                     song.position = position
                     songs.append(song)
                     

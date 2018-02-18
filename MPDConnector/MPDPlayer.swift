@@ -17,8 +17,13 @@ enum ConnectionError: Error {
 }
 
 enum MPDType: String {
-    case Classic = "Classic"
-    case Mopidy = "Mopidy"
+    case classic = "Classic"
+    case mopidy = "Mopidy"
+}
+
+public enum MPDConnectionProperties: String {
+    case coverPrefix = "MPD.Uri.Prefix"
+    case coverPostfix = "MPD.Uri.Postfix"
 }
 
 public class MPDPlayer: PlayerProtocol {
@@ -47,10 +52,14 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
+            let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(host)") ?? ""
+            let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(host)") ?? ""
             return [ConnectionProperties.Name.rawValue: name,
                     ConnectionProperties.Host.rawValue: host,
                     ConnectionProperties.Port.rawValue: port,
-                    ConnectionProperties.Password.rawValue: password]
+                    ConnectionProperties.Password.rawValue: password,
+                    MPDConnectionProperties.coverPrefix.rawValue: prefix,
+                    MPDConnectionProperties.coverPostfix.rawValue: postfix]
         }
     }
     
@@ -96,10 +105,15 @@ public class MPDPlayer: PlayerProtocol {
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
         
+        let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(host)") ?? ""
+        let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(host)") ?? ""
         let connectionProperties = [ConnectionProperties.Name.rawValue: name,
-                                    ConnectionProperties.Host.rawValue: host,
-                                    ConnectionProperties.Port.rawValue: port,
-                                    ConnectionProperties.Password.rawValue: password] as [String: Any]
+                ConnectionProperties.Host.rawValue: host,
+                ConnectionProperties.Port.rawValue: port,
+                ConnectionProperties.Password.rawValue: password,
+                MPDConnectionProperties.coverPrefix.rawValue: prefix,
+                MPDConnectionProperties.coverPostfix.rawValue: postfix] as [String : Any]
+
         self.mpdStatus = MPDStatus.init(mpd: mpd,
                                         connectionProperties: connectionProperties,
                                         scheduler: scheduler)

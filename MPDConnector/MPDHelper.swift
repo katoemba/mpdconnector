@@ -99,7 +99,7 @@ public class MPDHelper {
     ///   - mpd: MPDProtocol object
     ///   - mpdSong: pointer to a mpdSong data structure
     /// - Returns: the filled Song object
-    public static func songFromMpdSong(mpd: MPDProtocol, mpdSong: OpaquePointer!) -> Song? {
+    public static func songFromMpdSong(mpd: MPDProtocol, connectionProperties: [String: Any], mpdSong: OpaquePointer!) -> Song? {
         guard mpdSong != nil else  {
             return nil
         }
@@ -141,6 +141,7 @@ public class MPDHelper {
         song.sortAlbumArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST_SORT, 0)
         song.sortAlbum = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_SORT, 0)
         
+        // Get a sensible coverURI
         let sections = song.id.split(separator: ":")
         guard let path = sections.last else {
             return song
@@ -153,8 +154,13 @@ public class MPDHelper {
             newPath.append(contentsOf: "/")
         }
         
-        song.coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        let coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        let host = connectionProperties[ConnectionProperties.Host.rawValue] as! String
+        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as! String
+        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as! String
         
+        song.coverURI = "http://\(host)/\(prefix)\(coverURI)\(postfix)"
+
         return song
     }
 }
