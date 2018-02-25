@@ -221,6 +221,10 @@ public class MPDWrapper: MPDProtocol {
         mpd_search_cancel(connection)
     }
     
+    public func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> Bool {
+        return mpd_search_add_group_tag(connection, tagType)
+    }
+
     public func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
         let mpd_pair = mpd_recv_pair_tag(connection, tagType)
         

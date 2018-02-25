@@ -299,6 +299,7 @@
 		C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
+		C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */; };
 		C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */; };
 		C5B7CD96203772E600C087ED /* MPDBrowseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */; };
 		C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */; };
@@ -470,6 +471,7 @@
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControlTests.swift; sourceTree = "<group>"; };
+		C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDAlbumBrowseViewModel.swift; sourceTree = "<group>"; };
 		C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowseTests.swift; sourceTree = "<group>"; };
 		C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowse.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
@@ -550,6 +552,7 @@
 				C548EF401FFCDCC500FBE535 /* MPDStatus.swift */,
 				C585B3651F519A5D00D7B784 /* MPDControl.swift */,
 				C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */,
+				C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
 				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
@@ -1324,6 +1327,7 @@
 				C546B0601F35FAF0003C5B7E /* socket.c in Sources */,
 				C52878281F77F5FA009D6CC4 /* NetService+Rx.swift in Sources */,
 				C546B01C1F35FAF0003C5B7E /* error.c in Sources */,
+				C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */,
 				C546B05F1F35FAF0003C5B7E /* settings.c in Sources */,
 				C546B0221F35FAF0003C5B7E /* ierror.c in Sources */,
 				C546B05E1F35FAF0003C5B7E /* send.c in Sources */,

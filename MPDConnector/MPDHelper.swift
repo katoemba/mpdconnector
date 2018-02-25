@@ -128,6 +128,7 @@ public class MPDHelper {
         song.length = Int(mpd.song_get_duration(mpdSong))
         song.name = mpd.song_get_tag(mpdSong, MPD_TAG_NAME, 0)
         song.date = mpd.song_get_tag(mpdSong, MPD_TAG_DATE, 0)
+        song.year = Int(String(song.date.prefix(4))) ?? 0
         song.performer = mpd.song_get_tag(mpdSong, MPD_TAG_PERFORMER, 0)
         song.comment = mpd.song_get_tag(mpdSong, MPD_TAG_COMMENT, 0)
         song.disc = mpd.song_get_tag(mpdSong, MPD_TAG_DISC, 0)
