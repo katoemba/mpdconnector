@@ -3,7 +3,7 @@
 //  MPDConnector
 //
 //  Created by Berrie Kremers on 10-08-17.
-//  Copyright © 2017 Kaotemba Software. All rights reserved.
+//  Copyright © 2017 Katoemba Software. All rights reserved.
 //
 
 import XCTest
@@ -44,24 +44,27 @@ class MockBase {
     func assertCall(_ functionName: String, expectedCallCount: Int = 1, expectedParameters: [String: String] = [:]) {
         var callCount = 0
         if let callInfos = calls[functionName] {
-            callCount = callInfos.count
-
-            var callInfo = [String: String]()
-            if callInfos.count > 0 {
-                callInfo = callInfos[0]
+            if expectedParameters == [:] {
+                callCount = callInfos.count
             }
-            for expectedParameter in expectedParameters.keys {
-                let expectedValue = expectedParameters[expectedParameter]
-                let actualValue = callInfo[expectedParameter]
-                
-                if actualValue != nil {
-                    XCTAssert(expectedValue == actualValue, "\(functionName): expected \(expectedValue!) for parameter \(expectedParameter), got \(actualValue!)")
-                }
-                else {
-                    XCTAssert(true == false, "\(functionName): no value found for parameter \(expectedParameter)")
+            else {
+                for callInfo in callInfos {
+                    var allIsGood = true
+                    for expectedParameter in expectedParameters.keys {
+                        let expectedValue = expectedParameters[expectedParameter]
+                        let actualValue = callInfo[expectedParameter]
+                        
+                        if expectedValue != actualValue && expectedValue != "*" {
+                            allIsGood = false
+                            break
+                        }
+                    }
+                    
+                    if allIsGood {
+                        callCount = callCount + 1
+                    }
                 }
             }
-
         }
         XCTAssert(callCount == expectedCallCount, "Expected \(expectedCallCount) calls to '\(functionName)', actual number of calls is \(callCount)")
     }    

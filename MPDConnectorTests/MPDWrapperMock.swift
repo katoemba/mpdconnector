@@ -3,7 +3,7 @@
 //  MPDConnector
 //
 //  Created by Berrie Kremers on 09-08-17.
-//  Copyright © 2017 Kaotemba Software. All rights reserved.
+//  Copyright © 2017 Katoemba Software. All rights reserved.
 //
 
 import Foundation
@@ -313,6 +313,10 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws {
         registerCall("search_add_window", ["start": "\(start)", "end": "\(end)"])
+    }
+    
+    func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
+        registerCall("search_add_group_tag", ["tagType": "\(tagType)"])
     }
     
     func search_commit(_ connection: OpaquePointer!) throws  {

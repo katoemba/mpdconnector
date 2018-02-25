@@ -3,7 +3,7 @@
 //  MPDConnector_iOS
 //
 //  Created by Berrie Kremers on 03-01-18.
-//  Copyright © 2018 Kaotemba Software. All rights reserved.
+//  Copyright © 2018 Katoemba Software. All rights reserved.
 //
 
 import Foundation

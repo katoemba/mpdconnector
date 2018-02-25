@@ -3,7 +3,7 @@
 //  MPDConnector_iOS
 //
 //  Created by Berrie Kremers on 20-02-18.
-//  Copyright © 2018 Kaotemba Software. All rights reserved.
+//  Copyright © 2018 Katoemba Software. All rights reserved.
 //
 
 import Foundation
@@ -103,12 +103,12 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         Observable.combineLatest(albumsObservable, extendTriggerObservable)
             .filter({ (albums, arg) -> Bool in
                 let (start, count) = arg
-                return start < min(start+count, albums.count-1)
+                return start < min(start+count, albums.count)
             })
             .flatMap({ (albums, arg) -> Observable<[Album]> in
                 let (start, count) = arg
                 
-                return browse.completeAlbums(Array(albums[start..<min(start+count, albums.count-1)]))
+                return browse.completeAlbums(Array(albums[start..<min(start+count, albums.count)]))
             })
             .scan([]) { inputAlbums, newAlbums in
                 inputAlbums + newAlbums

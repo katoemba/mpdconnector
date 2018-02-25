@@ -3,7 +3,7 @@
 //  MPDConnector
 //
 //  Created by Berrie Kremers on 09-08-17.
-//  Copyright © 2017 Kaotemba Software. All rights reserved.
+//  Copyright © 2017 Katoemba Software. All rights reserved.
 //
 
 import Foundation
@@ -61,9 +61,9 @@ public protocol MPDProtocol {
     func search_add_tag_constraint(_ connection: OpaquePointer!, oper: mpd_operator, tagType: mpd_tag_type, value: UnsafePointer<Int8>!) throws
     func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
     func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws
+    func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
     func search_commit(_ connection: OpaquePointer!) throws
     func search_cancel(_ connection: OpaquePointer!)
-    func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> Bool
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool
     func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32

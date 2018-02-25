@@ -3,7 +3,7 @@
 //  MPDConnector
 //
 //  Created by Berrie Kremers on 09-08-17.
-//  Copyright © 2017 Kaotemba Software. All rights reserved.
+//  Copyright © 2017 Katoemba Software. All rights reserved.
 //
 
 import Foundation
@@ -211,6 +211,12 @@ public class MPDWrapper: MPDProtocol {
         }
     }
     
+    public func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
+        if mpd_search_add_group_tag(connection, tagType) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
     public func search_commit(_ connection: OpaquePointer!) throws {
         if mpd_search_commit(connection) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
             throw MPDError.commandFailed
@@ -221,10 +227,6 @@ public class MPDWrapper: MPDProtocol {
         mpd_search_cancel(connection)
     }
     
-    public func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> Bool {
-        return mpd_search_add_group_tag(connection, tagType)
-    }
-
     public func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
         let mpd_pair = mpd_recv_pair_tag(connection, tagType)
         

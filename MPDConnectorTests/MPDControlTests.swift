@@ -3,7 +3,7 @@
 //  MPDConnector
 //
 //  Created by Berrie Kremers on 26-08-17.
-//  Copyright © 2017 Kaotemba Software. All rights reserved.
+//  Copyright © 2017 Katoemba Software. All rights reserved.
 //
 
 import XCTest
