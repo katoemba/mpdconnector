@@ -70,4 +70,6 @@ public protocol MPDProtocol {
     func run_clear(_ connection: OpaquePointer!) -> Bool
     func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle
     func send_noidle(_ connection: OpaquePointer!) -> Bool
+    func run_move(_ connection: OpaquePointer!, from: UInt32, to: UInt32) -> Bool
+    func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool
 }

@@ -288,6 +288,26 @@ public class MPDControl: ControlProtocol {
             .disposed(by: bag)
     }
     
+    /// Move a song in the playqueue to a different position
+    ///
+    /// - Parameters:
+    ///   - from: the position of the song to change
+    ///   - to: the position to move the song to
+    public func moveSong(from: Int, to: Int) {
+        runCommand()  { connection in
+            _ = self.mpd.run_move(connection, from: UInt32(from), to: UInt32(to))
+        }
+    }
+    
+    /// Remove song from the playqueue
+    ///
+    /// - Parameter at: the position of the song to remove
+    public func deleteSong(_ at: Int) {
+        runCommand()  { connection in
+            _ = self.mpd.run_delete(connection, pos: UInt32(at))
+        }
+    }
+
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///
     /// - Parameters:

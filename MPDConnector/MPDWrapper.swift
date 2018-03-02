@@ -261,6 +261,14 @@ public class MPDWrapper: MPDProtocol {
         return mpd_send_noidle(connection)
     }
 
+    public func run_move(_ connection: OpaquePointer!, from: UInt32, to: UInt32) -> Bool {
+        return mpd_run_move(connection, from, to)
+    }
+    
+    public func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool {
+        return mpd_run_delete(connection, pos)
+    }
+
     /// Convert a raw mpd-string to a standard Swift string.
     ///
     /// - Parameter mpdString: Pointer to a null-terminated (unsigned char) string.

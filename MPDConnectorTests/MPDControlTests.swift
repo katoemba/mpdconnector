@@ -145,6 +145,17 @@ class MPDControlTests: XCTestCase {
         testScheduler.start()
     }
 
+    func testShuffleSentToMPD() {
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.shufflePlayqueue()
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_shuffle", expectedParameters: [:])
+        }
+        
+        testScheduler.start()
+    }
+    
     func testRepeatOffSentToMPD() {
         testScheduler.scheduleAt(50) {
             self.mpdPlayer?.control.setRepeat(repeatMode: .Off)
@@ -371,4 +382,25 @@ class MPDControlTests: XCTestCase {
         testScheduler.start()
     }
     
+    func testMoveSong() {
+        testScheduler.scheduleAt(50) {
+            _ = self.mpdPlayer?.control.moveSong(from: 3, to: 7)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_move", expectedParameters: ["from": "3", "to": "7"])
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testDeleteSong() {
+        testScheduler.scheduleAt(50) {
+            _ = self.mpdPlayer?.control.deleteSong(5)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_delete", expectedParameters: ["pos": "5"])
+        }
+        
+        testScheduler.start()
+    }
 }

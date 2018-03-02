@@ -346,6 +346,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return Int32(to)
     }
     
+    func run_move(_ connection: OpaquePointer!, from: UInt32, to: UInt32) -> Bool {
+        registerCall("run_move", ["from": "\(from)", "to": "\(to)"])
+        return true
+    }
+    
+    func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool {
+        registerCall("run_delete", ["pos": "\(pos)"])
+        return true
+    }
+    
     func run_clear(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_clear", [:])
         return true
