@@ -187,6 +187,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return OpaquePointer.init(bitPattern: 5)
     }
     
+    func run_seek(_ connection: OpaquePointer!, pos: UInt32, t: UInt32) -> Bool {
+        registerCall("run_seek", ["pos": "\(pos)", "t": "\(t)"])
+        return true
+    }
+    
     func song_free(_ song: OpaquePointer!) {
         registerCall("song_free", ["song": "\(song)"])
     }

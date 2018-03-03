@@ -36,6 +36,8 @@ public class MPDStatus: StatusProtocol {
     }
     let disconnectHandler = PublishSubject<Int>()
     
+    private var lastKnownElapsedTime = 0
+    private var lastKnownElapsedTimeRecorded = Date()
     
     private var statusScheduler: SchedulerType
     private var elapsedTimeScheduler: SchedulerType
@@ -96,7 +98,7 @@ public class MPDStatus: StatusProtocol {
                 if let weakSelf = self {
                     if weakSelf._playerStatus.value.playing.playPauseMode == .Playing {
                         var newPlayerStatus = PlayerStatus.init(weakSelf._playerStatus.value)
-                        newPlayerStatus.time.elapsedTime = newPlayerStatus.time.elapsedTime + 1
+                        newPlayerStatus.time.elapsedTime = weakSelf.lastKnownElapsedTime + Int(Date().timeIntervalSince(weakSelf.lastKnownElapsedTimeRecorded))
                         return newPlayerStatus
                     }
                 }
@@ -182,6 +184,8 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.volume = Float(self.mpd.status_get_volume(status)) / 100.0
                 playerStatus.time.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))
                 playerStatus.time.trackTime = Int(self.mpd.status_get_total_time(status))
+                self.lastKnownElapsedTime = playerStatus.time.elapsedTime
+                self.lastKnownElapsedTimeRecorded = Date()
                 
                 playerStatus.playing.playPauseMode = (self.mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
                 playerStatus.playing.randomMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
@@ -199,7 +203,8 @@ public class MPDStatus: StatusProtocol {
                     self.mpd.song_free(song)
                 }
                 
-                if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: song) {
+                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: song) {
+                    song.position = playerStatus.playqueue.songIndex
                     playerStatus.currentSong = song
                 }
             }

@@ -68,6 +68,90 @@ class MPDControlTests: XCTestCase {
         testScheduler.start()
     }
     
+    func testSetSeek() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            var song = Song()
+            song.length = 100
+            song.position = 5
+            playerStatus.currentSong = song
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setSeek(seconds: 10)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_seek", expectedParameters: ["pos": "5", "t": "10"])
+        }
+
+        testScheduler.start()
+    }
+    
+    func testSetInvalidSeek() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            var song = Song()
+            song.length = 100
+            song.position = 5
+            playerStatus.currentSong = song
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setSeek(seconds: 200)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_seek", expectedCallCount: 0)
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testSetRelativeSeek() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            var song = Song()
+            song.length = 100
+            song.position = 6
+            playerStatus.currentSong = song
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setSeek(percentage: 0.3)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_seek", expectedParameters: ["pos": "6", "t": "30"])
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testSetInvalidRelativeSeek() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            var song = Song()
+            song.length = 100
+            song.position = 6
+            playerStatus.currentSong = song
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setSeek(percentage: 1.3)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_seek", expectedCallCount: 0)
+        }
+        
+        testScheduler.start()
+    }
+    
     func testPlaySentToMPD() {
         testScheduler.scheduleAt(50) {
             self.mpdPlayer?.control.play()

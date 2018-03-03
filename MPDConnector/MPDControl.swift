@@ -24,6 +24,7 @@ public class MPDControl: ControlProtocol {
     private let endIndex = Variable<Int>(0)
     private let repeatMode = Variable<RepeatMode>(.Off)
     private let randomMode = Variable<RandomMode>(.Off)
+    private let currentSong = Variable<Song?>(nil)
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
@@ -66,6 +67,14 @@ public class MPDControl: ControlProtocol {
             }
             .distinctUntilChanged()
             .bind(to: randomMode)
+            .disposed(by: bag)
+        
+        playerStatusObservable
+            .map { (playerStatus) -> Song in
+                playerStatus.currentSong
+            }
+            .distinctUntilChanged()
+            .bind(to: currentSong)
             .disposed(by: bag)
 
         HelpMePlease.allocUp(name: "MPDControl")
@@ -198,6 +207,28 @@ public class MPDControl: ControlProtocol {
         runCommand(refreshStatus: false)  { connection in
             _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
         }
+    }
+    
+    /// Seek to a position in the current song
+    ///
+    /// - Parameter seconds: seconds in the current song, must be <= length of the song
+    public func setSeek(seconds: UInt32) {
+        guard let song = currentSong.value else { return }
+        guard seconds < song.length else { return }
+        
+        runCommand()  { connection in
+            _ = self.mpd.run_seek(connection, pos: UInt32(song.position), t: seconds)
+        }
+    }
+    
+    /// Seek to a relative position in the current song
+    ///
+    /// - Parameter percentage: relative position in the current song, must be between 0.0 and 1.0
+    public func setSeek(percentage: Float) {
+        guard let song = currentSong.value else { return }
+        guard percentage >= 0.0 && percentage <= 1.0 else { return }
+
+        setSeek(seconds: UInt32(percentage * Float(song.length)))
     }
     
     /// add an array of songs to the playqueue

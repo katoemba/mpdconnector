@@ -268,6 +268,10 @@ public class MPDWrapper: MPDProtocol {
     public func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool {
         return mpd_run_delete(connection, pos)
     }
+    
+    public func run_seek(_ connection: OpaquePointer!, pos: UInt32, t: UInt32) -> Bool {
+        return mpd_run_seek_pos(connection, pos, t)
+    }
 
     /// Convert a raw mpd-string to a standard Swift string.
     ///
