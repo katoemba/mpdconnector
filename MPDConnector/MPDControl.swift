@@ -319,6 +319,30 @@ public class MPDControl: ControlProtocol {
             .disposed(by: bag)
     }
     
+    /// Add a playlist to the play queue
+    ///
+    /// - Parameters:
+    ///   - playlist: the playlist to add
+    ///   - addMode: how to add the song to the playqueue
+    ///   - shuffle: whether or not to shuffle the playlist
+    public func addPlaylist(_ playlist: Playlist, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
+        runCommand()  { connection in
+            switch addMode {
+            case .replace:
+                _ = self.mpd.run_clear(connection)
+            default:
+                break
+            }
+
+            _ = self.mpd.run_load(connection, name: playlist.id)
+            if shuffle {
+                _ = self.mpd.run_shuffle(connection)
+            }
+            
+            _ = self.mpd.run_play_pos(connection, startWithSong)
+        }
+    }
+
     /// Move a song in the playqueue to a different position
     ///
     /// - Parameters:

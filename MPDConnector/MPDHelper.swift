@@ -164,4 +164,37 @@ public class MPDHelper {
 
         return song
     }
+    
+    /// Fill a generic Playlist object from an mpdPlaylist
+    ///
+    /// - Parameters:
+    ///   - mpd: MPDProtocol object
+    ///   - mpdPlaylist: pointer to a mpdPlaylist data structure
+    /// - Returns: the filled Playlist object
+    public static func playlistFromMpdPlaylist(mpd: MPDProtocol, mpdPlaylist: OpaquePointer!) -> Playlist? {
+        guard mpdPlaylist != nil else  {
+            return nil
+        }
+        
+        var playlist = Playlist()
+        
+        playlist.id = mpd.playlist_get_path(mpdPlaylist)
+        if playlist.id.starts(with: "spotify:") {
+            playlist.source = .Spotify
+        }
+        else {
+            playlist.source = .Local
+        }
+        
+        let elements = playlist.id.split(separator: "/")
+        if let name = elements.last {
+            playlist.name = String(name)
+        }
+        else {
+            playlist.name = "Unknown"
+        }
+        playlist.lastModified = mpd.playlist_get_last_modified(mpdPlaylist)
+
+        return playlist
+    }
 }

@@ -74,47 +74,53 @@ public class MPDBrowse: BrowseProtocol {
             try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: search)
             try mpd.search_commit(connection)
             
-            while let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpd.get_song(connection)) {
-                if song.id.starts(with: "podcast+") {
-                    if filter.count == 0 || filter.contains(.Podcast) == true {
-                        // Process podcast
-                    }
-                }
-                else if song.id.contains("spotify") {
-                    if filter.count == 0 || filter.contains(.Spotify) == true {
-                        if song.id.contains(":album:") {
-                            var album = Album(id: song.id, source: song.source, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: song.length)
-                            album.coverURI = song.coverURI
-                            albums.append(album)
-                        }
-                        else if song.id.contains(":artist:") {
-                            artists.append(Artist(id: song.id, source: song.source, name: song.artist))
-                        }
-                        else {
-                            songs.append(song)
+            var mpdSong = mpd.get_song(connection)
+            while mpdSong != nil {
+                if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
+                    if song.id.starts(with: "podcast+") {
+                        if filter.count == 0 || filter.contains(.Podcast) == true {
+                            // Process podcast
                         }
                     }
-                }
-                else {
-                    if filter.count == 0 || filter.contains(.Local) == true {
-                        if (tagType == MPD_TAG_TITLE) {
-                            songs.append(song)
-                        }
-                        else if (tagType == MPD_TAG_ALBUM) {
-                            var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
-                            album.coverURI = song.coverURI
-                            if albums.contains(album) == false {
+                    else if song.id.contains("spotify") {
+                        if filter.count == 0 || filter.contains(.Spotify) == true {
+                            if song.id.contains(":album:") {
+                                var album = Album(id: song.id, source: song.source, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: song.length)
+                                album.coverURI = song.coverURI
                                 albums.append(album)
                             }
+                            else if song.id.contains(":artist:") {
+                                artists.append(Artist(id: song.id, source: song.source, name: song.artist))
+                            }
+                            else {
+                                songs.append(song)
+                            }
                         }
-                        else if (tagType == MPD_TAG_ARTIST) {
-                            let artist = Artist(id: song.artist, source: .Local, name: song.artist)
-                            if artists.contains(artist) == false {
-                                artists.append(artist)
+                    }
+                    else {
+                        if filter.count == 0 || filter.contains(.Local) == true {
+                            if (tagType == MPD_TAG_TITLE) {
+                                songs.append(song)
+                            }
+                            else if (tagType == MPD_TAG_ALBUM) {
+                                var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
+                                album.coverURI = song.coverURI
+                                if albums.contains(album) == false {
+                                    albums.append(album)
+                                }
+                            }
+                            else if (tagType == MPD_TAG_ARTIST) {
+                                let artist = Artist(id: song.artist, source: .Local, name: song.artist)
+                                if artists.contains(artist) == false {
+                                    artists.append(artist)
+                                }
                             }
                         }
                     }
                 }
+                
+                mpd.song_free(mpdSong)
+                mpdSong = mpd.get_song(connection)
             }
         }
         catch {
@@ -450,6 +456,106 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an ArtistBrowseViewModel instance
     public func artistBrowseViewModel(_ artists: [Artist]) -> ArtistBrowseViewModel {
         return MPDArtistBrowseViewModel(browse: self, artists: artists)
+    }
+
+    /// Return a view model for a list of playlists, which can return playlists in batches.
+    ///
+    /// - Returns: an PlaylistBrowseViewModel instance
+    public func playlistBrowseViewModel() -> PlaylistBrowseViewModel {
+        return MPDPlaylistBrowseViewModel(browse: self)
+    }
+    
+    /// Return a view model for a preloaded list of playlists.
+    ///
+    /// - Parameter playlists: list of playlists to show
+    /// - Returns: an PlaylistBrowseViewModel instance
+    public func playlistBrowseViewModel(_ playlists: [Playlist]) -> PlaylistBrowseViewModel {
+        return MPDPlaylistBrowseViewModel(browse: self, playlists: playlists)
+    }
+
+    public func fetchPlaylists() -> Observable<[Playlist]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[Playlist]> in
+                var playlists = [Playlist]()
+                
+                if self.mpd.send_list_playlists(connection) == true {
+                    var mpdPlaylist = self.mpd.recv_playlist(connection)
+                    while mpdPlaylist != nil {
+                        if let playlist = MPDHelper.playlistFromMpdPlaylist(mpd: self.mpd, mpdPlaylist: mpdPlaylist) {
+                            playlists.append(playlist)
+                        }
+                    
+                        self.mpd.playlist_free(mpdPlaylist)
+                        mpdPlaylist = self.mpd.recv_playlist(connection)
+                    }
+                }
+                
+                self.mpd.connection_free(connection)
+
+                return Observable.just(playlists.sorted(by: { (lhs, rhs) -> Bool in
+                    return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
+                }))
+            })
+    }
+    
+    /// Return a view model for a preloaded list of songs.
+    ///
+    /// - Parameter songs: list of songs to show
+    /// - Returns: a SongBrowseViewModel instance
+    public func songBrowseViewModel(_ songs: [Song]) -> SongBrowseViewModel {
+        return MPDSongBrowseViewModel(browse: self, songs: songs)
+    }
+    
+    /// Return a view model for a list of songs in a playlist, which can return songs in batches.
+    ///
+    /// - Parameter playlist: playlist to filter on
+    /// - Returns: a SongBrowseViewModel instance
+    public func songBrowseViewModel(_ playlist: Playlist) -> SongBrowseViewModel {
+        return MPDSongBrowseViewModel(browse: self, filters: [.playlist(playlist)])
+    }
+    
+    /// Asynchronously get all songs in a playlist
+    ///
+    /// - Parameter playlist: the playlst to get the songs for
+    /// - Returns: an observable array of Song objects
+    public func songsInPlaylist(_ playlist: Playlist) -> Observable<[Song]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[Song]> in
+                let songs = self.songsForPlaylist(connection: connection, playlist: playlist.id)
+                
+                // Cleanup
+                self.mpd.connection_free(connection)
+                
+                return Observable.just(songs)
+            })
+    }
+    
+    /// Return an array of songs for an artist and optional album. This will search through both artist and albumartist.
+    ///
+    /// - Parameters:
+    ///   - connection: an active mpd connection
+    ///   - artist: the artist name to search for
+    ///   - album: optionally an album title to search for
+    /// - Returns: an array of Song objects
+    private func songsForPlaylist(connection: OpaquePointer, playlist: String) -> [Song] {
+        var songs = [Song]()
+        
+        if self.mpd.send_list_playlist_meta(connection, playlist) == true {
+            var mpdSong = mpd.get_song(connection)
+            while mpdSong != nil {
+                if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
+                    songs.append(song)
+                }
+                self.mpd.song_free(mpdSong)
+                mpdSong = mpd.get_song(connection)
+            }
+            
+            _ = self.mpd.response_finish(connection)
+        }
+        
+        return songs
     }
 
     /*

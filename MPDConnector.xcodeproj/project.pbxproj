@@ -296,6 +296,8 @@
 		C548EF451FFE22A700FBE535 /* MPDHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C548EF441FFE22A700FBE535 /* MPDHelperTests.swift */; };
 		C548EF4D1FFE352800FBE535 /* MPDPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B27A1F3B0A8E003C5B7E /* MPDPlayerTests.swift */; };
 		C548EF4F1FFE36A200FBE535 /* MPDStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C548EF4E1FFE36A200FBE535 /* MPDStatusTests.swift */; };
+		C54AFF80204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */; };
+		C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */; };
 		C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
@@ -468,6 +470,8 @@
 		C548EF421FFCE21900FBE535 /* MPDHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDHelper.swift; sourceTree = "<group>"; };
 		C548EF441FFE22A700FBE535 /* MPDHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDHelperTests.swift; sourceTree = "<group>"; };
 		C548EF4E1FFE36A200FBE535 /* MPDStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDStatusTests.swift; sourceTree = "<group>"; };
+		C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlaylistBrowseViewModel.swift; sourceTree = "<group>"; };
+		C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDSongBrowseViewModel.swift; sourceTree = "<group>"; };
 		C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetServiceBrowser+Rx.swift"; sourceTree = "<group>"; };
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
@@ -556,6 +560,8 @@
 				C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */,
 				C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */,
 				C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */,
+				C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */,
+				C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
 				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
@@ -1292,6 +1298,7 @@
 			files = (
 				C5C9F7F82042B6B900D239A8 /* MPDArtistBrowseViewModel.swift in Sources */,
 				C546B05A1F35FAF0003C5B7E /* rplaylist.c in Sources */,
+				C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */,
 				C546B0291F35FAF0003C5B7E /* message.c in Sources */,
 				C546B0181F35FAF0003C5B7E /* cstatus.c in Sources */,
 				C546B0621F35FAF0003C5B7E /* song.c in Sources */,
@@ -1338,6 +1345,7 @@
 				C548EF431FFCE21900FBE535 /* MPDHelper.swift in Sources */,
 				C546B0571F35FAF0003C5B7E /* resolver.c in Sources */,
 				C546B26E1F3B0305003C5B7E /* MPDProtocol.swift in Sources */,
+				C54AFF80204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift in Sources */,
 				C546B01A1F35FAF0003C5B7E /* directory.c in Sources */,
 				C546B0561F35FAF0003C5B7E /* recv.c in Sources */,
 				C546B0591F35FAF0003C5B7E /* response.c in Sources */,

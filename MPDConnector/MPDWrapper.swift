@@ -272,6 +272,30 @@ public class MPDWrapper: MPDProtocol {
     public func run_seek(_ connection: OpaquePointer!, pos: UInt32, t: UInt32) -> Bool {
         return mpd_run_seek_pos(connection, pos, t)
     }
+    
+    public func send_list_playlists(_ connection: OpaquePointer!) -> Bool {
+        return mpd_send_list_playlists(connection)
+    }
+    
+    public func recv_playlist(_ connection: OpaquePointer!) -> OpaquePointer! {
+        return mpd_recv_playlist(connection)
+    }
+    
+    public func playlist_free(_ playlist: OpaquePointer!) {
+        mpd_playlist_free(playlist)
+    }
+    
+    public func playlist_get_path(_ playlist: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_playlist_get_path(playlist))
+    }
+    
+    public func playlist_get_last_modified(_ playlist: OpaquePointer!) -> Date {
+        return dateFromMPDDate(mpd_playlist_get_last_modified(playlist))
+    }
+    
+    public func send_list_playlist_meta(_ connection: OpaquePointer!, _ name: UnsafePointer<Int8>!) -> Bool {
+        return mpd_send_list_playlist_meta(connection, name)
+    }
 
     /// Convert a raw mpd-string to a standard Swift string.
     ///
@@ -283,5 +307,9 @@ public class MPDWrapper: MPDProtocol {
             return String(data: data, encoding: .utf8) ?? ""
         }
         return ""
+    }
+    
+    func dateFromMPDDate(_ mpdDate: time_t) -> Date {
+        return Date(timeIntervalSince1970: TimeInterval(mpdDate))
     }
 }

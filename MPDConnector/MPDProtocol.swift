@@ -73,4 +73,10 @@ public protocol MPDProtocol {
     func send_noidle(_ connection: OpaquePointer!) -> Bool
     func run_move(_ connection: OpaquePointer!, from: UInt32, to: UInt32) -> Bool
     func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool
+    func send_list_playlists(_ connection: OpaquePointer!) -> Bool
+    func recv_playlist(_ connection: OpaquePointer!) -> OpaquePointer!
+    func playlist_free(_ playlist: OpaquePointer!)
+    func playlist_get_path(_ playlist: OpaquePointer!) -> String
+    func playlist_get_last_modified(_ playlist: OpaquePointer!) -> Date
+    func send_list_playlist_meta(_ connection: OpaquePointer!, _ name: UnsafePointer<Int8>!) -> Bool
 }

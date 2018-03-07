@@ -73,6 +73,8 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 reload(genre: genre, sort: sort)
             case let .artist(artist):
                 reload(artist: artist, sort: sort)
+            default:
+                fatalError("MPDAlbumBrowseViewModel: unsupported filter type")
             }
         }
         else {
