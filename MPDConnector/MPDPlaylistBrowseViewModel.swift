@@ -12,16 +12,16 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
-    private var _playlistsSubject = PublishSubject<[Playlist]>()
+    private var _playlists = Variable<[Playlist]>([])
     public var playlistsObservable: Driver<[Playlist]> {
         get {
-            return _playlistsSubject.asDriver(onErrorJustReturn: [])
+            return _playlists.asDriver()
         }
     }
     
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
-    private let _playlists: [Playlist]
+    private let _providedPlaylists: [Playlist]
     
     deinit {
         print("Cleanup MPDPlaylistBrowseViewModel")
@@ -29,13 +29,13 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
     
     public required init(browse: MPDBrowse, playlists: [Playlist] = []) {
         _browse = browse
-        _playlists = playlists
+        _providedPlaylists = playlists
     }
     
     public func load() {
-        if _playlists.count > 0 {
+        if _providedPlaylists.count > 0 {
             bag = DisposeBag()
-            _playlistsSubject.onNext(_playlists)
+            _playlists.value = _providedPlaylists
         }
         else {
             reload()
@@ -47,21 +47,44 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         bag = DisposeBag()
         
         // Clear the contents
-        _playlistsSubject.onNext([])
+        _playlists.value = []
         
         // Load new contents
         let browse = _browse
-        let playlistsSubject = self._playlistsSubject
+        let playlists = self._playlists
         let playlistsObservable = browse.fetchPlaylists()
         
         playlistsObservable
             .observeOn(MainScheduler.instance)
-            .subscribe(onNext: { (playlists) in
-                playlistsSubject.onNext(playlists)
+            .subscribe(onNext: { (foundPlaylists) in
+                playlists.value = foundPlaylists
             })
             .disposed(by: bag)
     }
     
     public func extend() {
+    }
+    
+    public func renamePlaylist(_ playlist: Playlist, to: String) -> Playlist {
+        var renamedPlaylist = playlist
+        renamedPlaylist.id = to
+        renamedPlaylist.name = to
+        
+        if let index = _playlists.value.index(of: playlist), _playlists.value.contains(renamedPlaylist) == false {
+            _browse.renamePlaylist(playlist, newName: to)
+            
+            _playlists.value[index] = renamedPlaylist
+            return renamedPlaylist
+        }
+        
+        return playlist
+    }
+    
+    public func deletePlaylist(_ playlist: Playlist) {
+        if let index = _playlists.value.index(of: playlist) {
+            _browse.deletePlaylist(playlist)
+            
+            _playlists.value.remove(at: index)
+        }
     }
 }

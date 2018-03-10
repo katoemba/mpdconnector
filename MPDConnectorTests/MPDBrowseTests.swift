@@ -147,5 +147,116 @@ class MPDBrowseTests: XCTestCase {
         let searchCount = self.mpdWrapper.callCount("search_db_songs")
         XCTAssert(songCount - searchCount == songFreeCount, "Expected \(songCount - searchCount) for songFreeCount, got \(songFreeCount)")
     }
+    
+    func testDeletePlaylist() {
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: "", scheduler: testScheduler)
+
+        let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
+        testScheduler.scheduleAt(50) {
+            let browse = self.mpdPlayer?.browse as! MPDBrowse
+            let model = browse.playlistBrowseViewModel([playlist])
+            model.load()
+            model.deletePlaylist(playlist)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_rm", expectedParameters: ["name": "Playlist1"])
+
+            let connectCount = self.mpdWrapper.callCount("connection_new")
+            let freeCount = self.mpdWrapper.callCount("connection_free")
+            XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
+        }
+        
+        testScheduler.start()
+    }
+
+    func testRenamePlaylist() {
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: "", scheduler: testScheduler)
+        
+        let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
+        testScheduler.scheduleAt(50) {
+            let browse = self.mpdPlayer?.browse as! MPDBrowse
+            let model = browse.playlistBrowseViewModel([playlist])
+            model.load()
+            
+            let playlist = model.renamePlaylist(playlist, to: "Newbie")
+            XCTAssert(playlist.id == "Newbie", "Expected id Newbie, got \(playlist.id)")
+            XCTAssert(playlist.name == "Newbie", "Expected name Newbie, got \(playlist.name)")
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_rename", expectedParameters: ["from": "Playlist1", "to": "Newbie"])
+
+            let connectCount = self.mpdWrapper.callCount("connection_new")
+            let freeCount = self.mpdWrapper.callCount("connection_free")
+            XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
+        }
+
+        testScheduler.start()
+    }
+    
+    func testSongsInPlaylist() {
+        let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
+
+        mpdWrapper.songs = [["title": "t1", "album": "alb1", "artist": "art1"],
+                            ["title": "t2", "album": "alb2", "artist": "art2"],
+                            ["title": "t3", "album": "alb3", "artist": "art3"],
+                            ["title": "t4", "album": "alb4", "artist": "art4"]]
+        
+        let songResults = mpdPlayer?.browse.songsInPlaylist(playlist)
+            .toBlocking(timeout: 0.8)
+            .materialize()
+        
+        switch songResults {
+        case .completed(let songOnNext)?:
+            let songs = songOnNext[0]
+            XCTAssert(songs.count == 4, "Expected 4 songs, got \(songs.count)")
+        default:
+            XCTAssert(false, "songsInPlaylist failed")
+        }
+        
+        self.mpdWrapper.assertCall("send_list_playlist_meta", expectedCallCount: 1, expectedParameters: ["name": "Playlist1"])
+        let connectCount = self.mpdWrapper.callCount("connection_new")
+        let freeCount = self.mpdWrapper.callCount("connection_free")
+        XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
+
+        let songCount = self.mpdWrapper.callCount("get_song")
+        let songFreeCount = self.mpdWrapper.callCount("song_free")
+        let fetchCount = self.mpdWrapper.callCount("send_list_playlist_meta")
+        XCTAssert(songCount - fetchCount == songFreeCount, "Expected \(songCount - fetchCount) for songFreeCount, got \(songFreeCount)")
+    }
+
+    func testPlaylists() {
+        mpdWrapper.playlists = [["id": "id1", "name": "name1"],
+                                ["id": "id2", "name": "name2"],
+                                ["id": "id3", "name": "name3"]]
+
+        let browseViewModel = mpdPlayer?.browse.playlistBrowseViewModel()
+        browseViewModel!.load()
+        let playlistResult = browseViewModel!.playlistsObservable
+            .toBlocking(timeout: 0.8)
+            .materialize()
+
+        switch playlistResult {
+        case .failed(let playlistOnNext, let error):
+            if error.localizedDescription == RxError.timeout.localizedDescription {
+                let playlists = playlistOnNext.last
+                XCTAssert(playlists!.count == 3, "Expected 3 songs, got \(playlists!.count)")
+            }
+            else {
+                XCTAssert(false, "getting playlists failed \(error)")
+            }
+        default:
+            XCTAssert(false, "getting playlists failed")
+        }
+
+        self.mpdWrapper.assertCall("send_list_playlists", expectedCallCount: 1)
+        let connectCount = self.mpdWrapper.callCount("connection_new")
+        let freeCount = self.mpdWrapper.callCount("connection_free")
+        XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
+        
+        let playlistCount = self.mpdWrapper.callCount("recv_playlist")
+        let playlistFreeCount = self.mpdWrapper.callCount("playlist_free")
+        let fetchCount = self.mpdWrapper.callCount("send_list_playlists")
+        XCTAssert(playlistCount - fetchCount == playlistFreeCount, "Expected \(playlistCount - fetchCount) for playlistFreeCount, got \(playlistFreeCount)")
+    }
 }
 

@@ -362,7 +362,16 @@ public class MPDControl: ControlProtocol {
             _ = self.mpd.run_delete(connection, pos: UInt32(at))
         }
     }
-
+    
+    /// Save the current playqueue as a playlist
+    ///
+    /// - Parameter name: name for the playlist
+    public func savePlaylist(_ name: String) {
+        runCommand()  { connection in
+            _ = self.mpd.run_save(connection, name: name)
+        }
+    }
+    
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///
     /// - Parameters:

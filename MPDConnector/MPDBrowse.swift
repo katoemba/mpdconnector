@@ -473,7 +473,10 @@ public class MPDBrowse: BrowseProtocol {
         return MPDPlaylistBrowseViewModel(browse: self, playlists: playlists)
     }
 
-    public func fetchPlaylists() -> Observable<[Playlist]> {
+    /// Load playlists from mpd.
+    ///
+    /// - Returns: an observable array of playlists, order by name
+    func fetchPlaylists() -> Observable<[Playlist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Playlist]> in
@@ -482,7 +485,7 @@ public class MPDBrowse: BrowseProtocol {
                 if self.mpd.send_list_playlists(connection) == true {
                     var mpdPlaylist = self.mpd.recv_playlist(connection)
                     while mpdPlaylist != nil {
-                        if let playlist = MPDHelper.playlistFromMpdPlaylist(mpd: self.mpd, mpdPlaylist: mpdPlaylist) {
+                        if let playlist = MPDHelper.playlistFromMpdPlaylist(mpd: self.mpd, mpdPlaylist: mpdPlaylist!) {
                             playlists.append(playlist)
                         }
                     
@@ -536,13 +539,12 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Parameters:
     ///   - connection: an active mpd connection
-    ///   - artist: the artist name to search for
-    ///   - album: optionally an album title to search for
+    ///   - playlist: the name of the playlist to get songs for
     /// - Returns: an array of Song objects
     private func songsForPlaylist(connection: OpaquePointer, playlist: String) -> [Song] {
         var songs = [Song]()
         
-        if self.mpd.send_list_playlist_meta(connection, playlist) == true {
+        if self.mpd.send_list_playlist_meta(connection, name: playlist) == true {
             var mpdSong = mpd.get_song(connection)
             while mpdSong != nil {
                 if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
@@ -556,6 +558,32 @@ public class MPDBrowse: BrowseProtocol {
         }
         
         return songs
+    }
+    
+    /// Delete a playlist
+    ///
+    /// - Parameter playlist: the playlist to delete
+    func deletePlaylist(_ playlist: Playlist) {
+        _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .subscribe(onNext: { (connection) in
+                _ = self.mpd.run_rm(connection, name: playlist.id)
+                self.mpd.connection_free(connection)
+            })
+    }
+    
+    /// Rename a playlist
+    ///
+    /// - Parameters:
+    ///   - playlist: the playlist to rename
+    ///   - newName: the new name to give to the playlist
+    func renamePlaylist(_ playlist: Playlist, newName: String) {
+        _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .subscribe(onNext: { (connection) in
+                _ = self.mpd.run_rename(connection, from: playlist.id, to: newName)
+                self.mpd.connection_free(connection)
+            })
     }
 
     /*

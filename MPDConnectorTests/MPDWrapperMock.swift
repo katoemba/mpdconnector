@@ -41,6 +41,10 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var noidle: PublishSubject<Int>?
     var currentSong: [String:String]?
     var songs = [[String:String]]()
+    var currentPlaylist: [String:String]?
+    var playlists = [[String:String]]()
+    var playlistPath = ""
+    var playlistLastModified = Date(timeIntervalSince1970: 0)
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -363,6 +367,53 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_clear(_ connection: OpaquePointer!) -> Bool {
         registerCall("run_clear", [:])
+        return true
+    }
+    
+    func send_list_playlists(_ connection: OpaquePointer!) -> Bool {
+        registerCall("send_list_playlists", [:])
+        return true
+    }
+    
+    func recv_playlist(_ connection: OpaquePointer!) -> OpaquePointer! {
+        registerCall("recv_playlist", [:])
+        if playlists.count > 0 {
+            currentPlaylist = playlists[0]
+            playlists.removeFirst()
+            return OpaquePointer.init(bitPattern: 6)
+        }
+        else {
+            currentPlaylist = nil
+            return nil
+        }
+    }
+    
+    func playlist_free(_ playlist: OpaquePointer!) {
+        registerCall("playlist_free", [:])
+    }
+    
+    func playlist_get_path(_ playlist: OpaquePointer!) -> String {
+        registerCall("playlist_get_path", [:])
+        return currentPlaylist!["id"]!
+    }
+    
+    func playlist_get_last_modified(_ playlist: OpaquePointer!) -> Date {
+        registerCall("playlist_get_last_modified", [:])
+        return playlistLastModified
+    }
+    
+    func send_list_playlist_meta(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        registerCall("send_list_playlist_meta", ["name": "\(stringFromMPDString(name))"])
+        return true
+    }
+    
+    func run_rename(_ connection: OpaquePointer!, from: UnsafePointer<Int8>!, to: UnsafePointer<Int8>!) -> Bool {
+        registerCall("run_rename", ["from": "\(stringFromMPDString(from))", "to": "\(stringFromMPDString(to))"])
+        return true
+    }
+    
+    func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        registerCall("run_rm", ["name": "\(stringFromMPDString(name))"])
         return true
     }
     

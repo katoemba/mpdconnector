@@ -487,4 +487,15 @@ class MPDControlTests: XCTestCase {
         
         testScheduler.start()
     }
+    
+    func testSavePlaylist() {
+        testScheduler.scheduleAt(50) {
+            _ = self.mpdPlayer?.control.savePlaylist("Name of the Game")
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_save", expectedParameters: ["name": "Name of the Game"])
+        }
+        
+        testScheduler.start()
+    }
 }

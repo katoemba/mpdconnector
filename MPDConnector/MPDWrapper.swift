@@ -293,10 +293,18 @@ public class MPDWrapper: MPDProtocol {
         return dateFromMPDDate(mpd_playlist_get_last_modified(playlist))
     }
     
-    public func send_list_playlist_meta(_ connection: OpaquePointer!, _ name: UnsafePointer<Int8>!) -> Bool {
+    public func send_list_playlist_meta(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         return mpd_send_list_playlist_meta(connection, name)
     }
+    
+    public func run_rename(_ connection: OpaquePointer!, from: UnsafePointer<Int8>!, to: UnsafePointer<Int8>!) -> Bool {
+        return mpd_run_rename(connection, from, to)
+    }
 
+    public func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
+        return mpd_run_rm(connection, name)
+    }
+    
     /// Convert a raw mpd-string to a standard Swift string.
     ///
     /// - Parameter mpdString: Pointer to a null-terminated (unsigned char) string.
