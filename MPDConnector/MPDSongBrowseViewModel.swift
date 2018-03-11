@@ -45,19 +45,14 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
             _songsSubject.onNext(_songs)
         }
         else if filters.count > 0 {
-            switch filters[0] {
-            case let .playlist(playlist):
-                reload(playlist: playlist)
-            default:
-                fatalError("MPDSongBrowseViewModel: load without filters not allowed")
-            }
+            reload(filter: filters[0])
         }
         else {
             fatalError("MPDSongBrowseViewModel: load without filters not allowed")
         }
     }
     
-    private func reload(playlist: Playlist) {
+    private func reload(filter: BrowseFilter) {
         // Get rid of old disposables
         bag = DisposeBag()
         
@@ -67,7 +62,15 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
         // Load new contents
         let browse = _browse
         let songsSubject = self._songsSubject
-        let songsObservable = browse.songsInPlaylist(playlist)
+        var songsObservable : Observable<[Song]>
+        switch filter {
+        case let .playlist(playlist):
+            songsObservable = browse.songsInPlaylist(playlist)
+        case let .album(album):
+            songsObservable = browse.songsOnAlbum(album)
+        default:
+            fatalError("MPDSongBrowseViewModel: load without filters not allowed")
+        }
         
         songsObservable
             .observeOn(MainScheduler.instance)

@@ -535,6 +535,14 @@ public class MPDBrowse: BrowseProtocol {
             })
     }
     
+    /// Return a view model for a list of songs in an album, which can return songs in batches.
+    ///
+    /// - Parameter album: album to filter on
+    /// - Returns: a SongBrowseViewModel instance
+    public func songBrowseViewModel(_ album: Album) -> SongBrowseViewModel {
+        return MPDSongBrowseViewModel(browse: self, filters: [.album(album)])
+    }
+    
     /// Return an array of songs for an artist and optional album. This will search through both artist and albumartist.
     ///
     /// - Parameters:
