@@ -13,6 +13,7 @@ import ConnectorProtocol
 
 public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     private var _albumsSubject = PublishSubject<[Album]>()
+    private var numberOfItems = Variable<Int>(0)
     public var albumsObservable: Driver<[Album]> {
         get {
             return _albumsSubject.asDriver(onErrorJustReturn: [])
@@ -121,11 +122,24 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             })
             .disposed(by: bag)
         
+        extendTriggerObservable
+            .map { (start, extendSize) -> Int in
+                start + extendSize
+            }
+            .bind(to: numberOfItems)
+            .disposed(by: bag)
+        
         // Trigger a first load
         extend()
     }
     
     public func extend() {
         extendTriggerSubject.onNext(extendSize)
+    }
+
+    public func extend(to: Int) {
+        if to > numberOfItems.value {
+            extendTriggerSubject.onNext(extendSize)
+        }
     }
 }
