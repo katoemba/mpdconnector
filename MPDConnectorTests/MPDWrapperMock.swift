@@ -280,8 +280,8 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return true
     }
     
-    func get_song(_ connection: OpaquePointer!) -> OpaquePointer! {
-        registerCall("get_song", [:])
+    func recv_song(_ connection: OpaquePointer!) -> OpaquePointer! {
+        registerCall("recv_song", [:])
         if songs.count > 0 {
             currentSong = songs[0]
             songs.removeFirst()

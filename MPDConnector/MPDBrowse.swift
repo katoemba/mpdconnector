@@ -74,7 +74,7 @@ public class MPDBrowse: BrowseProtocol {
             try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: search)
             try mpd.search_commit(connection)
             
-            var mpdSong = mpd.get_song(connection)
+            var mpdSong = mpd.recv_song(connection)
             while mpdSong != nil {
                 if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
                     if song.id.starts(with: "podcast+") {
@@ -120,7 +120,7 @@ public class MPDBrowse: BrowseProtocol {
                 }
                 
                 mpd.song_free(mpdSong)
-                mpdSong = mpd.get_song(connection)
+                mpdSong = mpd.recv_song(connection)
             }
         }
         catch {
@@ -159,7 +159,7 @@ public class MPDBrowse: BrowseProtocol {
                 }
                 try self.mpd.search_commit(connection)
                 
-                var mpdSong = self.mpd.get_song(connection)
+                var mpdSong = self.mpd.recv_song(connection)
                 while mpdSong != nil {
                     if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
                         if songIDs[song.id] == nil {
@@ -169,7 +169,7 @@ public class MPDBrowse: BrowseProtocol {
                     }
                     
                     self.mpd.song_free(mpdSong)
-                    mpdSong = self.mpd.get_song(connection)
+                    mpdSong = self.mpd.recv_song(connection)
                 }
             }
             catch {
@@ -222,6 +222,7 @@ public class MPDBrowse: BrowseProtocol {
         let artist = song.albumartist != "" ? song.albumartist : song.artist
         var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0)
         album.coverURI = song.coverURI
+        album.lastModified = song.lastModified
     
         return album
     }
@@ -246,8 +247,54 @@ public class MPDBrowse: BrowseProtocol {
                 return Observable.just(weakself.albumsFromSongs(songs))
             })
     }
+    
+    func fetchRecentAlbums(numberOfDays: Int = 0) -> Observable<[Album]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[Album]> in
+                do {
+                    var albums = [Album]()
+                    
+                    try self.mpd.search_db_songs(connection, exact: true)
+                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSinceNow: TimeInterval(-1 * (numberOfDays > 0 ? numberOfDays : 180) * 24 * 60 * 60)))
+                    try self.mpd.search_commit(connection)
+                    
+                    var albumIDs = [String: Int]()
+                    while let mpdSong = self.mpd.recv_song(connection) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                            let albumID = "\(song.albumartist):\(song.album)"
+                            if albumIDs[albumID] == nil {
+                                albumIDs[albumID] = 1
+                                albums.append(self.albumFromSong(song))
+                            }
+                        }
 
-    public func fetchAlbums(genre: String?, sort: SortType) -> Observable<[Album]> {
+                        self.mpd.song_free(mpdSong)
+                    }
+                    _ = self.mpd.response_finish(connection)
+                    
+                    // Cleanup
+                    self.mpd.connection_free(connection)
+                    
+                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
+                        return lhs.lastModified > rhs.lastModified
+                    }))
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    self.mpd.connection_free(connection)
+                    
+                    return Observable.empty()
+                }
+            })
+    }
+
+    func fetchAlbums(genre: String?, sort: SortType, numberOfDays: Int = 0) -> Observable<[Album]> {
+        if sort == .recent {
+            return fetchRecentAlbums(numberOfDays: numberOfDays)
+        }
+        
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
@@ -339,7 +386,7 @@ public class MPDBrowse: BrowseProtocol {
                         try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: album.artist)
                         try self.mpd.search_commit(connection)
                         
-                        if let mpdSong = self.mpd.get_song(connection) {
+                        if let mpdSong = self.mpd.recv_song(connection) {
                             song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong)
                             self.mpd.song_free(mpdSong)
                         }
@@ -553,13 +600,13 @@ public class MPDBrowse: BrowseProtocol {
         var songs = [Song]()
         
         if self.mpd.send_list_playlist_meta(connection, name: playlist) == true {
-            var mpdSong = mpd.get_song(connection)
+            var mpdSong = mpd.recv_song(connection)
             while mpdSong != nil {
                 if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
                     songs.append(song)
                 }
                 self.mpd.song_free(mpdSong)
-                mpdSong = mpd.get_song(connection)
+                mpdSong = mpd.recv_song(connection)
             }
             
             _ = self.mpd.response_finish(connection)

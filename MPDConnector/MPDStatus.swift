@@ -234,7 +234,7 @@ public class MPDStatus: StatusProtocol {
         
         var songs = [Song]()
         if mpd.send_list_queue_range_meta(connection, start: UInt32(start), end: UInt32(end)) == true {
-            var mpdSong = mpd.get_song(connection)
+            var mpdSong = mpd.recv_song(connection)
             var position = start
             while mpdSong != nil {
                 if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
@@ -245,7 +245,7 @@ public class MPDStatus: StatusProtocol {
                 }
                 
                 mpd.song_free(mpdSong)
-                mpdSong = mpd.get_song(connection)
+                mpdSong = mpd.recv_song(connection)
             }
             
             _ = mpd.response_finish(connection)

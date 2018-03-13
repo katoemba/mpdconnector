@@ -161,11 +161,15 @@ public class MPDWrapper: MPDProtocol {
         return stringFromMPDString(mpd_song_get_uri(song))
     }
     
+    public func song_get_last_modified(_ song: OpaquePointer!) -> Date {
+        return dateFromMPDDate(mpd_song_get_last_modified(song))
+    }
+    
     public func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         return mpd_send_list_queue_range_meta(connection, start, end)
     }
     
-    public func get_song(_ connection: OpaquePointer!) -> OpaquePointer! {
+    public func recv_song(_ connection: OpaquePointer!) -> OpaquePointer! {
         return mpd_recv_song(connection)
     }
     
@@ -199,6 +203,13 @@ public class MPDWrapper: MPDProtocol {
         }
     }
     
+    public func search_add_modified_since_constraint(_ connection: OpaquePointer!, oper: mpd_operator, since: Date) throws {
+        //Int(Date(timeIntervalSinceNow: -180 * 24 * 60 * 60).timeIntervalSince1970)
+        if mpd_search_add_modified_since_constraint(connection, oper, Int(since.timeIntervalSince1970)) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+
     public func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
         if mpd_search_add_sort_tag(connection, tagType, false) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
             throw MPDError.commandFailed

@@ -21,7 +21,7 @@ public class MPDHelper {
     ///   - password: Password to use after connecting.
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 3000) -> OpaquePointer? {
+    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000) -> OpaquePointer? {
         guard let connection = mpd.connection_new(host, UInt32(port), UInt32(timeout)) else {
             return nil
         }
@@ -141,6 +141,7 @@ public class MPDHelper {
         song.sortArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ARTIST_SORT, 0)
         song.sortAlbumArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST_SORT, 0)
         song.sortAlbum = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_SORT, 0)
+        song.lastModified = mpd.song_get_last_modified(mpdSong)
         
         // Get a sensible coverURI
         let sections = song.id.split(separator: ":")
