@@ -262,7 +262,8 @@ public class MPDBrowse: BrowseProtocol {
                     var albumIDs = [String: Int]()
                     while let mpdSong = self.mpd.recv_song(connection) {
                         if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                            let albumID = "\(song.albumartist):\(song.album)"
+                            let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
+                            let albumID = "\(albumartist):\(song.album)"
                             if albumIDs[albumID] == nil {
                                 albumIDs[albumID] = 1
                                 albums.append(self.albumFromSong(song))
@@ -290,11 +291,7 @@ public class MPDBrowse: BrowseProtocol {
             })
     }
 
-    func fetchAlbums(genre: String?, sort: SortType, numberOfDays: Int = 0) -> Observable<[Album]> {
-        if sort == .recent {
-            return fetchRecentAlbums(numberOfDays: numberOfDays)
-        }
-        
+    func fetchAlbums(genre: String?, sort: SortType) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in

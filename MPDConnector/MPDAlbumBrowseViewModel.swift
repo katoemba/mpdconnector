@@ -13,12 +13,13 @@ import ConnectorProtocol
 
 public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     private var _albumsSubject = PublishSubject<[Album]>()
-    private var numberOfItems = Variable<Int>(0)
+    private var numberOfItems = BehaviorRelay<Int>(value: 0)
     public var albumsObservable: Driver<[Album]> {
         get {
             return _albumsSubject.asDriver(onErrorJustReturn: [])
         }
     }
+    private var _filters = [BrowseFilter]([])
     public var filters: [BrowseFilter] {
         get {
             return _filters
@@ -49,13 +50,12 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     private var extendSize = 30
     private let _browse: MPDBrowse
     private let _albums: [Album]
-    private let _filters: [BrowseFilter]
     
     deinit {
         print("Cleanup MPDAlbumBrowseViewModel")
     }
     
-    public required init(browse: MPDBrowse, albums: [Album] = [], filters: [BrowseFilter] = []) {
+    init(browse: MPDBrowse, albums: [Album] = [], filters: [BrowseFilter] = []) {
         _browse = browse
         _albums = albums
         _filters = filters
@@ -63,7 +63,15 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     
     public func load(sort: SortType) {
         _sort = sort
-        
+        load()
+    }
+    
+    public func load(filters: [BrowseFilter]) {
+        _filters = filters
+        load()
+    }
+    
+    private func load() {
         if _albums.count > 0 {
             bag = DisposeBag()
             _albumsSubject.onNext(_albums)
@@ -74,6 +82,8 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 reload(genre: genre, sort: sort)
             case let .artist(artist):
                 reload(artist: artist, sort: sort)
+            case let .recent(duration):
+                reload(recent: duration, sort: sort)
             default:
                 fatalError("MPDAlbumBrowseViewModel: unsupported filter type")
             }
@@ -83,7 +93,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         }
     }
     
-    private func reload(genre: String? = nil, artist: Artist? = nil, sort: SortType) {
+    private func reload(genre: String? = nil, artist: Artist? = nil, recent: Int? = nil, sort: SortType) {
         // Get rid of old disposables
         bag = DisposeBag()
         
@@ -92,9 +102,23 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         
         // Load new contents
         let browse = _browse
-        let extendSize = self.extendSize
         let albumsSubject = self._albumsSubject
-        let albumsObservable = artist != nil ? browse.albumsByArtist(artist!) : browse.fetchAlbums(genre: genre, sort: sort)
+        var albumsObservable : Observable<[Album]>
+        
+        if let artist = artist {
+            self.extendSize = 30
+            albumsObservable = browse.albumsByArtist(artist)
+        }
+        else if let recent = recent {
+            self.extendSize = 200
+            albumsObservable = browse.fetchRecentAlbums(numberOfDays: recent)
+        }
+        else {
+            self.extendSize = 30
+            albumsObservable = browse.fetchAlbums(genre: genre, sort: sort)
+        }
+        
+        let extendSize = self.extendSize
         let extendTriggerObservable = extendTriggerSubject.asObservable()
             .scan(-extendSize) { seed, next in
                 seed + next

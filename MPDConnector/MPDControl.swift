@@ -20,11 +20,11 @@ public class MPDControl: ControlProtocol {
     private let bag = DisposeBag()
     private var serialScheduler: SchedulerType
     
-    private let songIndex = Variable<Int>(0)
-    private let endIndex = Variable<Int>(0)
-    private let repeatMode = Variable<RepeatMode>(.Off)
-    private let randomMode = Variable<RandomMode>(.Off)
-    private let currentSong = Variable<Song?>(nil)
+    private let songIndex = BehaviorRelay<Int>(value: 0)
+    private let endIndex = BehaviorRelay<Int>(value: 0)
+    private let repeatMode = BehaviorRelay<RepeatMode>(value: .Off)
+    private let randomMode = BehaviorRelay<RandomMode>(value: .Off)
+    private let currentSong = BehaviorRelay<Song?>(value: nil)
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
