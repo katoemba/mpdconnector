@@ -39,6 +39,9 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             else if filters.count > 0, case .artist(_) = filters[0] {
                 return []
             }
+            else if filters.count > 0, case .genre(_) = filters[0] {
+                return []
+            }
             else {
                 return [.artist, .year, .yearReverse]
             }

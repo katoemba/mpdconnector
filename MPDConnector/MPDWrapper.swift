@@ -191,6 +191,12 @@ public class MPDWrapper: MPDProtocol {
         }
     }
     
+    public func search_add_db_songs(_ connection: OpaquePointer!, exact: Bool) throws {
+        if mpd_search_add_db_songs(connection, exact) == false {
+            throw MPDError.commandFailed
+        }
+    }
+    
     public func search_db_tags(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
         if mpd_search_db_tags(connection, tagType) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
             throw MPDError.commandFailed
@@ -260,6 +266,14 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_add_id_to(connection, uri, to)
     }
     
+    public func send_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
+        return mpd_send_add(connection, uri)
+    }
+    
+    public func send_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Bool {
+        return mpd_send_add_id_to(connection, uri, to)
+    }
+    
     public func run_clear(_ connection: OpaquePointer!) -> Bool {
         return mpd_run_clear(connection)
     }
@@ -314,6 +328,14 @@ public class MPDWrapper: MPDProtocol {
 
     public func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         return mpd_run_rm(connection, name)
+    }
+    
+    public func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool {
+        return mpd_command_list_begin(connection, discrete_ok)
+    }
+    
+    public func command_list_end(_ connection: OpaquePointer!) -> Bool {
+        return mpd_command_list_end(connection)
     }
     
     /// Convert a raw mpd-string to a standard Swift string.

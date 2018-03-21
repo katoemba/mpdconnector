@@ -222,7 +222,7 @@ class MPDStatusTests: XCTestCase {
         XCTAssert(songs.count == 3, "Expected 3 songs, got \(songs.count)")
 
         let songCount = self.mpdWrapper.callCount("run_current_song") +
-            self.mpdWrapper.callCount("get_song") - 1
+            self.mpdWrapper.callCount("recv_song") - 1
         let songFreeCount = self.mpdWrapper.callCount("song_free")
         XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
         mpdWrapper.assertCall("send_list_queue_range_meta", expectedParameters: ["start": "\(2)", "end": "\(5)"])

@@ -35,6 +35,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var songIndex = Int32(0)
     var songDuration = UInt32(0)
     var songUri = ""
+    var songLastModifiedDate = Date(timeIntervalSince1970: 0)
     var searchName = ""
     var searchValue = ""
     var testScheduler: TestScheduler?
@@ -274,6 +275,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("song_get_tag", ["song": "\(song)"])
         return songDuration
     }
+    
+    func song_get_last_modified(_ song: OpaquePointer!) -> Date {
+        registerCall("song_get_last_modified", ["song": "\(song)"])
+        return songLastModifiedDate
+    }
 
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         registerCall("send_list_queue_range_meta", ["start": "\(start)", "end": "\(end)"])
@@ -328,6 +334,14 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("search_add_group_tag", ["tagType": "\(tagType)"])
     }
     
+    func search_add_db_songs(_ connection: OpaquePointer!, exact: Bool) throws {
+        registerCall("search_add_db_songs", ["exact": "\(exact)"])
+    }
+    
+    func search_add_modified_since_constraint(_ connection: OpaquePointer!, oper: mpd_operator, since: Date) throws {
+        registerCall("search_add_modified_since_constraint", ["oper": "\(oper)", "since": "\(since)"])
+    }
+
     func search_commit(_ connection: OpaquePointer!) throws  {
         registerCall("search_commit", [:])
     }
@@ -355,6 +369,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return Int32(to)
     }
     
+    func send_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
+        registerCall("send_add", ["uri": "\(stringFromMPDString(uri))"])
+        return true
+    }
+    
+    func send_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Bool {
+        registerCall("send_add_id_to", ["uri": "\(stringFromMPDString(uri))", "to": "\(to)"])
+        return true
+    }
+
     func run_move(_ connection: OpaquePointer!, from: UInt32, to: UInt32) -> Bool {
         registerCall("run_move", ["from": "\(from)", "to": "\(to)"])
         return true
@@ -414,6 +438,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         registerCall("run_rm", ["name": "\(stringFromMPDString(name))"])
+        return true
+    }
+    
+    func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool {
+        registerCall("command_list_begin", ["discrete_ok": "\(discrete_ok)"])
+        return true
+    }
+    
+    func command_list_end(_ connection: OpaquePointer!) -> Bool {
+        registerCall("command_list_end", [:])
         return true
     }
     

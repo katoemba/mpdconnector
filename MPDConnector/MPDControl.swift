@@ -254,11 +254,14 @@ public class MPDControl: ControlProtocol {
             
             let songsToAdd = shuffle ? songs.shuffled() : songs
             
+            // Add songs in a command list, as this can be a longer list.
+            _ = self.mpd.command_list_begin(connection, discrete_ok: false)
             for song in songsToAdd {
-                print("Adding \(song.id) at position \(pos)")
-                _ = self.mpd.run_add_id_to(connection, uri: song.id, to: pos)
+                _ = self.mpd.send_add_id_to(connection, uri: song.id, to: pos)
                 pos = pos + 1
             }
+            _ = self.mpd.command_list_end(connection)
+            _ = self.mpd.response_finish(connection)
 
             if addMode == .replace {
                 _ = self.mpd.run_play_pos(connection, startWithSong)
@@ -343,6 +346,42 @@ public class MPDControl: ControlProtocol {
         }
     }
 
+    /// Add a genre to the play queue
+    ///
+    /// - Parameters:
+    ///   - genre: the genre to add
+    ///   - addMode: how to add the songs to the playqueue
+    ///   - shuffle: whether or not to shuffle the songs before adding them
+    public func addGenre(_ genre: String, addMode: AddMode, shuffle: Bool) {
+        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(serialScheduler)
+            .subscribe(onNext: { (connection) in
+                do {
+                    _ = self.mpd.run_clear(connection)
+
+                    try self.mpd.search_add_db_songs(connection, exact: true)
+                    try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                    try self.mpd.search_commit(connection)
+                    
+                    _ = self.mpd.response_finish(connection)
+
+                    if shuffle {
+                        _ = self.mpd.run_shuffle(connection)
+                    }
+                    
+                    _ = self.mpd.run_play_pos(connection, 0)
+
+                    self.mpd.connection_free(connection)
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    self.mpd.connection_free(connection)
+                }
+            })
+            .disposed(by: bag)
+    }
+    
     /// Move a song in the playqueue to a different position
     ///
     /// - Parameters:

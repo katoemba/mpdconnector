@@ -58,6 +58,7 @@ public protocol MPDProtocol {
     func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws
+    func search_add_db_songs(_ connection: OpaquePointer!, exact: Bool) throws
     func search_db_tags(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
     func search_add_tag_constraint(_ connection: OpaquePointer!, oper: mpd_operator, tagType: mpd_tag_type, value: UnsafePointer<Int8>!) throws
     func search_add_modified_since_constraint(_ connection: OpaquePointer!, oper: mpd_operator, since: Date) throws
@@ -69,6 +70,8 @@ public protocol MPDProtocol {
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool
     func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32
+    func send_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool
+    func send_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Bool
     func run_seek(_ connection: OpaquePointer!, pos: UInt32, t: UInt32) -> Bool
     func run_clear(_ connection: OpaquePointer!) -> Bool
     func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle
@@ -82,5 +85,7 @@ public protocol MPDProtocol {
     func playlist_get_last_modified(_ playlist: OpaquePointer!) -> Date
     func send_list_playlist_meta(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_rename(_ connection: OpaquePointer!, from: UnsafePointer<Int8>!, to: UnsafePointer<Int8>!) -> Bool
+    func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool
+    func command_list_end(_ connection: OpaquePointer!) -> Bool
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
 }

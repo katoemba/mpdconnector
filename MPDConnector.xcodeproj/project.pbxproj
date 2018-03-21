@@ -300,6 +300,7 @@
 		C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */; };
 		C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
+		C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
 		C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */; };
 		C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */; };
@@ -474,6 +475,7 @@
 		C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDSongBrowseViewModel.swift; sourceTree = "<group>"; };
 		C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetServiceBrowser+Rx.swift"; sourceTree = "<group>"; };
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
+		C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDGenreBrowseViewModel.swift; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControlTests.swift; sourceTree = "<group>"; };
 		C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDAlbumBrowseViewModel.swift; sourceTree = "<group>"; };
@@ -562,6 +564,7 @@
 				C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */,
 				C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */,
 				C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */,
+				C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
 				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
@@ -1330,6 +1333,7 @@
 				C546B01B1F35FAF0003C5B7E /* entity.c in Sources */,
 				C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */,
 				C546B0151F35FAF0003C5B7E /* coutput.c in Sources */,
+				C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */,
 				C546B0161F35FAF0003C5B7E /* cplaylist.c in Sources */,
 				C546B0281F35FAF0003C5B7E /* list.c in Sources */,
 				C546B0261F35FAF0003C5B7E /* iso8601.c in Sources */,

@@ -68,7 +68,7 @@ class MPDBrowseTests: XCTestCase {
         self.mpdWrapper.assertCall("search_commit", expectedCallCount: 2)
         self.mpdWrapper.assertCall("connection_free")
 
-        let songCount = self.mpdWrapper.callCount("get_song")
+        let songCount = self.mpdWrapper.callCount("recv_song")
         let songFreeCount = self.mpdWrapper.callCount("song_free")
         let searchCount = self.mpdWrapper.callCount("search_db_songs")
         XCTAssert(songCount - searchCount == songFreeCount, "Expected \(songCount - searchCount) for songFreeCount, got \(songFreeCount)")
@@ -105,7 +105,7 @@ class MPDBrowseTests: XCTestCase {
         self.mpdWrapper.assertCall("search_commit", expectedCallCount: 2)
         self.mpdWrapper.assertCall("connection_free")
 
-        let songCount = self.mpdWrapper.callCount("get_song")
+        let songCount = self.mpdWrapper.callCount("recv_song")
         let songFreeCount = self.mpdWrapper.callCount("song_free")
         let searchCount = self.mpdWrapper.callCount("search_db_songs")
         XCTAssert(songCount - searchCount == songFreeCount, "Expected \(songCount - searchCount) for songFreeCount, got \(songFreeCount)")
@@ -142,7 +142,7 @@ class MPDBrowseTests: XCTestCase {
         self.mpdWrapper.assertCall("search_commit", expectedCallCount: 2)
         self.mpdWrapper.assertCall("connection_free")
 
-        let songCount = self.mpdWrapper.callCount("get_song")
+        let songCount = self.mpdWrapper.callCount("recv_song")
         let songFreeCount = self.mpdWrapper.callCount("song_free")
         let searchCount = self.mpdWrapper.callCount("search_db_songs")
         XCTAssert(songCount - searchCount == songFreeCount, "Expected \(songCount - searchCount) for songFreeCount, got \(songFreeCount)")
@@ -218,7 +218,7 @@ class MPDBrowseTests: XCTestCase {
         let freeCount = self.mpdWrapper.callCount("connection_free")
         XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
 
-        let songCount = self.mpdWrapper.callCount("get_song")
+        let songCount = self.mpdWrapper.callCount("recv_song")
         let songFreeCount = self.mpdWrapper.callCount("song_free")
         let fetchCount = self.mpdWrapper.callCount("send_list_playlist_meta")
         XCTAssert(songCount - fetchCount == songFreeCount, "Expected \(songCount - fetchCount) for songFreeCount, got \(songFreeCount)")

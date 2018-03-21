@@ -637,6 +637,52 @@ public class MPDBrowse: BrowseProtocol {
                 self.mpd.connection_free(connection)
             })
     }
+    
+    /// Return a view model for a list of genres, which can return genres in batches.
+    ///
+    /// - Returns: a GenreBrowseViewModel
+    public func genreBrowseViewModel() -> GenreBrowseViewModel {
+        return MPDGenreBrowseViewModel(browse: self)
+    }
+
+    /// Fetch an array of genres
+    ///
+    /// - Returns: an observable String array of genre names
+    func fetchGenres() -> Observable<[String]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[String]> in
+                do {
+                    var genres = [String]()
+                    
+                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_GENRE)
+                    try self.mpd.search_commit(connection)
+                    
+                    while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_GENRE) {
+                        let genre = result.1
+                        if genre != "" {
+                            genres.append(genre)
+                        }
+                    }
+                    _ = self.mpd.response_finish(connection)
+                    
+                    // Cleanup
+                    self.mpd.connection_free(connection)
+                    
+                    return Observable.just(genres)
+                    //return Observable.just(genres.sorted(by: { (lhs, rhs) -> Bool in
+                    //    return lhs.caseInsensitiveCompare(rhs) == .orderedAscending
+                    //}))
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    self.mpd.connection_free(connection)
+                    
+                    return Observable.empty()
+                }
+            })
+    }
 
     /*
     private func getAllAlbumNames(artist: String = "", genre: String = "") -> [String] {
