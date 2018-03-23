@@ -198,12 +198,19 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
             }
             
-            if let song = self.mpd.run_current_song(connection) {
+            var song = self.mpd.run_current_song(connection)
+            if song == nil {
+                if mpd.send_list_queue_range_meta(connection, start: UInt32(0), end: UInt32(1)) == true {
+                    song = mpd.recv_song(connection)
+                }
+                _ = mpd.response_finish(connection)
+            }
+            if let mpdSong = song {
                 defer {
-                    self.mpd.song_free(song)
+                    self.mpd.song_free(mpdSong)
                 }
                 
-                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: song) {
+                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
                     song.position = playerStatus.playqueue.songIndex
                     playerStatus.currentSong = song
                 }

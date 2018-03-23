@@ -115,7 +115,18 @@ public class MPDControl: ControlProtocol {
     /// Toggle between play and pause: when paused -> start to play, when playing -> pause.
     public func togglePlayPause() {
         runCommand()  { connection in
-            _ = self.mpd.run_toggle_pause(connection)
+            var playingStatus = MPD_STATE_UNKNOWN
+            if let status = self.mpd.run_status(connection) {
+                playingStatus = self.mpd.status_get_state(status)
+                self.mpd.status_free(status)
+            }
+            
+            if playingStatus == MPD_STATE_STOP {
+                _ = self.mpd.run_play(connection)
+            }
+            else {
+                _ = self.mpd.run_toggle_pause(connection)
+            }
         }
     }
     
