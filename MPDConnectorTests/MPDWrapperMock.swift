@@ -46,6 +46,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var playlists = [[String:String]]()
     var playlistPath = ""
     var playlistLastModified = Date(timeIntervalSince1970: 0)
+    var playerVersion = "0.0.0"
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -449,6 +450,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func command_list_end(_ connection: OpaquePointer!) -> Bool {
         registerCall("command_list_end", [:])
         return true
+    }
+    
+    public func connection_get_server_version(_ connection: OpaquePointer!) -> String {
+        registerCall("connection_get_server_version", [:])
+        return playerVersion
     }
     
     func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle {

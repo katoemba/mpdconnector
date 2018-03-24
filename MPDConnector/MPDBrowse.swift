@@ -189,6 +189,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an observable array of Song objects
     public func songsOnAlbum(_ album: Album) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: album.artist, album: album.title)
@@ -207,6 +208,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an observable array of Song objects
     public func songsByArtist(_ artist: Artist) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist.name)
@@ -250,6 +252,7 @@ public class MPDBrowse: BrowseProtocol {
     
     func fetchRecentAlbums(numberOfDays: Int = 0) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
                 do {
@@ -293,6 +296,7 @@ public class MPDBrowse: BrowseProtocol {
 
     func fetchAlbums(genre: String?, sort: SortType) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
                 do {
@@ -371,6 +375,7 @@ public class MPDBrowse: BrowseProtocol {
     
     public func completeAlbums(_ albums: [Album]) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
                 var completeAlbums = [Album]()
@@ -442,6 +447,7 @@ public class MPDBrowse: BrowseProtocol {
 
     public func fetchArtists(genre: String?) -> Observable<[Artist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Artist]> in
                 do {
@@ -522,6 +528,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an observable array of playlists, order by name
     func fetchPlaylists() -> Observable<[Playlist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Playlist]> in
                 var playlists = [Playlist]()
@@ -568,6 +575,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an observable array of Song objects
     public func songsInPlaylist(_ playlist: Playlist) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
                 let songs = self.songsForPlaylist(connection: connection, playlist: playlist.id)
@@ -617,6 +625,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter playlist: the playlist to delete
     func deletePlaylist(_ playlist: Playlist) {
         _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(onNext: { (connection) in
                 _ = self.mpd.run_rm(connection, name: playlist.id)
@@ -631,6 +640,7 @@ public class MPDBrowse: BrowseProtocol {
     ///   - newName: the new name to give to the playlist
     func renamePlaylist(_ playlist: Playlist, newName: String) {
         _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(onNext: { (connection) in
                 _ = self.mpd.run_rename(connection, from: playlist.id, to: newName)
@@ -650,6 +660,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an observable String array of genre names
     func fetchGenres() -> Observable<[String]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[String]> in
                 do {
@@ -683,89 +694,4 @@ public class MPDBrowse: BrowseProtocol {
                 }
             })
     }
-
-    /*
-    private func getAllAlbumNames(artist: String = "", genre: String = "") -> [String] {
-        var albumNames = [String]()
-        do {
-            try mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
-            if artist != "" {
-                try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist)
-            }
-            else if genre != "" {
-                try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
-            }
-            try mpd.search_commit(connection)
-            
-            while let result = mpd.recv_pair_tag(connection, tagType: MPD_TAG_ALBUM) {
-                if result.1 != "" {
-                    albumNames.append(result.1)
-                }
-            }
-        }
-        catch {
-            print(mpd.connection_get_error_message(connection))
-            _ = mpd.connection_clear_error(connection)
-        }
-        
-        // Cleanup
-        _ = mpd.response_finish(connection)
-        
-        return albumNames.sorted
-            { $0.caseInsensitiveCompare($1) == .orderedAscending }
-    }
-    
-    private func albumNames(artist: String = "", genre: String = "") -> Observable<String> {
-        return Observable.create { observer in
-            do {
-                try self.mpd.search_db_tags(self.connection, tagType: MPD_TAG_ALBUM)
-                if artist != "" {
-                    try self.mpd.search_add_tag_constraint(self.connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist)
-                }
-                else if genre != "" {
-                    try self.mpd.search_add_tag_constraint(self.connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
-                }
-                try self.mpd.search_commit(self.connection)
-                
-                while let result = self.mpd.recv_pair_tag(self.connection, tagType: MPD_TAG_ALBUM) {
-                    observer.on(.next(result.1))
-                }
-            }
-            catch  {
-                print(self.mpd.connection_get_error_message(self.connection))
-                _ = self.mpd.connection_clear_error(self.connection)
-                observer.on(.error(MPDError.commandFailed))
-            }
-            
-            observer.on(.completed)
-
-            return Disposables.create()
-        }
-     }
-
-    private func getAllArtistNames(genre: String = "") -> [String] {
-        var artistNames = [String]()
-        do {
-            try mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
-            if genre != "" {
-                try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
-            }
-            try mpd.search_commit(connection)
-            
-            while let result = mpd.recv_pair_tag(connection, tagType: MPD_TAG_ALBUM) {
-                artistNames.append(result.1)
-            }
-        }
-        catch {
-            print(mpd.connection_get_error_message(connection))
-            _ = mpd.connection_clear_error(connection)
-        }
-        
-        // Cleanup
-        _ = mpd.response_finish(connection)
-        
-        return artistNames.sorted
-            { $0.caseInsensitiveCompare($1) == .orderedAscending }
-    }
-     */
 }

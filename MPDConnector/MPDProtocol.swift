@@ -88,4 +88,5 @@ public protocol MPDProtocol {
     func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool
     func command_list_end(_ connection: OpaquePointer!) -> Bool
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
+    func connection_get_server_version(_ connection: OpaquePointer!) -> String
 }

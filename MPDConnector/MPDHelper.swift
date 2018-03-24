@@ -49,9 +49,11 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 3000) -> Observable<OpaquePointer> {
+    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> OpaquePointer? {
         return connect(mpd: mpd,
-                       connectionProperties: connectionProperties,
+                       host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
+                       port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
+                       password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
                        timeout: timeout)
     }
     
@@ -64,7 +66,7 @@ public class MPDHelper {
     ///   - password: Password to use after connecting, default = "".
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", timeout: Int = 3000) -> Observable<OpaquePointer> {
+    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", timeout: Int = 5000) -> Observable<OpaquePointer> {
         return Observable<OpaquePointer>.create { observer in
             if let connection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
                 observer.onNext(connection)
@@ -85,7 +87,7 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 3000) -> Observable<OpaquePointer> {
+    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> Observable<OpaquePointer> {
         return connectToMPD(mpd: mpd,
                             host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
                             port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,

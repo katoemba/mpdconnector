@@ -338,6 +338,15 @@ public class MPDWrapper: MPDProtocol {
         return mpd_command_list_end(connection)
     }
     
+    public func connection_get_server_version(_ connection: OpaquePointer!) -> String {
+        if let tripleTuple = mpd_connection_get_server_version(connection) {
+            return "\(tripleTuple[0]).\(tripleTuple[1]).\(tripleTuple[2])"
+        }
+        else {
+            return "0.0.0"
+        }
+    }
+    
     /// Convert a raw mpd-string to a standard Swift string.
     ///
     /// - Parameter mpdString: Pointer to a null-terminated (unsigned char) string.
