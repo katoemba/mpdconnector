@@ -199,6 +199,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(songs)
             })
+            .observeOn(MainScheduler.instance)
     }
 
     /// Asynchronously get all songs for an artist
@@ -218,6 +219,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(songs)
             })
+            .observeOn(MainScheduler.instance)
     }
     
     private func albumFromSong(_ song: Song) -> Album {
@@ -248,6 +250,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(weakself.albumsFromSongs(songs))
             })
+            .observeOn(MainScheduler.instance)
     }
     
     func fetchRecentAlbums(numberOfDays: Int = 0) -> Observable<[Album]> {
@@ -292,6 +295,7 @@ public class MPDBrowse: BrowseProtocol {
                     return Observable.empty()
                 }
             })
+            .observeOn(MainScheduler.instance)
     }
 
     func fetchAlbums(genre: String?, sort: SortType) -> Observable<[Album]> {
@@ -371,6 +375,7 @@ public class MPDBrowse: BrowseProtocol {
                     return Observable.empty()
                 }
             })
+            .observeOn(MainScheduler.instance)
     }
     
     public func completeAlbums(_ albums: [Album]) -> Observable<[Album]> {
@@ -412,6 +417,7 @@ public class MPDBrowse: BrowseProtocol {
                 self.mpd.connection_free(connection)
                 return Observable.just(completeAlbums)
             })
+            .observeOn(MainScheduler.instance)
     }
     
     /// Return a view model for a list of albums, which can return albums in batches.
@@ -483,6 +489,7 @@ public class MPDBrowse: BrowseProtocol {
                     return Observable.empty()
                 }
             })
+            .observeOn(MainScheduler.instance)
     }
     
     /// Return a view model for a list of artists, which can return artists in batches.
@@ -551,6 +558,7 @@ public class MPDBrowse: BrowseProtocol {
                     return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
                 }))
             })
+            .observeOn(MainScheduler.instance)
     }
     
     /// Return a view model for a preloaded list of songs.
@@ -585,6 +593,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(songs)
             })
+            .observeOn(MainScheduler.instance)
     }
     
     /// Return a view model for a list of songs in an album, which can return songs in batches.
@@ -693,5 +702,6 @@ public class MPDBrowse: BrowseProtocol {
                     return Observable.empty()
                 }
             })
+            .observeOn(MainScheduler.instance)
     }
 }
