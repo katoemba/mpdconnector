@@ -222,9 +222,13 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
     
-    private func albumFromSong(_ song: Song) -> Album {
+    private func createArtistFromSong(_ song: Song) -> Artist {
+        return Artist(id: song.artist, source: song.source, name: song.artist)
+    }
+    
+    private func createAlbumFromSong(_ song: Song) -> Album {
         let artist = song.albumartist != "" ? song.albumartist : song.artist
-        var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0)
+        var album = Album(id: "\(song.artist):\(song.album)", source: song.source, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0)
         album.coverURI = song.coverURI
         album.lastModified = song.lastModified
     
@@ -234,7 +238,7 @@ public class MPDBrowse: BrowseProtocol {
     private func albumsFromSongs(_ songs: [Song]) -> [Album] {
         var albums = [Album]()
         for song in songs {
-            let album = albumFromSong(song)
+            let album = createAlbumFromSong(song)
             if albums.contains(album) == false {
                 albums.append(album)
             }
@@ -272,7 +276,7 @@ public class MPDBrowse: BrowseProtocol {
                             let albumID = "\(albumartist):\(song.album)"
                             if albumIDs[albumID] == nil {
                                 albumIDs[albumID] = 1
-                                albums.append(self.albumFromSong(song))
+                                albums.append(self.createAlbumFromSong(song))
                             }
                         }
 
@@ -407,7 +411,7 @@ public class MPDBrowse: BrowseProtocol {
                     _ = self.mpd.response_finish(connection)
                     
                     if song != nil {
-                        completeAlbums.append(self.albumFromSong(song!))
+                        completeAlbums.append(self.createAlbumFromSong(song!))
                     }
                     else {
                         completeAlbums.append(album)
@@ -703,5 +707,21 @@ public class MPDBrowse: BrowseProtocol {
                 }
             })
             .observeOn(MainScheduler.instance)
+    }
+    
+    /// Get an Artist object for the artist performing a particular song
+    ///
+    /// - Parameter song: the song for which to get the artist
+    /// - Returns: an observable Artist
+    public func artistFromSong(_ song: Song) -> Observable<Artist> {
+        return Observable.just(createArtistFromSong(song))
+    }
+    
+    /// Get an Album object for the album on which a particular song appears
+    ///
+    /// - Parameter song: the song for which to get the album
+    /// - Returns: an observable Album
+    public func albumFromSong(_ song: Song) -> Observable<Album> {
+        return Observable.just(createAlbumFromSong(song))
     }
 }

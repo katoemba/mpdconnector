@@ -20,18 +20,20 @@ public class MPDStatus: StatusProtocol {
     
     /// ConectionStatus for the player
     private var _connectionStatus = BehaviorRelay<ConnectionStatus>(value: .unknown)
-    public var connectionStatusObservable : Driver<ConnectionStatus> {
+    private var _connectionStatusObservable : Observable<ConnectionStatus>
+    public var connectionStatusObservable : Observable<ConnectionStatus> {
         get {
-            return _connectionStatus.asDriver()
+            return _connectionStatusObservable
         }
     }
     private var connecting = false
 
     /// PlayerStatus object for the player
     private var _playerStatus = BehaviorRelay<PlayerStatus>(value: PlayerStatus())
+    private var _playerStatusObservable : Observable<PlayerStatus>
     public var playerStatusObservable : Observable<PlayerStatus> {
         get {
-            return _playerStatus.asObservable()
+            return _playerStatusObservable
         }
     }
     let disconnectHandler = PublishSubject<Int>()
@@ -60,6 +62,12 @@ public class MPDStatus: StatusProtocol {
             self.elapsedTimeScheduler = scheduler!
         }
         
+        _connectionStatusObservable = _connectionStatus
+            .observeOn(MainScheduler.instance)
+
+        _playerStatusObservable = _playerStatus
+            .observeOn(MainScheduler.instance)
+
         HelpMePlease.allocUp(name: "MPDStatus")
     }
     
