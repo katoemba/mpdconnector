@@ -16,13 +16,28 @@ enum ConnectionError: Error {
     case internalError
 }
 
-public enum MPDType: String {
-    case classic = "Classic"
-    case mopidy = "Mopidy"
-    case volumio = "Volumio"
+public enum MPDType: Int {
+    case classic = 1
+    case mopidy = 2
+    case volumio = 3
+    case bryston = 4
+    
+    var description: String {
+        switch self {
+        case .classic:
+            return "Classic MPD"
+        case .mopidy:
+            return "Mopidy"
+        case .volumio:
+            return "Volumio"
+        case .bryston:
+            return "Bryston"
+        }
+    }
 }
 
 public enum MPDConnectionProperties: String {
+    case MPDType = "type"
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"
 }
@@ -48,7 +63,7 @@ public class MPDPlayer: PlayerProtocol {
         return _version
     }
     public var description: String {
-        return _type.rawValue + " " + _version
+        return _type.description + " " + _version
     }
     
     /// Current status
@@ -65,14 +80,23 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
-            let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(host)") ?? ""
-            let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(host)") ?? ""
+            let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
+            let postfix = (self.loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue) as? StringSetting)?.value ?? ""
             return [ConnectionProperties.Name.rawValue: name,
                     ConnectionProperties.Host.rawValue: host,
                     ConnectionProperties.Port.rawValue: port,
                     ConnectionProperties.Password.rawValue: password,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
-                    MPDConnectionProperties.coverPostfix.rawValue: postfix]
+                    MPDConnectionProperties.coverPostfix.rawValue: postfix,
+                    MPDConnectionProperties.MPDType.rawValue: type.rawValue]
+        }
+    }
+    
+    public var settings: [PlayerSetting] {
+        get {
+            return [loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
+                    loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
+                    loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!]
         }
     }
     
@@ -119,17 +143,19 @@ public class MPDPlayer: PlayerProtocol {
         self.password = password
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
-        self._type = type
-        self._version = version
-        
-        let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(host)") ?? ""
-        let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(host)") ?? ""
+        _version = version
+        let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(_name)")
+        _type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
+
+        let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(_name)") ?? ""
+        let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(_name)") ?? ""
         let connectionProperties = [ConnectionProperties.Name.rawValue: name,
                 ConnectionProperties.Host.rawValue: host,
                 ConnectionProperties.Port.rawValue: port,
                 ConnectionProperties.Password.rawValue: password,
                 MPDConnectionProperties.coverPrefix.rawValue: prefix,
-                MPDConnectionProperties.coverPostfix.rawValue: postfix] as [String : Any]
+                MPDConnectionProperties.coverPostfix.rawValue: postfix,
+                MPDConnectionProperties.MPDType.rawValue: _type] as [String : Any]
 
         self.mpdStatus = MPDStatus.init(mpd: mpd,
                                         connectionProperties: connectionProperties,
@@ -195,6 +221,77 @@ public class MPDPlayer: PlayerProtocol {
     /// - Returns: copy of the this player
     public func copy() -> PlayerProtocol {
         return MPDPlayer.init(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler, type: type, version: version)
+    }
+    
+    /// Store setting.value into user-defaults and perform any other required actions
+    ///
+    /// - Parameter setting: the settings definition, including the value
+    public func updateSetting(_ setting: PlayerSetting) {
+        let playerSpecificId = setting.id + "." + uniqueID
+        let defaults = UserDefaults.standard
+
+        if setting.id == MPDConnectionProperties.MPDType.rawValue {
+            let selectionSetting = setting as! SelectionSetting
+            let currentValue = defaults.integer(forKey: playerSpecificId)
+            if currentValue != selectionSetting.value {
+                defaults.set(selectionSetting.value, forKey: playerSpecificId)
+                
+                if selectionSetting.value == MPDType.volumio.rawValue {
+                    defaults.set("albumart?path=", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    defaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
+                    _type = MPDType.volumio
+                }
+                else if selectionSetting.value == MPDType.bryston.rawValue {
+                    defaults.set("music", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
+                    _type = MPDType.bryston
+                }
+                else {
+                    defaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
+                    _type = MPDType.classic
+                }
+            }
+        }
+        else if setting.id == MPDConnectionProperties.coverPrefix.rawValue {
+            let stringSetting = setting as! StringSetting
+            defaults.set(stringSetting.value, forKey: playerSpecificId)
+        }
+        else if setting.id == MPDConnectionProperties.coverPostfix.rawValue {
+            let stringSetting = setting as! StringSetting
+            defaults.set(stringSetting.value, forKey: playerSpecificId)
+        }
+    }
+    
+    /// Get data for a specific setting
+    ///
+    /// - Parameter id: the id of the setting to load
+    /// - Returns: a new PlayerSetting object containing the value of the requested setting
+    public func loadSetting(id: String) -> PlayerSetting? {
+        let playerSpecificId = id + "." + uniqueID
+        let defaults = UserDefaults.standard
+        if id == MPDConnectionProperties.MPDType.rawValue {
+            return SelectionSetting.init(id: id,
+                                          description: "Player Type",
+                                          items: [MPDType.classic.rawValue: MPDType.classic.description,
+                                                  MPDType.volumio.rawValue: MPDType.volumio.description,
+                                                  MPDType.bryston.rawValue: MPDType.bryston.description],
+                                          value: defaults.integer(forKey: playerSpecificId))
+        }
+        else if id == MPDConnectionProperties.coverPrefix.rawValue {
+            return StringSetting.init(id: id,
+                                               description: "Cover Prefix",
+                                               placeholder: "Prefix",
+                                               value: defaults.string(forKey: playerSpecificId) ?? "")
+        }
+        else if id == MPDConnectionProperties.coverPostfix.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Cover Postfix",
+                                      placeholder: "Postfix",
+                                      value: defaults.string(forKey: playerSpecificId) ?? "")
+        }
+
+        return nil
     }
 }
 
