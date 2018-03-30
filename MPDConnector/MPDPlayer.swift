@@ -162,8 +162,30 @@ public class MPDPlayer: PlayerProtocol {
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
         _version = version
         let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(_name)")
+        if defaultTypeInt > 0 {
+            _type = MPDType(rawValue: defaultTypeInt)!
+        }
+        else {
+            // Note: using _name here instead of _uniqueId because that is not yet available.
+            let defaults = UserDefaults.standard
+            if type == MPDType.volumio {
+                defaults.set("albumart?path=", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + _name)
+                defaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + _name)
+            }
+            else if type == MPDType.bryston {
+                defaults.set("music", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + _name)
+                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + _name)
+            }
+            else {
+                defaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + _name)
+                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + _name)
+            }
+            defaults.set(type.rawValue, forKey: MPDConnectionProperties.MPDType.rawValue + "." + _name)
+            _type = type
+        }
         _type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
 
+        // Note: using _name here instead of _uniqueId because that is not yet available.
         let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(_name)") ?? ""
         let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(_name)") ?? ""
         let connectionProperties = [ConnectionProperties.Name.rawValue: name,
