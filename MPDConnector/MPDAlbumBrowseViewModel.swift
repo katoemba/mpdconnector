@@ -32,9 +32,9 @@ import ConnectorProtocol
 public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     private var _albumsSubject = PublishSubject<[Album]>()
     private var numberOfItems = BehaviorRelay<Int>(value: 0)
-    public var albumsObservable: Driver<[Album]> {
+    public var albumsObservable: Observable<[Album]> {
         get {
-            return _albumsSubject.asDriver(onErrorJustReturn: [])
+            return _albumsSubject.asObservable()
         }
     }
     private var _filters = [BrowseFilter]([])

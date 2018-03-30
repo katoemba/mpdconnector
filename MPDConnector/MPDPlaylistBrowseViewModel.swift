@@ -31,9 +31,9 @@ import ConnectorProtocol
 
 public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
     private var _playlists = Variable<[Playlist]>([])
-    public var playlistsObservable: Driver<[Playlist]> {
+    public var playlistsObservable: Observable<[Playlist]> {
         get {
-            return _playlists.asDriver()
+            return _playlists.asObservable()
         }
     }
     

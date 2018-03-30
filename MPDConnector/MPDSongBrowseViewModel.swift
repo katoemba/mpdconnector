@@ -31,9 +31,9 @@ import ConnectorProtocol
 
 public class MPDSongBrowseViewModel: SongBrowseViewModel {
     private var _songsSubject = PublishSubject<[Song]>()
-    public var songsObservable: Driver<[Song]> {
+    public var songsObservable: Observable<[Song]> {
         get {
-            return _songsSubject.asDriver(onErrorJustReturn: [])
+            return _songsSubject.asObservable()
         }
     }
     public var filters: [BrowseFilter] {

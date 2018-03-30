@@ -31,9 +31,9 @@ import ConnectorProtocol
 
 public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
     private var _genresSubject = PublishSubject<[String]>()
-    public var genresObservable: Driver<[String]> {
+    public var genresObservable: Observable<[String]> {
         get {
-            return _genresSubject.asDriver(onErrorJustReturn: [])
+            return _genresSubject.asObservable()
         }
     }
     

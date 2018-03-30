@@ -31,9 +31,9 @@ import ConnectorProtocol
 
 public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     private var _artistsSubject = PublishSubject<[Artist]>()
-    public var artistsObservable: Driver<[Artist]> {
+    public var artistsObservable: Observable<[Artist]> {
         get {
-            return _artistsSubject.asDriver(onErrorJustReturn: [])
+            return _artistsSubject.asObservable()
         }
     }
     public var filters: [BrowseFilter] {

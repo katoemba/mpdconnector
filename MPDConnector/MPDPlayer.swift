@@ -28,7 +28,6 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
-import RxCocoa
 
 enum ConnectionError: Error {
     case internalError
