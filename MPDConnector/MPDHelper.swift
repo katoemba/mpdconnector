@@ -40,6 +40,10 @@ public class MPDHelper {
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
     public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000) -> OpaquePointer? {
+        if Thread.current.isMainThread {
+            print("Warning: connecting to MPD on the main thread could cause blocking")
+        }
+        
         guard let connection = mpd.connection_new(host, UInt32(port), UInt32(timeout)) else {
             return nil
         }

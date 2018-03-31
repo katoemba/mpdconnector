@@ -32,6 +32,8 @@ import RxSwift
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
     private let mpdNetServiceBrowser : NetServiceBrowser
     private let volumioNetServiceBrowser : NetServiceBrowser
+    private let backgroundScheduler = ConcurrentDispatchQueueScheduler.init(qos: .background)
+
     public let addPlayerObservable : Observable<PlayerProtocol>
     public let removePlayerObservable : Observable<PlayerProtocol>
     
@@ -51,7 +53,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
 
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
         let addVolumioPlayerObservable = volumioNetServiceBrowser.rx.serviceAdded
-            .observeOn(MainScheduler.asyncInstance)
+            .observeOn(backgroundScheduler)
             .filter({ (netService) -> Bool in
                 // Check if an MPD player is present at the default port
                 let mpd = MPDWrapper()
@@ -95,7 +97,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         // Merge the detected players, and get a version out of them.
         addPlayerObservable = Observable.merge(addMPDPlayerObservable, addVolumioPlayerObservable)
-            .observeOn(MainScheduler.asyncInstance)
+            .observeOn(backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
                 if let connection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties) {
