@@ -57,6 +57,7 @@ public enum MPDConnectionProperties: String {
     case MPDType = "type"
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"
+    case alternativeCoverPostfix = "MPD.Uri.AlternativePostfix"
 }
 
 public class MPDPlayer: PlayerProtocol {
@@ -281,7 +282,7 @@ public class MPDPlayer: PlayerProtocol {
                     _type = MPDType.volumio
                 }
                 else if selectionSetting.value == MPDType.bryston.rawValue {
-                    defaults.set("music", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    defaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     _type = MPDType.bryston
                 }

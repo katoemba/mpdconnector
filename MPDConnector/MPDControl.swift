@@ -448,7 +448,9 @@ public class MPDControl: ControlProtocol {
     private func runCommand(refreshStatus: Bool = true, command: @escaping (OpaquePointer) -> Void) {
         let mpd = self.mpd
         
+        // Connect and run the command on the serial scheduler to prevent any blocking.
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(serialScheduler)
             .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
                 command(connection)

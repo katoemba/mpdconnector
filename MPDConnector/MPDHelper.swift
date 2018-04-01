@@ -185,7 +185,12 @@ public class MPDHelper {
         let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as! String
         let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as! String
         
-        song.coverURI = "http://\(host)/\(prefix)\(coverURI)\(postfix)"
+        if postfix == "" {
+            song.coverURI = CoverURI.fullPathURI("http://\(host)/\(prefix)\(coverURI)")
+        }
+        else {
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", [postfix])
+        }
 
         return song
     }
