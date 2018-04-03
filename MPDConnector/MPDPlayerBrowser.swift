@@ -46,10 +46,29 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         // Create an observable that monitors when new players are discovered.
         let addMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
             .map({ (netService) -> MPDPlayer in
-                
                 return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: netService.port)
             })
-            .asObservable()
+            .flatMapFirst({ (player) -> Observable<MPDPlayer> in
+                return Observable.create { observer in
+                    // Make a request to the player for the state
+                    let session = URLSession.shared
+                    let request = URLRequest(url: URL(string: "http://\(player.connectionProperties[ConnectionProperties.Host.rawValue] ?? "Unknown")/bdbapiver")!)
+                    let task = session.dataTask(with: request) {
+                        (data, response, error) -> Void in
+                        if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200 {
+                            observer.onNext(MPDPlayer.init(connectionProperties: player.connectionProperties, type: .bryston))
+                        }
+                        else {
+                            observer.onNext(player)
+                        }
+                        observer.onCompleted()
+                    }
+                    
+                    task.resume()
+                
+                    return Disposables.create()
+                }
+            })
 
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
         let addVolumioPlayerObservable = volumioNetServiceBrowser.rx.serviceAdded
