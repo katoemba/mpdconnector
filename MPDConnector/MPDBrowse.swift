@@ -246,7 +246,7 @@ public class MPDBrowse: BrowseProtocol {
     
     private func createAlbumFromSong(_ song: Song) -> Album {
         let artist = song.albumartist != "" ? song.albumartist : song.artist
-        var album = Album(id: "\(song.artist):\(song.album)", source: song.source, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0)
+        var album = Album(id: "\(artist):\(song.album)", source: song.source, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0)
         album.coverURI = song.coverURI
         album.lastModified = song.lastModified
     
