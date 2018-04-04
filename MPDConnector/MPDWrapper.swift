@@ -167,6 +167,19 @@ public class MPDWrapper: MPDProtocol {
         return mpd_status_get_queue_version(status)
     }
     
+    public func status_get_kbit_rate(_ status: OpaquePointer!) -> UInt32 {
+        return mpd_status_get_kbit_rate(status)
+    }
+    
+    public func status_get_audio_format(_ status: OpaquePointer!) -> (UInt32, UInt8, UInt8)? {
+        if let audio_format = mpd_status_get_audio_format(status) {
+            return ((audio_format.pointee.sample_rate, audio_format.pointee.bits, audio_format.pointee.channels))
+        }
+        else {
+            return ((0, 0, 0))
+        }
+    }
+
     public func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String {
         return stringFromMPDString(mpd_song_get_tag(song, type, idx))
     }

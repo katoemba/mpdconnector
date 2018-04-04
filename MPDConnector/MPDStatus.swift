@@ -243,6 +243,30 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.length = Int(self.mpd.status_get_queue_length(status))
                 playerStatus.playqueue.version = Int(self.mpd.status_get_queue_version(status))
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
+                
+                let bitrate = self.mpd.status_get_kbit_rate(status)
+                playerStatus.quality.bitrate = bitrate > 0 ? "\(self.mpd.status_get_kbit_rate(status))bit" : "-"
+                if let audioFormat = self.mpd.status_get_audio_format(status) {
+                    if audioFormat.0 > 0 {
+                        playerStatus.quality.encoding = "\(audioFormat.0/1000)kHz"
+                    }
+                    else {
+                        playerStatus.quality.encoding = "-"
+                    }
+                    if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
+                        playerStatus.quality.bitrate = "FLOAT"
+                    }
+                    else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
+                        playerStatus.quality.bitrate = "DSD"
+                    }
+                    else if audioFormat.1 > 0 {
+                        playerStatus.quality.bitrate = "\(audioFormat.1)bit"
+                    }
+                    else {
+                        playerStatus.quality.bitrate = "???"
+                    }
+                    playerStatus.quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
+                }
             }
             
             var song = self.mpd.run_current_song(connection)
