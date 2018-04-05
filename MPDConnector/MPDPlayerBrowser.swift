@@ -159,8 +159,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         }
         
         isListening = true
-        mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "local.")
-        volumioNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "local.")
+        mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "")
+        volumioNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
     }
     
     /// Stop listening for players.
