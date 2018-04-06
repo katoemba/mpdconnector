@@ -244,27 +244,29 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.version = Int(self.mpd.status_get_queue_version(status))
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
                 
-                let bitrate = self.mpd.status_get_kbit_rate(status)
-                playerStatus.quality.bitrate = bitrate > 0 ? "\(self.mpd.status_get_kbit_rate(status))bit" : "-"
+                let samplerate = self.mpd.status_get_kbit_rate(status)
+                playerStatus.quality.samplerate = samplerate > 0 ? "\(self.mpd.status_get_kbit_rate(status))bit" : "-"
                 if let audioFormat = self.mpd.status_get_audio_format(status) {
                     if audioFormat.0 > 0 {
-                        playerStatus.quality.encoding = "\(audioFormat.0/1000)kHz"
+                        playerStatus.quality.samplerate = "\(audioFormat.0/1000)kHz"
                     }
                     else {
-                        playerStatus.quality.encoding = "-"
+                        playerStatus.quality.samplerate = "-"
                     }
+                    
                     if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
-                        playerStatus.quality.bitrate = "FLOAT"
+                        playerStatus.quality.encoding = "FLOAT"
                     }
                     else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
-                        playerStatus.quality.bitrate = "DSD"
+                        playerStatus.quality.encoding = "DSD"
                     }
                     else if audioFormat.1 > 0 {
-                        playerStatus.quality.bitrate = "\(audioFormat.1)bit"
+                        playerStatus.quality.encoding = "\(audioFormat.1)bit"
                     }
                     else {
-                        playerStatus.quality.bitrate = "???"
+                        playerStatus.quality.encoding = "???"
                     }
+                    
                     playerStatus.quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
                 }
             }

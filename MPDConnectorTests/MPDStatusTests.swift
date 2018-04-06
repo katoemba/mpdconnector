@@ -180,6 +180,9 @@ class MPDStatusTests: XCTestCase {
             self.mpdWrapper.songDuration = 330
             self.mpdWrapper.songIndex = 5
             self.mpdWrapper.state = MPD_STATE_PLAY
+            self.mpdWrapper.samplerate = 192000
+            self.mpdWrapper.encoding = 24
+            self.mpdWrapper.channels = 1
             
             self.mpdWrapper.statusChanged()
         }
@@ -203,6 +206,9 @@ class MPDStatusTests: XCTestCase {
             XCTAssert(playerStatus.currentSong.title == "Creature Comfort", "Expected Creature Comfort, got \(playerStatus.currentSong.title)")
             XCTAssert(playerStatus.currentSong.artist == "Arcade Fire", "Expected Arcade Fire, got \(playerStatus.currentSong.artist)")
             XCTAssert(playerStatus.currentSong.album == "Everything Now", "Expected Everything Now, got \(playerStatus.currentSong.album)")
+            XCTAssert(playerStatus.quality.samplerate == "192kHz", "Expected bitrate 192kHz, got \(playerStatus.quality.samplerate)")
+            XCTAssert(playerStatus.quality.encoding == "24bit", "Expected encoding 24bit, got \(playerStatus.quality.encoding)")
+            XCTAssert(playerStatus.quality.channels == "Mono", "Expected channels Mono, got \(playerStatus.quality.channels)")
 
             // Check that all song data is freed
             let songCount = self.mpdWrapper.callCount("run_current_song") +
@@ -218,6 +224,103 @@ class MPDStatusTests: XCTestCase {
             print("Default")
         }
         
+    }
+    
+    func testPlayerStatusQualityDSD() {
+        // Given a mpd player
+        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
+                                    ConnectionProperties.Host.rawValue: "host",
+                                    ConnectionProperties.Port.rawValue: 1000,
+                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        
+        // When creating a new MPDStatus object and starting it twice
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        status.start()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.mpdWrapper.songIndex = 3
+            self.mpdWrapper.album = "Everything Now"
+            self.mpdWrapper.artist = "Arcade Fire"
+            self.mpdWrapper.songTitle = "Creature Comfort"
+            self.mpdWrapper.queueVersion = 10
+            self.mpdWrapper.queueLength = 15
+            self.mpdWrapper.volume = 75
+            self.mpdWrapper.random = true
+            self.mpdWrapper.singleValue = true
+            self.mpdWrapper.repeatValue = true
+            self.mpdWrapper.songDuration = 330
+            self.mpdWrapper.songIndex = 5
+            self.mpdWrapper.state = MPD_STATE_PLAY
+            self.mpdWrapper.samplerate = 192000
+            self.mpdWrapper.encoding = UInt8(MPD_SAMPLE_FORMAT_DSD)
+            self.mpdWrapper.channels = 2
+            
+            self.mpdWrapper.statusChanged()
+        }
+        
+        // Then the statuses .online is reported once
+        let playerStatuses = status.playerStatusObservable
+            .toBlocking(timeout: 0.4)
+            .materialize()
+        
+        switch playerStatuses {
+        case .failed(let playerStatusArray, _):
+            let playerStatus = playerStatusArray.last!
+            
+            XCTAssert(playerStatus.quality.encoding == "DSD", "Expected encoding DSD, got \(playerStatus.quality.encoding)")
+            XCTAssert(playerStatus.quality.channels == "Stereo", "Expected channels Stereo, got \(playerStatus.quality.channels)")
+            
+        default:
+            print("Default")
+        }
+    }
+
+    func testPlayerStatusQualityFloat() {
+        // Given a mpd player
+        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
+                                    ConnectionProperties.Host.rawValue: "host",
+                                    ConnectionProperties.Port.rawValue: 1000,
+                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        
+        // When creating a new MPDStatus object and starting it twice
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        status.start()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.mpdWrapper.songIndex = 3
+            self.mpdWrapper.album = "Everything Now"
+            self.mpdWrapper.artist = "Arcade Fire"
+            self.mpdWrapper.songTitle = "Creature Comfort"
+            self.mpdWrapper.queueVersion = 10
+            self.mpdWrapper.queueLength = 15
+            self.mpdWrapper.volume = 75
+            self.mpdWrapper.random = true
+            self.mpdWrapper.singleValue = true
+            self.mpdWrapper.repeatValue = true
+            self.mpdWrapper.songDuration = 330
+            self.mpdWrapper.songIndex = 5
+            self.mpdWrapper.state = MPD_STATE_PLAY
+            self.mpdWrapper.samplerate = 192000
+            self.mpdWrapper.encoding = UInt8(MPD_SAMPLE_FORMAT_FLOAT)
+            self.mpdWrapper.channels = 2
+            
+            self.mpdWrapper.statusChanged()
+        }
+        
+        // Then the statuses .online is reported once
+        let playerStatuses = status.playerStatusObservable
+            .toBlocking(timeout: 0.4)
+            .materialize()
+        
+        switch playerStatuses {
+        case .failed(let playerStatusArray, _):
+            let playerStatus = playerStatusArray.last!
+            
+            XCTAssert(playerStatus.quality.encoding == "FLOAT", "Expected encoding FLOAT, got \(playerStatus.quality.encoding)")
+            
+        default:
+            print("Default")
+        }
     }
     
     func testPlayqueuSongs() {
