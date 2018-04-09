@@ -228,7 +228,15 @@ public class MPDStatus: StatusProtocol {
                     self.mpd.status_free(status)
                 }
                 
-                playerStatus.volume = Float(self.mpd.status_get_volume(status)) / 100.0
+                let volume = self.mpd.status_get_volume(status)
+                if volume < 0 {
+                    playerStatus.volume = 0.5
+                    playerStatus.volumeEnabled = false
+                }
+                else {
+                    playerStatus.volume = Float(volume) / 100.0
+                    playerStatus.volumeEnabled = true
+                }
                 playerStatus.time.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))
                 playerStatus.time.trackTime = Int(self.mpd.status_get_total_time(status))
                 self.lastKnownElapsedTime = playerStatus.time.elapsedTime

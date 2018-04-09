@@ -200,6 +200,7 @@ class MPDStatusTests: XCTestCase {
             XCTAssert(playerStatus.playing.randomMode == .On, "Expected .On, got \(playerStatus.playing.randomMode)")
             XCTAssert(playerStatus.playing.repeatMode == .Single, "Expected .Single, got \(playerStatus.playing.repeatMode)")
             XCTAssert(playerStatus.volume == 0.75, "Expected volume 0.75, got \(playerStatus.volume)")
+            XCTAssert(playerStatus.volumeEnabled == true, "Expected volumeEnabled true, got \(playerStatus.volumeEnabled)")
             XCTAssert(playerStatus.playqueue.version == 10, "Expected version 10, got \(playerStatus.playqueue.version)")
             XCTAssert(playerStatus.playqueue.length == 15, "Expected length 15, got \(playerStatus.playqueue.length)")
             XCTAssert(playerStatus.playqueue.songIndex == 5, "Expected songIndex 5, got \(playerStatus.playqueue.songIndex)")
@@ -244,7 +245,7 @@ class MPDStatusTests: XCTestCase {
             self.mpdWrapper.songTitle = "Creature Comfort"
             self.mpdWrapper.queueVersion = 10
             self.mpdWrapper.queueLength = 15
-            self.mpdWrapper.volume = 75
+            self.mpdWrapper.volume = -1
             self.mpdWrapper.random = true
             self.mpdWrapper.singleValue = true
             self.mpdWrapper.repeatValue = true
@@ -267,6 +268,8 @@ class MPDStatusTests: XCTestCase {
         case .failed(let playerStatusArray, _):
             let playerStatus = playerStatusArray.last!
             
+            XCTAssert(playerStatus.volume == 0.5, "Expected volume 0.5, got \(playerStatus.volume)")
+            XCTAssert(playerStatus.volumeEnabled == false, "Expected volumeEnabled false, got \(playerStatus.volumeEnabled)")
             XCTAssert(playerStatus.quality.encoding == "DSD", "Expected encoding DSD, got \(playerStatus.quality.encoding)")
             XCTAssert(playerStatus.quality.channels == "Stereo", "Expected channels Stereo, got \(playerStatus.quality.channels)")
             
