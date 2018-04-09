@@ -96,6 +96,12 @@ public class MPDPlayer: PlayerProtocol {
         }
     }
     
+    public var model: String {
+        get {
+            return type.description
+        }
+    }
+    
     public var connectionProperties: [String: Any] {
         get {
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
