@@ -118,12 +118,23 @@ public class MPDPlayer: PlayerProtocol {
         }
     }
     
-    public var settings: [PlayerSetting] {
+    public var settings: [PlayerSettingGroup] {
         get {
-            return [loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
-                    loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
-                    loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
-                    loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]
+            let mpdDBStatusObservable = (self.browse as! MPDBrowse).databaseStatus()
+            let reloadingObservable = Observable<Int>
+                .interval(RxTimeInterval(2), scheduler: MainScheduler.instance)
+                .flatMap( { _ in
+                    mpdDBStatusObservable
+                })
+            
+            return [PlayerSettingGroup(title: "Player Type", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!]),
+                    PlayerSettingGroup(title: "Cover Art", description: "", settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
+                                                                                      loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
+                                                                                      loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]),
+                    PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
+                                                                                         ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () in
+                        (self.browse as! MPDBrowse).updateDB()
+                    })])]
         }
     }
     

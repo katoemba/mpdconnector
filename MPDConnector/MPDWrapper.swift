@@ -180,6 +180,10 @@ public class MPDWrapper: MPDProtocol {
         }
     }
 
+    public func status_get_update_id(_ status: OpaquePointer!) -> UInt32 {
+        return mpd_status_get_update_id(status)
+    }
+
     public func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String {
         return stringFromMPDString(mpd_song_get_tag(song, type, idx))
     }
@@ -369,6 +373,22 @@ public class MPDWrapper: MPDProtocol {
         return mpd_command_list_end(connection)
     }
     
+    public func run_update(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> UInt32 {
+        return mpd_run_update(connection, path)
+    }
+    
+    public func run_stats(_ connection: OpaquePointer!) -> OpaquePointer! {
+        return mpd_run_stats(connection)
+    }
+
+    public func stats_free(_ stats: OpaquePointer!) {
+        mpd_stats_free(stats)
+    }
+    
+    public func stats_get_db_update_time(_ stats: OpaquePointer!) -> Date {
+        return dateFromMPDDate(time_t(mpd_stats_get_db_update_time(stats)))
+    }
+
     public func connection_get_server_version(_ connection: OpaquePointer!) -> String {
         if let tripleTuple = mpd_connection_get_server_version(connection) {
             return "\(tripleTuple[0]).\(tripleTuple[1]).\(tripleTuple[2])"

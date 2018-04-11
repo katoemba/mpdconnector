@@ -68,6 +68,7 @@ public protocol MPDProtocol {
     func status_get_queue_version(_ status: OpaquePointer!) -> UInt32
     func status_get_kbit_rate(_ status: OpaquePointer!) -> UInt32
     func status_get_audio_format(_ status: OpaquePointer!) -> (UInt32, UInt8, UInt8)?
+    func status_get_update_id(_ status: OpaquePointer!) -> UInt32
     func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String
     func song_get_duration(_ song: OpaquePointer!) -> UInt32
     func song_get_uri(_ song: OpaquePointer!) -> String
@@ -108,5 +109,9 @@ public protocol MPDProtocol {
     func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool
     func command_list_end(_ connection: OpaquePointer!) -> Bool
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
+    func run_update(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> UInt32
+    func run_stats(_ connection: OpaquePointer!) -> OpaquePointer!
+    func stats_free(_ stats: OpaquePointer!)
+    func stats_get_db_update_time(_ stats: OpaquePointer!) -> Date
     func connection_get_server_version(_ connection: OpaquePointer!) -> String
 }

@@ -742,4 +742,48 @@ public class MPDBrowse: BrowseProtocol {
     public func albumFromSong(_ song: Song) -> Observable<Album> {
         return Observable.just(createAlbumFromSong(song))
     }
+    
+    func updateDB() {
+        _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
+            .observeOn(scheduler)
+            .subscribe(onNext: { (connection) in
+                _ = self.mpd.run_update(connection, path: nil)
+            })
+    }
+    
+    func databaseStatus() -> Observable<String> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
+            .observeOn(scheduler)
+            .flatMapFirst({ (connection) -> Observable<String> in
+                var updateId = UInt32(0)
+                var lastUpdateDate = Date(timeIntervalSince1970: 0)
+                if let status = self.mpd.run_status(connection) {
+                    defer {
+                        self.mpd.status_free(status)
+                    }
+                    
+                    updateId = self.mpd.status_get_update_id(status)
+                    if let mpdStats = self.mpd.run_stats(connection) {
+                        defer {
+                            self.mpd.stats_free(mpdStats)
+                        }
+                        lastUpdateDate = self.mpd.stats_get_db_update_time(mpdStats)
+                    }
+                }
+                
+                // Cleanup
+                self.mpd.connection_free(connection)
+                
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .short
+                if updateId > 0 {
+                    return Observable.just("Updating...")
+                }
+                return Observable.just("Last updated: \(dateFormatter.string(from: lastUpdateDate))")
+            })
+            .observeOn(MainScheduler.instance)
+    }
 }
