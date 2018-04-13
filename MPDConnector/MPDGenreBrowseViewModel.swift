@@ -36,7 +36,13 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
             return _genresSubject.asObservable()
         }
     }
-    
+    private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
+    public var loadProgressObservable: Observable<LoadProgress> {
+        get {
+            return loadProgress.asObservable()
+        }
+    }
+
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
     private let _genres: [String]
@@ -52,6 +58,7 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
     
     public func load() {
         if _genres.count > 0 {
+            loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
             _genresSubject.onNext(_genres)
         }
@@ -66,16 +73,40 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
         
         // Clear the contents
         _genresSubject.onNext([])
-        
+        loadProgress.accept(.loading)
+
         // Load new contents
         let browse = _browse
         let genresSubject = self._genresSubject
         
-        browse.fetchGenres()
+        let genresObservable = browse.fetchGenres()
             .observeOn(MainScheduler.instance)
+            .share(replay: 1)
+
+        genresObservable
             .subscribe(onNext: { (genres) in
                 genresSubject.onNext(genres)
             })
+            .disposed(by: bag)
+        
+        genresObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count > 0
+            })
+            .map { (_) -> LoadProgress in
+                .allDataLoaded
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+        
+        genresObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count == 0
+            })
+            .map { (_) -> LoadProgress in
+                .noDataFound
+            }
+            .bind(to: loadProgress)
             .disposed(by: bag)
     }
     

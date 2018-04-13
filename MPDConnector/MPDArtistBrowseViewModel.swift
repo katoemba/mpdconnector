@@ -36,6 +36,13 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
             return _artistsSubject.asObservable()
         }
     }
+    private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
+    public var loadProgressObservable: Observable<LoadProgress> {
+        get {
+            return loadProgress.asObservable()
+        }
+    }
+
     public var filters: [BrowseFilter] {
         get {
             return _filters
@@ -59,6 +66,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     
     public func load() {
         if _artists.count > 0 {
+            loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
             _artistsSubject.onNext(_artists)
         }
@@ -81,17 +89,39 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         
         // Clear the contents
         _artistsSubject.onNext([])
-        
+        loadProgress.accept(.loading)
+
         // Load new contents
         let browse = _browse
         let artistsSubject = self._artistsSubject
         let artistsObservable = browse.fetchArtists(genre: genre)
-
-        artistsObservable
             .observeOn(MainScheduler.instance)
+            .share(replay: 1)
+            
+        artistsObservable
             .subscribe(onNext: { (artists) in
                 artistsSubject.onNext(artists)
             })
+            .disposed(by: bag)
+        
+        artistsObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count > 0
+            })
+            .map { (_) -> LoadProgress in
+                .allDataLoaded
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+
+        artistsObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count == 0
+            })
+            .map { (_) -> LoadProgress in
+                .noDataFound
+            }
+            .bind(to: loadProgress)
             .disposed(by: bag)
     }
     

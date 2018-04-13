@@ -36,6 +36,13 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
             return _songsSubject.asObservable()
         }
     }
+    private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
+    public var loadProgressObservable: Observable<LoadProgress> {
+        get {
+            return loadProgress.asObservable()
+        }
+    }
+
     public var filters: [BrowseFilter] {
         get {
             return _filters
@@ -59,6 +66,7 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
     
     public func load() {
         if _songs.count > 0 {
+            loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
             _songsSubject.onNext(_songs)
         }
@@ -84,18 +92,42 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
         switch filter {
         case let .playlist(playlist):
             songsObservable = browse.songsInPlaylist(playlist)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
         case let .album(album):
             songsObservable = browse.songsOnAlbum(album)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
         default:
             fatalError("MPDSongBrowseViewModel: load without filters not allowed")
         }
         
         songsObservable
-            .observeOn(MainScheduler.instance)
             .subscribe(onNext: { (songs) in
                 songsSubject.onNext(songs)
             })
             .disposed(by: bag)
+        
+        songsObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count > 0
+            })
+            .map { (_) -> LoadProgress in
+                .allDataLoaded
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+        
+        songsObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count == 0
+            })
+            .map { (_) -> LoadProgress in
+                .noDataFound
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+
     }
     
     public func extend() {

@@ -37,6 +37,13 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             return _albumsSubject.asObservable()
         }
     }
+    private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
+    public var loadProgressObservable: Observable<LoadProgress> {
+        get {
+            return loadProgress.asObservable()
+        }
+    }
+    
     private var _filters = [BrowseFilter]([])
     public var filters: [BrowseFilter] {
         get {
@@ -94,6 +101,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     
     private func load() {
         if _albums.count > 0 {
+            loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
             _albumsSubject.onNext(_albums)
         }
@@ -119,8 +127,9 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         bag = DisposeBag()
         
         // Clear the contents
-        _albumsSubject.onNext([])
-        
+        _albumsSubject.onNext([])        
+        loadProgress.accept(.loading)
+
         // Load new contents
         let browse = _browse
         let albumsSubject = self._albumsSubject
@@ -129,14 +138,20 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         if let artist = artist {
             self.extendSize = 30
             albumsObservable = browse.albumsByArtist(artist)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
         }
         else if let recent = recent {
             self.extendSize = 200
             albumsObservable = browse.fetchRecentAlbums(numberOfDays: recent)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
         }
         else {
             self.extendSize = 30
             albumsObservable = browse.fetchAlbums(genre: genre, sort: sort)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
         }
         
         let extendSize = self.extendSize
@@ -148,25 +163,72 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 (start, extendSize)
             })
         
-        Observable.combineLatest(albumsObservable, extendTriggerObservable)
+        let startLoadObservable = Observable.combineLatest(albumsObservable, extendTriggerObservable)
             .filter({ (albums, arg) -> Bool in
                 let (start, count) = arg
                 return start < min(start+count, albums.count)
             })
+        
+        startLoadObservable
+            .observeOn(MainScheduler.instance)
+            .map { (_) -> LoadProgress in
+                .loading
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+        
+        let dataAvailableObservable = startLoadObservable
             .flatMap({ (albums, arg) -> Observable<[Album]> in
                 let (start, count) = arg
-                
                 return browse.completeAlbums(Array(albums[start..<min(start+count, albums.count)]))
             })
             .scan([]) { inputAlbums, newAlbums in
                 inputAlbums + newAlbums
             }
             .observeOn(MainScheduler.instance)
+            .share(replay: 1)
+            
+        dataAvailableObservable
             .subscribe(onNext: { (albums) in
                 albumsSubject.onNext(albums)
             })
             .disposed(by: bag)
         
+        dataAvailableObservable
+            .map { (_) -> LoadProgress in
+                .dataAvailable
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+        
+        let endReachedObservable = startLoadObservable
+            .map { (albums, arg) -> Bool in
+                let (start, count) = arg
+                return start+count >= albums.count
+            }
+        
+        albumsObservable
+            .observeOn(MainScheduler.instance)
+            .filter { (albums) -> Bool in
+                albums.count == 0
+            }
+            .map { (_) -> LoadProgress in
+                .noDataFound
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+
+        Observable.combineLatest(dataAvailableObservable, endReachedObservable)
+            .observeOn(MainScheduler.instance)
+            .filter { (_, end) -> Bool in
+                end
+            }
+            .map { (_) -> LoadProgress in
+                .allDataLoaded
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+
         extendTriggerObservable
             .map { (start, extendSize) -> Int in
                 start + extendSize

@@ -36,7 +36,13 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
             return _playlists.asObservable()
         }
     }
-    
+    private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
+    public var loadProgressObservable: Observable<LoadProgress> {
+        get {
+            return loadProgress.asObservable()
+        }
+    }
+
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
     private let _providedPlaylists: [Playlist]
@@ -52,6 +58,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
     
     public func load() {
         if _providedPlaylists.count > 0 {
+            loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
             _playlists.value = _providedPlaylists
         }
@@ -66,7 +73,8 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         
         // Clear the contents
         _playlists.value = []
-        
+        loadProgress.accept(.loading)
+
         // Load new contents
         let browse = _browse
         let playlists = self._playlists
@@ -77,6 +85,26 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
             .subscribe(onNext: { (foundPlaylists) in
                 playlists.value = foundPlaylists
             })
+            .disposed(by: bag)
+        
+        playlistsObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count > 0
+            })
+            .map { (_) -> LoadProgress in
+                .allDataLoaded
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+        
+        playlistsObservable
+            .filter({ (itemsFound) -> Bool in
+                itemsFound.count == 0
+            })
+            .map { (_) -> LoadProgress in
+                .noDataFound
+            }
+            .bind(to: loadProgress)
             .disposed(by: bag)
     }
     
