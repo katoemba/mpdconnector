@@ -95,7 +95,9 @@ public class MPDHelper {
                 observer.onCompleted()
             }
             else {
-                observer.onError(ConnectionError.internalError)
+                // Don't throw an error, as that could mess up with bind:
+                print("Couldn't connect to MPD: \(ConnectionError.internalError).")
+                observer.onCompleted()
             }
             
             return Disposables.create()
