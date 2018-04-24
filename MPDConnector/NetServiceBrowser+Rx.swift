@@ -76,6 +76,7 @@ extension Reactive where Base: NetServiceBrowser {
                 let netService = params[1] as! NetService                
                 return netService.rx.resolve(withTimeout: 5)
             }
+            .share(replay: 1)
     }
     
     public var serviceRemoved: Observable<NetService> {
@@ -84,5 +85,6 @@ extension Reactive where Base: NetServiceBrowser {
             .map { params in
                 return params[1] as! NetService
             }
+            .share(replay: 1)
     }
 }

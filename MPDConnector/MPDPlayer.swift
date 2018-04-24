@@ -92,10 +92,18 @@ public class MPDPlayer: PlayerProtocol {
     
     public var uniqueID: String {
         get {
-            return "\(_name)"
+            return "\(MPDPlayer.uniqueIDForPlayer(self))"
         }
     }
     
+    private static func uniqueIDForPlayer(_ player: MPDPlayer) -> String {
+        return uniqueIDForPlayer(host: player.host, port: player.port)
+    }
+
+    private static func uniqueIDForPlayer(host: String, port: Int) -> String {
+        return "\(host)"
+    }
+
     public var model: String {
         get {
             return type.description
@@ -182,7 +190,8 @@ public class MPDPlayer: PlayerProtocol {
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
         _version = version
-        let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(_name)")
+        let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
+        let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
         if defaultTypeInt > 0 {
             _type = MPDType(rawValue: defaultTypeInt)!
         }
@@ -190,29 +199,29 @@ public class MPDPlayer: PlayerProtocol {
             // Note: using _name here instead of _uniqueId because that is not yet available.
             let defaults = UserDefaults.standard
             if type == MPDType.volumio {
-                defaults.set("albumart?path=", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + _name)
-                defaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + _name)
-                defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + _name)
+                defaults.set("albumart?path=", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
+                defaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
+                defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
             else if type == MPDType.bryston {
-                defaults.set("music", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + _name)
-                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + _name)
-                defaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + _name)
+                defaults.set("music", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
+                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
+                defaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
             else {
-                defaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + _name)
-                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + _name)
-                defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + _name)
+                defaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
+                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
+                defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
-            defaults.set(type.rawValue, forKey: MPDConnectionProperties.MPDType.rawValue + "." + _name)
+            defaults.set(type.rawValue, forKey: MPDConnectionProperties.MPDType.rawValue + "." + initialUniqueID)
             _type = type
         }
         _type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
 
         // Note: using _name here instead of _uniqueId because that is not yet available.
-        let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(_name)") ?? ""
-        let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(_name)") ?? ""
-        let alternativePostfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.alternativeCoverPostfix.rawValue).\(_name)") ?? ""
+        let prefix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(initialUniqueID)") ?? ""
+        let postfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(initialUniqueID)") ?? ""
+        let alternativePostfix = UserDefaults.standard.string(forKey: "\(MPDConnectionProperties.alternativeCoverPostfix.rawValue).\(initialUniqueID)") ?? ""
         let connectionProperties = [ConnectionProperties.Name.rawValue: name,
                 ConnectionProperties.Host.rawValue: host,
                 ConnectionProperties.Port.rawValue: port,

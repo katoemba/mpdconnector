@@ -385,6 +385,7 @@ public class MPDControl: ControlProtocol {
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
+                guard let connection = connection else { return }
                 do {
                     _ = self.mpd.run_clear(connection)
 
@@ -453,6 +454,7 @@ public class MPDControl: ControlProtocol {
             .subscribeOn(serialScheduler)
             .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
+                guard let connection = connection else { return }
                 command(connection)
                 mpd.connection_free(connection)
             }, onError: { (error) in

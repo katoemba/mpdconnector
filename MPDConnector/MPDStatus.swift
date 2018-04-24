@@ -110,14 +110,15 @@ public class MPDStatus: StatusProtocol {
         MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties)
             .subscribeOn(statusScheduler)
             .subscribe(onNext: { [weak self] (connection) in
+                guard let connection = connection else {
+                    self?._connectionStatus.accept(.offline)
+                    self?.connecting = false
+                    return
+                }
                 self?.statusConnection = connection
                 self?._connectionStatus.accept(.online)
                 self?.connecting = false
                 self?.startMonitoring()
-            },
-                       onError: { [weak self] _ in
-                        self?._connectionStatus.accept(.offline)
-                        self?.connecting = false
             })
             .disposed(by: bag)
     }

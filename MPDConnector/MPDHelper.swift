@@ -88,18 +88,17 @@ public class MPDHelper {
     ///   - password: Password to use after connecting, default = "".
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", timeout: Int = 5000) -> Observable<OpaquePointer> {
-        return Observable<OpaquePointer>.create { observer in
+    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", timeout: Int = 5000) -> Observable<OpaquePointer?> {
+        return Observable<OpaquePointer?>.create { observer in
             if let connection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
                 observer.onNext(connection)
-                observer.onCompleted()
             }
             else {
-                // Don't throw an error, as that could mess up with bind:
                 print("Couldn't connect to MPD: \(ConnectionError.internalError).")
-                observer.onCompleted()
+                observer.onNext(nil)
             }
-            
+            observer.onCompleted()
+
             return Disposables.create()
         }
     }
@@ -111,7 +110,7 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> Observable<OpaquePointer> {
+    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> Observable<OpaquePointer?> {
         return connectToMPD(mpd: mpd,
                             host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
                             port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,

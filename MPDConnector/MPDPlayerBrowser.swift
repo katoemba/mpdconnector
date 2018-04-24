@@ -45,21 +45,21 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
 
         // Create an observable that monitors when new players are discovered.
         let addMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
-            .map({ (netService) -> MPDPlayer in
-                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: netService.port)
+            .map({ (netService) -> (String, String, Int) in
+                (netService.name, netService.hostName ?? "Unknown", netService.port)
             })
-            .flatMapFirst({ (player) -> Observable<MPDPlayer> in
+            .flatMap({ (name, host, port) -> Observable<MPDPlayer> in
                 return Observable.create { observer in
                     // Make a request to the player for the state
                     let session = URLSession.shared
-                    let request = URLRequest(url: URL(string: "http://\(player.connectionProperties[ConnectionProperties.Host.rawValue] ?? "Unknown")/bdbapiver")!)
+                    let request = URLRequest(url: URL(string: "http://\(host)/bdbapiver")!)
                     let task = session.dataTask(with: request) {
                         (data, response, error) -> Void in
                         if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200 {
-                            observer.onNext(MPDPlayer.init(connectionProperties: player.connectionProperties, type: .bryston))
+                            observer.onNext(MPDPlayer.init(name: name, host: host, port: port, type: .bryston))
                         }
                         else {
-                            observer.onNext(player)
+                            observer.onNext(MPDPlayer.init(name: name, host: host, port: port, type: .classic))
                         }
                         observer.onCompleted()
                     }

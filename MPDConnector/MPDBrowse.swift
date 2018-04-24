@@ -68,6 +68,8 @@ public class MPDBrowse: BrowseProtocol {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<SearchResult> in
+                guard let connection = connection else { return Observable.just(SearchResult()) }
+                
                 let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
                 let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
                 let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
@@ -210,6 +212,8 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
+                guard let connection = connection else { return Observable.just([]) }
+
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: album.artist, album: album.title)
                 
                 // Cleanup
@@ -230,6 +234,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
+                guard let connection = connection else { return Observable.just([]) }
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist.name)
                 
                 // Cleanup
@@ -280,6 +285,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
+                guard let connection = connection else { return Observable.just([]) }
                 do {
                     var albums = [Album]()
                     
@@ -325,6 +331,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
+                guard let connection = connection else { return Observable.just([]) }
                 do {
                     var albums = [Album]()
                     
@@ -405,6 +412,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Album]> in
+                guard let connection = connection else { return Observable.just([]) }
                 var completeAlbums = [Album]()
                 for album in albums {
                     var song : Song?
@@ -478,6 +486,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Artist]> in
+                guard let connection = connection else { return Observable.just([]) }
                 do {
                     var artists = [Artist]()
                     
@@ -560,6 +569,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Playlist]> in
+                guard let connection = connection else { return Observable.just([]) }
                 var playlists = [Playlist]()
                 
                 if self.mpd.send_list_playlists(connection) == true {
@@ -608,6 +618,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
+                guard let connection = connection else { return Observable.just([]) }
                 let songs = self.songsForPlaylist(connection: connection, playlist: playlist.id)
                 
                 // Cleanup
@@ -659,6 +670,8 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(onNext: { (connection) in
+                guard let connection = connection else { return }
+                
                 _ = self.mpd.run_rm(connection, name: playlist.id)
                 self.mpd.connection_free(connection)
             })
@@ -674,6 +687,8 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(onNext: { (connection) in
+                guard let connection = connection else { return }
+
                 _ = self.mpd.run_rename(connection, from: playlist.id, to: newName)
                 self.mpd.connection_free(connection)
             })
@@ -694,6 +709,8 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[String]> in
+                guard let connection = connection else { return Observable.just([]) }
+
                 do {
                     var genres = [String]()
                     
@@ -748,6 +765,7 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(onNext: { (connection) in
+                guard let connection = connection else { return }
                 _ = self.mpd.run_update(connection, path: nil)
             })
     }
@@ -757,6 +775,8 @@ public class MPDBrowse: BrowseProtocol {
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMapFirst({ (connection) -> Observable<String> in
+                guard let connection = connection else { return Observable.just("") }
+
                 var updateId = UInt32(0)
                 var lastUpdateDate = Date(timeIntervalSince1970: 0)
                 if let status = self.mpd.run_status(connection) {
