@@ -132,11 +132,11 @@ class MPDPlayerTests: XCTestCase {
     func testMPDPlayerDifferent() {
         // Given 2 players named "Player 1" and "Player 2"
         let connectionProperties1 = [ConnectionProperties.Name.rawValue: "Player 1",
-                                     ConnectionProperties.Host.rawValue: "host",
+                                     ConnectionProperties.Host.rawValue: "host 1",
                                      ConnectionProperties.Port.rawValue: 1000,
                                      ConnectionProperties.Password.rawValue: ""] as [String: Any]
-        let connectionProperties2 = [ConnectionProperties.Name.rawValue: "Player 2",
-                                     ConnectionProperties.Host.rawValue: "host",
+        let connectionProperties2 = [ConnectionProperties.Name.rawValue: "Player 1",
+                                     ConnectionProperties.Host.rawValue: "host 2",
                                      ConnectionProperties.Port.rawValue: 1000,
                                      ConnectionProperties.Password.rawValue: ""] as [String: Any]
         

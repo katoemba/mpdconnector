@@ -89,6 +89,15 @@ public protocol MPDProtocol {
     func search_commit(_ connection: OpaquePointer!) throws
     func search_cancel(_ connection: OpaquePointer!)
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
+    func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool
+    func recv_entity(_ connection: OpaquePointer!) -> OpaquePointer!
+    func entity_get_type(_ entity: OpaquePointer!) -> mpd_entity_type
+    func entity_get_directory(_ entity: OpaquePointer!) -> OpaquePointer!
+    func entity_get_song(_ entity: OpaquePointer!) -> OpaquePointer!
+    func entity_get_playlist(_ entity: OpaquePointer!) -> OpaquePointer!
+    func entity_free(_ entity: OpaquePointer!)
+    func directory_get_path(_ directory: OpaquePointer!) -> String
+    func directory_free(_ directory: OpaquePointer!)
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool
     func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32
     func send_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool

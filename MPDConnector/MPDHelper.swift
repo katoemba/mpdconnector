@@ -232,4 +232,31 @@ public class MPDHelper {
 
         return playlist
     }
+
+    /// Fill a generic Folder object from an mpdFolder
+    ///
+    /// - Parameters:
+    ///   - mpd: MPDProtocol object
+    ///   - mpdDirectory: pointer to a mpd directory data structure
+    /// - Returns: the filled Folder object
+    public static func folderFromMPDDirectory(mpd: MPDProtocol, mpdDirectory: OpaquePointer!) -> Folder? {
+        guard mpdDirectory != nil else  {
+            return nil
+        }
+        
+        var folder = Folder()
+        
+        folder.path = mpd.playlist_get_path(mpdDirectory)
+        folder.id = folder.path
+        folder.source = .Local
+        let elements = folder.id.split(separator: "/")
+        if let name = elements.last {
+            folder.name = String(name)
+        }
+        else {
+            folder.name = "Unknown"
+        }
+        
+        return folder
+    }
 }

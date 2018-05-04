@@ -744,6 +744,74 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
     
+    /// Return a view model for a list of items in the root folder. Contents might be returned in batches.
+    ///
+    /// - Returns: an observable FolderContent
+    public func folderContentsBrowseViewModel() -> FolderBrowseViewModel {
+        return MPDFolderBrowseViewModel(browse: self)
+    }
+    
+    /// Return a view model for a list of items in a folder. Contents might be returned in batches.
+    ///
+    /// - Parameter folder: folder for which to get the contents. May be left empty to start from the root.
+    /// - Returns: an observable FolderContent
+    public func folderContentsBrowseViewModel(_ parentFolder: Folder) -> FolderBrowseViewModel {
+        return MPDFolderBrowseViewModel(browse: self, parentFolder: parentFolder)
+    }
+    
+    /// Fetch an array of genres
+    ///
+    /// - Returns: an observable String array of genre names
+    func fetchFolderContents(parentFolder: Folder? = nil) -> Observable<[FolderContent]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[FolderContent]> in
+                guard let connection = connection else { return Observable.just([]) }
+                
+                do {
+                    var folderContents = [FolderContent]()
+                    
+                    if self.mpd.send_list_meta(connection, path: parentFolder?.path ?? "") == true {
+                        var mpdEntity = self.mpd.recv_entity(connection)
+                        while mpdEntity != nil {
+                            switch self.mpd.entity_get_type(mpdEntity) {
+                            case MPD_ENTITY_TYPE_SONG:
+                                if let mpdSong = self.mpd.entity_get_song(mpdEntity) {
+                                    if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                        folderContents.append(FolderContent.song(song))
+                                    }
+                                }
+                                break
+                            case MPD_ENTITY_TYPE_DIRECTORY:
+                                if let mpdDirectory = self.mpd.entity_get_directory(mpdEntity) {
+                                    if let folder = MPDHelper.folderFromMPDDirectory(mpd: self.mpd, mpdDirectory: mpdDirectory) {
+                                        folderContents.append(FolderContent.folder(folder))
+                                    }
+                                }
+                                break
+                            case MPD_ENTITY_TYPE_PLAYLIST:
+                                break
+                            case MPD_ENTITY_TYPE_UNKNOWN:
+                                break
+                            default:
+                                break
+                            }
+                            
+                            self.mpd.entity_free(mpdEntity)
+                            mpdEntity = self.mpd.recv_entity(connection)
+                        }
+                    }
+                    
+                    // Cleanup
+                    self.mpd.connection_free(connection)
+                    
+                    return Observable.just(folderContents)
+                }
+            })
+            .observeOn(MainScheduler.instance)
+    }
+    
     /// Get an Artist object for the artist performing a particular song
     ///
     /// - Parameter song: the song for which to get the artist

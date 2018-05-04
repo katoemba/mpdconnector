@@ -307,6 +307,7 @@
 		C5B7CD96203772E600C087ED /* MPDBrowseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */; };
 		C5C9F7F82042B6B900D239A8 /* MPDArtistBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */; };
 		C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */; };
+		C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */; };
 		E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -482,6 +483,7 @@
 		C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowseTests.swift; sourceTree = "<group>"; };
 		C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDArtistBrowseViewModel.swift; sourceTree = "<group>"; };
 		C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowse.swift; sourceTree = "<group>"; };
+		C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDFolderBrowseViewModel.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
 		F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnector_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC8E36039F8211E29E843D2B /* Pods-MPDConnector_tvOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_tvOS.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_tvOS/Pods-MPDConnector_tvOS.debug.xcconfig"; sourceTree = "<group>"; };
@@ -565,6 +567,7 @@
 				C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */,
 				C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */,
 				C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */,
+				C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
 				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
@@ -1310,6 +1313,7 @@
 				C546B02A1F35FAF0003C5B7E /* mixer.c in Sources */,
 				C546B0501F35FAF0003C5B7E /* player.c in Sources */,
 				C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */,
+				C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */,
 				C546B0511F35FAF0003C5B7E /* playlist.c in Sources */,
 				C546B04F1F35FAF0003C5B7E /* password.c in Sources */,
 				C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */,

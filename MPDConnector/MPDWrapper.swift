@@ -293,6 +293,42 @@ public class MPDWrapper: MPDProtocol {
         return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
     }
     
+    public func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
+        return mpd_send_list_meta(connection, path)
+    }
+    
+    public func recv_entity(_ connection: OpaquePointer!) -> OpaquePointer! {
+        return mpd_recv_entity(connection)
+    }
+    
+    public func entity_get_type(_ entity: OpaquePointer!) -> mpd_entity_type {
+        return mpd_entity_get_type(entity)
+    }
+    
+    public func entity_get_directory(_ entity: OpaquePointer!) -> OpaquePointer! {
+        return mpd_entity_get_directory(entity)
+    }
+    
+    public func entity_get_song(_ entity: OpaquePointer!) -> OpaquePointer! {
+        return mpd_entity_get_song(entity)
+    }
+    
+    public func entity_get_playlist(_ entity: OpaquePointer!) -> OpaquePointer! {
+        return mpd_entity_get_playlist(entity)
+    }
+    
+    public func entity_free(_ entity: OpaquePointer!) {
+        mpd_entity_free(entity)
+    }
+    
+    public func directory_get_path(_ directory: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_directory_get_path(directory))
+    }
+    
+    public func directory_free(_ directory: OpaquePointer!) {
+        mpd_directory_free(directory)
+    }
+    
     public func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
         return mpd_run_add(connection, uri)
     }

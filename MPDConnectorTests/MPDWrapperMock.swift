@@ -68,6 +68,13 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var samplerate = UInt32(128000)
     var encoding = UInt8(16)
     var channels = UInt8(2)
+    var updateId = UInt32(5)
+    var mpdEntityType = MPD_ENTITY_TYPE_UNKNOWN
+    var dbUpdateTime = Date(timeIntervalSince1970: 0)
+    var entities = [mpd_entity_type]()
+    var currentEntity: mpd_entity_type?
+    var directories = [[String:String]]()
+    var currentDirectory: [String:String]?
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -391,6 +398,93 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("search_db_songs", ["exact": "\(exact)"])
     }
 
+    func status_get_update_id(_ status: OpaquePointer!) -> UInt32 {
+        registerCall("status_get_update_id", [:])
+        return updateId
+    }
+    
+    func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
+        registerCall("send_list_meta", ["path": "\(stringFromMPDString(path))"])
+        return true
+    }
+    
+    func recv_entity(_ connection: OpaquePointer!) -> OpaquePointer! {
+        registerCall("recv_entity", [:])
+        if entities.count > 0 {
+            currentEntity = entities[0]
+            entities.removeFirst()
+            return OpaquePointer.init(bitPattern: 6)
+        }
+        else {
+            currentEntity = nil
+            return nil
+        }
+    }
+    
+    func entity_get_type(_ entity: OpaquePointer!) -> mpd_entity_type {
+        registerCall("entity_get_type", [:])
+        if currentEntity! == MPD_ENTITY_TYPE_SONG {
+            currentSong = songs[0]
+            songs.removeFirst()
+        }
+        else if currentEntity! == MPD_ENTITY_TYPE_DIRECTORY {
+            currentDirectory = directories[0]
+            directories.removeFirst()
+        }
+        else if currentEntity! == MPD_ENTITY_TYPE_PLAYLIST {
+            currentPlaylist = playlists[0]
+            playlists.removeFirst()
+        }
+        return currentEntity!
+    }
+    
+    func entity_get_directory(_ entity: OpaquePointer!) -> OpaquePointer! {
+        registerCall("entity_get_directory", [:])
+        return OpaquePointer.init(bitPattern: 6)
+    }
+    
+    func entity_get_song(_ entity: OpaquePointer!) -> OpaquePointer! {
+        registerCall("entity_get_song", [:])
+        return OpaquePointer.init(bitPattern: 6)
+    }
+    
+    func entity_get_playlist(_ entity: OpaquePointer!) -> OpaquePointer! {
+        registerCall("entity_get_playlist", [:])
+        return OpaquePointer.init(bitPattern: 6)
+    }
+    
+    func entity_free(_ entity: OpaquePointer!) {
+        registerCall("entity_free", [:])
+    }
+    
+    func directory_get_path(_ directory: OpaquePointer!) -> String {
+        registerCall("directory_get_path", [:])
+        return currentDirectory!["path"]!
+    }
+    
+    func directory_free(_ directory: OpaquePointer!) {
+        registerCall("directory_free", [:])
+    }
+    
+    func run_update(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> UInt32 {
+        registerCall("run_update", ["path": "\(stringFromMPDString(path))"])
+        return updateId
+    }
+    
+    func run_stats(_ connection: OpaquePointer!) -> OpaquePointer! {
+        registerCall("run_stats", [:])
+        return OpaquePointer.init(bitPattern: 6)
+    }
+    
+    func stats_free(_ stats: OpaquePointer!) {
+        registerCall("stats_free", [:])
+    }
+    
+    func stats_get_db_update_time(_ stats: OpaquePointer!) -> Date {
+        registerCall("stats_get_db_update_time", [:])
+        return dbUpdateTime
+    }
+    
     func run_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool {
         registerCall("run_add", ["uri": "\(stringFromMPDString(uri))"])
         return true

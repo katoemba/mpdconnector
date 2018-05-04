@@ -276,5 +276,58 @@ class MPDBrowseTests: XCTestCase {
         let fetchCount = self.mpdWrapper.callCount("send_list_playlists")
         XCTAssert(playlistCount - fetchCount == playlistFreeCount, "Expected \(playlistCount - fetchCount) for playlistFreeCount, got \(playlistFreeCount)")
     }
+
+    func testFolder() {
+        mpdWrapper.entities = [MPD_ENTITY_TYPE_SONG, MPD_ENTITY_TYPE_PLAYLIST, MPD_ENTITY_TYPE_DIRECTORY, MPD_ENTITY_TYPE_SONG, MPD_ENTITY_TYPE_DIRECTORY, MPD_ENTITY_TYPE_SONG]
+        mpdWrapper.songs = [["title": "t1", "album": "alb1", "artist": "art1"],
+                            ["title": "t2", "album": "alb2", "artist": "art1"],
+                            ["title": "t3", "album": "alb3", "artist": "art1"]]
+        mpdWrapper.playlists = [["id": "id1", "name": "name1"]]
+        mpdWrapper.directories = [["path": "/abc/def"],
+                                  ["path": "/abc/hij"]]
+        
+        let browseViewModel = mpdPlayer?.browse.folderContentsBrowseViewModel(Folder.init(id: "FolderID", source: .Local, path: "FolderPath", name: "FolderName"))
+        browseViewModel!.load()
+        let folderContentsResult = browseViewModel!.folderContentsObservable
+            .toBlocking(timeout: 0.8)
+            .materialize()
+        
+        switch folderContentsResult {
+        case .failed(let folderContentsOnNext, let error):
+            if error.localizedDescription == RxError.timeout.localizedDescription {
+                let folderContents = folderContentsOnNext.last
+                XCTAssert(folderContents!.count == 5, "Expected 5 items, got \(folderContents!.count)")
+
+                var songCount = 0
+                var folderCount = 0
+                for folderContent in folderContents! {
+                    if case .song(_) = folderContent {
+                        songCount = songCount + 1
+                    }
+                    else if case .folder(_) = folderContent {
+                        folderCount = folderCount + 1
+                    }
+                }
+                
+                XCTAssert(songCount == 3, "Expected 3 songs, got \(songCount)")
+                XCTAssert(folderCount == 2, "Expected 2 folders, got \(folderCount)")
+            }
+            else {
+                XCTAssert(false, "getting folderContents failed \(error)")
+            }
+        default:
+            XCTAssert(false, "getting folderContents failed")
+        }
+        
+        self.mpdWrapper.assertCall("send_list_meta", expectedCallCount: 1)
+        let connectCount = self.mpdWrapper.callCount("connection_new")
+        let freeCount = self.mpdWrapper.callCount("connection_free")
+        XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
+        
+        let entityCount = self.mpdWrapper.callCount("recv_entity")
+        let entityFreeCount = self.mpdWrapper.callCount("entity_free")
+        let fetchCount = self.mpdWrapper.callCount("send_list_meta")
+        XCTAssert(entityCount - fetchCount == entityFreeCount, "Expected \(entityCount - fetchCount) for playlistFreeCount, got \(entityFreeCount)")
+    }
 }
 

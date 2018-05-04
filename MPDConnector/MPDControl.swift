@@ -325,6 +325,7 @@ public class MPDControl: ControlProtocol {
     ///   - album: the album to add
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
+    ///   - startWithSong: the position of the song (within the album) to start playing
     public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
@@ -357,6 +358,7 @@ public class MPDControl: ControlProtocol {
     ///   - playlist: the playlist to add
     ///   - addMode: how to add the song to the playqueue
     ///   - shuffle: whether or not to shuffle the playlist
+    ///   - startWithSong: the position of the song (within the playlist) to start playing
     public func addPlaylist(_ playlist: Playlist, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
         runCommand()  { connection in
             switch addMode {
@@ -408,6 +410,32 @@ public class MPDControl: ControlProtocol {
                     _ = self.mpd.connection_clear_error(connection)
                     self.mpd.connection_free(connection)
                 }
+            })
+            .disposed(by: bag)
+    }
+    
+    /// Add a folder to the play queue
+    ///
+    /// - Parameters:
+    ///   - album: the album to add
+    ///   - addMode: how to add the songs to the playqueue
+    ///   - shuffle: whether or not to shuffle the songs before adding them
+    ///   - startWithSong: the position of the song (within the folder) to start playing
+    public func addFolder(_ folder: Folder, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
+        // First we need to get all the songs on an album, then add them one by one
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        browse.fetchFolderContents(parentFolder: folder)
+            .map({ (folderContents) -> [Song] in
+                var songs = [Song]()
+                for folderContent in folderContents {
+                    if case let .song(song) = folderContent {
+                        songs.append(song)
+                    }
+                }
+                return songs
+            })
+            .subscribe(onNext: { (songs) in
+                self.addSongs(songs, addMode: addMode, shuffle: shuffle, startWithSong: startWithSong)
             })
             .disposed(by: bag)
     }

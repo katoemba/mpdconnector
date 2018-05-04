@@ -1,6 +1,5 @@
 //
-//  MPDPlaylistBrowseViewModel.swift
-//  MPDConnector_iOS
+// MPDConnector
 //
 // The MIT License (MIT)
 //
@@ -23,17 +22,18 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+	
 
 import Foundation
 import RxSwift
 import RxCocoa
 import ConnectorProtocol
 
-public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
-    private var _playlists = Variable<[Playlist]>([])
-    public var playlistsObservable: Observable<[Playlist]> {
+public class MPDFolderBrowseViewModel: FolderBrowseViewModel {
+    private var _folderContentsSubject = PublishSubject<[FolderContent]>()
+    public var folderContentsObservable: Observable<[FolderContent]> {
         get {
-            return _playlists.asObservable()
+            return _folderContentsSubject.asObservable()
         }
     }
     private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
@@ -42,54 +42,61 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
             return loadProgress.asObservable()
         }
     }
-
+    
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
-    private let _providedPlaylists: [Playlist]
-    
-    deinit {
-        print("Cleanup MPDPlaylistBrowseViewModel")
+    private let _folderContents: [FolderContent]
+    private let _parentFolder: Folder?
+    public var parentFolder: Folder? {
+        get {
+            return _parentFolder
+        }
     }
     
-    public required init(browse: MPDBrowse, playlists: [Playlist] = []) {
+    deinit {
+        print("Cleanup MPDFolderBrowseViewModel")
+    }
+    
+    public required init(browse: MPDBrowse, folderContents: [FolderContent] = [], parentFolder: Folder? = nil) {
         _browse = browse
-        _providedPlaylists = playlists
+        _folderContents = folderContents
+        _parentFolder = parentFolder
     }
     
     public func load() {
-        if _providedPlaylists.count > 0 {
+        if _folderContents.count > 0 {
             loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
-            _playlists.value = _providedPlaylists
+            _folderContentsSubject.onNext(_folderContents)
         }
         else {
-            reload()
+            reload(parentFolder: _parentFolder)
         }
     }
     
-    private func reload() {
+    private func reload(parentFolder: Folder? = nil) {
         // Get rid of old disposables
         bag = DisposeBag()
         
         // Clear the contents
-        _playlists.value = []
+        _folderContentsSubject.onNext([])
         loadProgress.accept(.loading)
-
+        
         // Load new contents
         let browse = _browse
-        let playlists = self._playlists
-        let playlistsObservable = browse.fetchPlaylists()
+        let folderContentsSubject = self._folderContentsSubject
+        
+        let folderContentsObservable = browse.fetchFolderContents(parentFolder: parentFolder)
             .observeOn(MainScheduler.instance)
             .share(replay: 1)
         
-        playlistsObservable
-            .observeOn(MainScheduler.instance)
-            .subscribe(onNext: { (foundPlaylists) in
-                playlists.value = foundPlaylists
+        folderContentsObservable
+            .subscribe(onNext: { (folderContents) in
+                folderContentsSubject.onNext(folderContents)
             })
             .disposed(by: bag)
         
-        playlistsObservable
+        folderContentsObservable
             .filter({ (itemsFound) -> Bool in
                 itemsFound.count > 0
             })
@@ -99,7 +106,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
             .bind(to: loadProgress)
             .disposed(by: bag)
         
-        playlistsObservable
+        folderContentsObservable
             .filter({ (itemsFound) -> Bool in
                 itemsFound.count == 0
             })
@@ -111,28 +118,5 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
     }
     
     public func extend() {
-    }
-    
-    public func renamePlaylist(_ playlist: Playlist, to: String) -> Playlist {
-        var renamedPlaylist = playlist
-        renamedPlaylist.id = to
-        renamedPlaylist.name = to
-        
-        if let index = _playlists.value.index(of: playlist), _playlists.value.contains(renamedPlaylist) == false {
-            _browse.renamePlaylist(playlist, newName: to)
-            
-            _playlists.value[index] = renamedPlaylist
-            return renamedPlaylist
-        }
-        
-        return playlist
-    }
-    
-    public func deletePlaylist(_ playlist: Playlist) {
-        if let index = _playlists.value.index(of: playlist) {
-            _browse.deletePlaylist(playlist)
-            
-            _playlists.value.remove(at: index)
-        }
     }
 }
