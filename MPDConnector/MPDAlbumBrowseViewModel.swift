@@ -169,7 +169,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 return start < min(start+count, albums.count)
             })
         
-        startLoadObservable
+        albumsObservable
             .observeOn(MainScheduler.instance)
             .map { (_) -> LoadProgress in
                 .loading
