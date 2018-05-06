@@ -525,6 +525,17 @@ class MPDControlTests: XCTestCase {
         testScheduler.start()
     }
     
+    func testClearPlayqueue() {
+        testScheduler.scheduleAt(50) {
+            _ = self.mpdPlayer?.control.clearPlayqueue()
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_clear")
+        }
+        
+        testScheduler.start()
+    }
+    
     func testAddPlaylist() {
         testScheduler.scheduleAt(50) {
             var playlist = Playlist()

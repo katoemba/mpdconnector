@@ -469,6 +469,13 @@ public class MPDControl: ControlProtocol {
         }
     }
     
+    /// Clear the active playqueue
+    public func clearPlayqueue() {
+        runCommand()  { connection in
+            _ = self.mpd.run_clear(connection)
+        }
+    }
+
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///
     /// - Parameters:
