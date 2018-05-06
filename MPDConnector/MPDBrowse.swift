@@ -481,7 +481,7 @@ public class MPDBrowse: BrowseProtocol {
         return MPDAlbumBrowseViewModel(browse:self, albums: albums)
     }
 
-    public func fetchArtists(genre: String?) -> Observable<[Artist]> {
+    public func fetchArtists(genre: String?, albumArtist: Bool = false) -> Observable<[Artist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
             .subscribeOn(scheduler)
             .observeOn(scheduler)
@@ -490,13 +490,13 @@ public class MPDBrowse: BrowseProtocol {
                 do {
                     var artists = [Artist]()
                     
-                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
+                    try self.mpd.search_db_tags(connection, tagType: albumArtist ? MPD_TAG_ALBUM_ARTIST : MPD_TAG_ARTIST)
                     if let genre = genre, genre != "" {
                         try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
                     }
                     try self.mpd.search_commit(connection)
                     
-                    while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ARTIST) {
+                    while let result = self.mpd.recv_pair_tag(connection, tagType: albumArtist ? MPD_TAG_ALBUM_ARTIST : MPD_TAG_ARTIST) {
                         let title = result.1
                         if title != "" {
                             let artist = Artist(id: title, source: .Local, name: title)
@@ -526,16 +526,16 @@ public class MPDBrowse: BrowseProtocol {
     /// Return a view model for a list of artists, which can return artists in batches.
     ///
     /// - Returns: an ArtistBrowseViewModel instance
-    public func artistBrowseViewModel() -> ArtistBrowseViewModel {
-        return MPDArtistBrowseViewModel(browse: self)
+    public func artistBrowseViewModel(albumArtist: Bool) -> ArtistBrowseViewModel {
+        return MPDArtistBrowseViewModel(browse: self, filters: [.albumArtist])
     }
     
     /// Return a view model for a list of artists filtered by genre, which can return artist in batches.
     ///
     /// - Parameter genre: genre to filter on
     /// - Returns: an ArtistBrowseViewModel instance
-    public func artistBrowseViewModel(_ genre: String) -> ArtistBrowseViewModel {
-        return MPDArtistBrowseViewModel(browse: self, filters: [.genre(genre)])
+    public func artistBrowseViewModel(_ genre: String, albumArtist: Bool) -> ArtistBrowseViewModel {
+        return MPDArtistBrowseViewModel(browse: self, filters: [.genre(genre), .albumArtist])
     }
     
     /// Return a view model for a preloaded list of artists.

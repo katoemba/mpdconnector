@@ -43,6 +43,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         }
     }
 
+    private var _filters: [BrowseFilter]
     public var filters: [BrowseFilter] {
         get {
             return _filters
@@ -52,7 +53,6 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
     private let _artists: [Artist]
-    private let _filters: [BrowseFilter]
     
     deinit {
         print("Cleanup MPDArtistBrowseViewModel")
@@ -64,6 +64,11 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         _filters = filters
     }
     
+    public func load(filters: [BrowseFilter]) {
+        _filters = filters
+        load()
+    }
+
     public func load() {
         if _artists.count > 0 {
             loadProgress.accept(.allDataLoaded)
@@ -71,19 +76,33 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
             _artistsSubject.onNext(_artists)
         }
         else if filters.count > 0 {
-            switch filters[0] {
-            case let .genre(genre):
-                reload(genre: genre)
-            default:
-                reload()
+            var genre = nil as String?
+            if let genreIndex = filters.index(where: { (filter) -> Bool in
+                if case .genre(_) = filter {
+                    return true
+                }
+                return false
+            }) {
+                if case let .genre(localGenre) = filters[genreIndex] {
+                    genre = localGenre
+                }
             }
+            
+            let albumArtist = filters.contains { (filter) -> Bool in
+                if case .albumArtist = filter {
+                    return true
+                }
+                return false
+            }
+
+            reload(genre: genre, albumArtist: albumArtist)
         }
         else {
-            reload()
+            reload(albumArtist: false)
         }
     }
     
-    private func reload(genre: String? = nil) {
+    private func reload(genre: String? = nil, albumArtist: Bool) {
         // Get rid of old disposables
         bag = DisposeBag()
         
@@ -94,7 +113,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         // Load new contents
         let browse = _browse
         let artistsSubject = self._artistsSubject
-        let artistsObservable = browse.fetchArtists(genre: genre)
+        let artistsObservable = browse.fetchArtists(genre: genre, albumArtist: albumArtist)
             .observeOn(MainScheduler.instance)
             .share(replay: 1)
             
