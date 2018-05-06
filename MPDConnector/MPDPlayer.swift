@@ -68,6 +68,14 @@ public class MPDPlayer: PlayerProtocol {
         return _name
     }
     
+    public var controllerType: String {
+        return "MPD"
+    }
+    private var _discoverMode = DiscoverMode.automatic
+    public var discoverMode: DiscoverMode {
+        return _discoverMode
+    }
+    
     private var host: String
     private var port: Int
     private var password: String
@@ -181,7 +189,8 @@ public class MPDPlayer: PlayerProtocol {
                 password: String = "",
                 scheduler: SchedulerType? = nil,
                 type: MPDType = .classic,
-                version: String = "") {
+                version: String = "",
+                discoverMode: DiscoverMode = .automatic) {
         self.mpd = mpd ?? MPDWrapper()
         self._name = name
         self.host = host
@@ -190,6 +199,7 @@ public class MPDPlayer: PlayerProtocol {
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
         _version = version
+        _discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
         let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
         if defaultTypeInt > 0 {
@@ -246,7 +256,8 @@ public class MPDPlayer: PlayerProtocol {
                             connectionProperties: [String: Any],
                             scheduler: SchedulerType? = nil,
                             type: MPDType = .classic,
-                            version: String = "") {
+                            version: String = "",
+                            discoverMode: DiscoverMode = .automatic) {
         guard let name = connectionProperties[ConnectionProperties.Name.rawValue] as? String,
             let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String,
             let port = connectionProperties[ConnectionProperties.Port.rawValue] as? Int else {
@@ -257,7 +268,8 @@ public class MPDPlayer: PlayerProtocol {
                           password: "",
                           scheduler: scheduler,
                           type: type,
-                          version: version)
+                          version: version,
+                          discoverMode: discoverMode)
                 return
         }
         
@@ -268,7 +280,8 @@ public class MPDPlayer: PlayerProtocol {
                   password: (connectionProperties[ConnectionProperties.Password.rawValue] as? String) ?? "",
                   scheduler: scheduler,
                   type: type,
-                  version: version)
+                  version: version,
+                  discoverMode: discoverMode)
     }
     
     deinit {

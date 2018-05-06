@@ -34,6 +34,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     private let volumioNetServiceBrowser : NetServiceBrowser
     private let backgroundScheduler = ConcurrentDispatchQueueScheduler.init(qos: .background)
 
+    private let addManualPlayerSubject = PublishSubject<MPDPlayer>()
+    private let removeManualPlayerSubject = PublishSubject<PlayerProtocol>()
     public let addPlayerObservable : Observable<PlayerProtocol>
     public let removePlayerObservable : Observable<PlayerProtocol>
     
@@ -115,7 +117,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .asObservable()
         
         // Merge the detected players, and get a version out of them.
-        addPlayerObservable = Observable.merge(addMPDPlayerObservable, addVolumioPlayerObservable)
+        addPlayerObservable = Observable.merge(addMPDPlayerObservable, addVolumioPlayerObservable, addManualPlayerSubject)
             .observeOn(backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
@@ -125,7 +127,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,
-                                          version: version)
+                                          version: version,
+                                          discoverMode: player.discoverMode)
                 }
 
                 return player
@@ -147,7 +150,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             })
             .asObservable()
         
-        removePlayerObservable = Observable.merge(removeMPDPlayerObservable, removeVolumioPlayerObservable)
+        removePlayerObservable = Observable.merge(removeMPDPlayerObservable, removeVolumioPlayerObservable, removeManualPlayerSubject)
             .observeOn(MainScheduler.instance)
             .asObservable()
     }
@@ -161,6 +164,11 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         isListening = true
         mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "")
         volumioNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
+        
+        let persistedPlayers = UserDefaults.standard.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
+        for persistedPlayer in persistedPlayers.keys {
+            addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: persistedPlayers[persistedPlayer] as! [String: Any], discoverMode: .manual))
+        }
     }
     
     /// Stop listening for players.
@@ -172,5 +180,44 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         isListening = false
         mpdNetServiceBrowser.stop()
         volumioNetServiceBrowser.stop()
+    }
+    
+    /// Manually create a player based on the connection properties
+    ///
+    /// - Parameter connectionProperties: dictionary of connection properties
+    /// - Returns: An observable on which a created Player can published.
+    public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
+        return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties)
+            .subscribeOn(backgroundScheduler)
+            .flatMapFirst({ (connection) -> Observable<PlayerProtocol?> in
+                if (connection != nil) {
+                    MPDWrapper().connection_free(connection)
+                    return Observable.just(MPDPlayer.init(connectionProperties: connectionProperties))
+                }
+                return Observable.just(nil)
+            })
+            .observeOn(MainScheduler.instance)
+    }
+    
+    public func persistPlayer(_ connectionProperties: [String: Any]) {
+        var persistedPlayers = UserDefaults.standard.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
+        
+        if persistedPlayers[connectionProperties[ConnectionProperties.Name.rawValue] as! String] != nil {
+            removeManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties))
+        }
+        persistedPlayers[connectionProperties[ConnectionProperties.Name.rawValue] as! String] = connectionProperties
+        addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties, discoverMode: .manual))
+
+        UserDefaults.standard.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
+    }
+    
+    public func removePlayer(_ player: PlayerProtocol) {
+        var persistedPlayers = UserDefaults.standard.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
+        
+        if persistedPlayers[player.name] != nil {
+            removeManualPlayerSubject.onNext(player)
+            persistedPlayers.removeValue(forKey: player.name)
+            UserDefaults.standard.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
+        }
     }
 }
