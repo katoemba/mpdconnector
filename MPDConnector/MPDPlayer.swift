@@ -214,7 +214,7 @@ public class MPDPlayer: PlayerProtocol {
                 defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
             else if type == MPDType.bryston {
-                defaults.set("music", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
+                defaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 defaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
