@@ -34,13 +34,17 @@ enum ConnectionError: Error {
 }
 
 public enum MPDType: Int {
+    case unknown = 0
     case classic = 1
     case mopidy = 2
     case volumio = 3
     case bryston = 4
+    case runeaudio = 5
     
     var description: String {
         switch self {
+        case .unknown:
+            return "Unknown"
         case .classic:
             return "Classic MPD"
         case .mopidy:
@@ -49,6 +53,8 @@ public enum MPDType: Int {
             return "Volumio"
         case .bryston:
             return "Bryston"
+        case .runeaudio:
+            return "Rune Audio"
         }
     }
 }
@@ -108,7 +114,7 @@ public class MPDPlayer: PlayerProtocol {
         return uniqueIDForPlayer(host: player.host, port: player.port)
     }
 
-    private static func uniqueIDForPlayer(host: String, port: Int) -> String {
+    static func uniqueIDForPlayer(host: String, port: Int) -> String {
         return "\(host)"
     }
 
@@ -143,10 +149,27 @@ public class MPDPlayer: PlayerProtocol {
                     mpdDBStatusObservable
                 })
             
+            var coverArtDescription = ""
+            if type == .runeaudio {
+                coverArtDescription = "To enable cover art retrieval from a Rune Audio player, you need to configure the internal webserver:\n\n" +
+                "1 - Login to the player: ssh root@\(host) (the default password is 'rune')\n" +
+                "2 - Enter the following command: ln -s /mnt/MPD   /var/www/music\n" +
+                "3 - Make sure the specified Cover Filename matches the artwork filename you use in each folder"
+            }
+            else if type == .bryston {
+                coverArtDescription = "For a Bryston player, make sure the specified Cover Filename matches the artwork filename you use in each folder."
+            }
+            else if type == .volumio {
+                coverArtDescription = "For a Volumio based player, the default cover art settings should not be changed."
+            }
+            else if type == .classic {
+                coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, using port 80. This webserver must be configured to support browsing the music directories.\n\n" +
+                "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
+            }
             return [PlayerSettingGroup(title: "Player Type", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!]),
-                    PlayerSettingGroup(title: "Cover Art", description: "", settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
-                                                                                      loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
-                                                                                      loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]),
+                    PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
+                                                                                                       loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
+                                                                                                       loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]),
                     PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
                                                                                          ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () in
                         (self.browse as! MPDBrowse).updateDB()
@@ -217,6 +240,11 @@ public class MPDPlayer: PlayerProtocol {
                 defaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 defaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+            }
+            else if type == MPDType.runeaudio {
+                defaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
+                defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
+                defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
             else {
                 defaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
@@ -335,6 +363,12 @@ public class MPDPlayer: PlayerProtocol {
                     defaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     _type = MPDType.bryston
                 }
+                else if selectionSetting.value == MPDType.runeaudio.rawValue {
+                    defaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
+                    defaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    _type = MPDType.runeaudio
+                }
                 else {
                     defaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     defaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
@@ -369,7 +403,8 @@ public class MPDPlayer: PlayerProtocol {
                                           description: "Player Type",
                                           items: [MPDType.classic.rawValue: MPDType.classic.description,
                                                   MPDType.volumio.rawValue: MPDType.volumio.description,
-                                                  MPDType.bryston.rawValue: MPDType.bryston.description],
+                                                  MPDType.bryston.rawValue: MPDType.bryston.description,
+                                                  MPDType.runeaudio.rawValue: MPDType.runeaudio.description],
                                           value: defaults.integer(forKey: playerSpecificId))
         }
         else if id == MPDConnectionProperties.coverPrefix.rawValue {

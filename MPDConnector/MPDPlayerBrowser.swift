@@ -46,35 +46,84 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         volumioNetServiceBrowser = NetServiceBrowser()
 
         // Create an observable that monitors when new players are discovered.
-        let addMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
-            .map({ (netService) -> (String, String, Int) in
-                (netService.name, netService.hostName ?? "Unknown", netService.port)
+        let mpdPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
+            .map({ (netService) -> (String, String, Int, MPDType) in
+                let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
+                let typeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
+                let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
+
+                return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
             })
-            .flatMap({ (name, host, port) -> Observable<MPDPlayer> in
+            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+                // Check if this is a Bryston player
                 return Observable.create { observer in
-                    // Make a request to the player for the state
-                    let session = URLSession.shared
-                    let request = URLRequest(url: URL(string: "http://\(host)/bdbapiver")!)
-                    let task = session.dataTask(with: request) {
-                        (data, response, error) -> Void in
-                        if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200 {
-                            observer.onNext(MPDPlayer.init(name: name, host: host, port: port, type: .bryston))
-                        }
-                        else {
-                            observer.onNext(MPDPlayer.init(name: name, host: host, port: port, type: .classic))
-                        }
+                    if type != .unknown {
+                        observer.onNext((name, host, port, type))
                         observer.onCompleted()
                     }
+                    else {
+                        // Make a request to the player for the api version
+                        let session = URLSession.shared
+                        let request = URLRequest(url: URL(string: "http://\(host)/bdbapiver")!)
+                        let task = session.dataTask(with: request) {
+                            (data, response, error) -> Void in
+                            if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200,
+                                let data = data, let responseString = String(data: data, encoding: String.Encoding.utf8),
+                                responseString.starts(with: "1") {
+                                observer.onNext((name, host, port, .bryston))
+                            }
+                            else {
+                                observer.onNext((name, host, port, type))
+                            }
+                            observer.onCompleted()
+                        }
+                        
+                        task.resume()
+                    }
                     
-                    task.resume()
-                
                     return Disposables.create()
                 }
             })
+            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+                // Check if this is a Rune Audio based player
+                Observable.create { observer in
+                    if type != .unknown {
+                        observer.onNext((name, host, port, type))
+                        observer.onCompleted()
+                    }
+                    else {
+                        // Make a request to the player for the stats command
+                        let session = URLSession.shared
+                        let request = URLRequest(url: URL(string: "http://\(host)/command/?cmd=stats")!)
+                        let task = session.dataTask(with: request){
+                            (data, response, error) -> Void in
+                            if error == nil, let data = data,
+                                let responseString = String(data: data, encoding: String.Encoding.utf8),
+                                responseString.contains("db_update") {
+                                observer.onNext((name, host, port, .runeaudio))
+                            }
+                            else {
+                                observer.onNext((name, host, port, type))
+                            }
+                            observer.onCompleted()
+                        }
+                        task.resume()
+                    }
+                    
+                    return Disposables.create()
+                }
+            })
+            .map({ (name, host, port, type) -> MPDPlayer in
+                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type)
+            })
+            .share(replay: 1)
 
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
-        let addVolumioPlayerObservable = volumioNetServiceBrowser.rx.serviceAdded
+        let httpPlayerObservable = volumioNetServiceBrowser.rx.serviceAdded
             .observeOn(backgroundScheduler)
+            .filter({ (netService) -> Bool in
+                netService.name.contains("[runeaudio]") == false && netService.name.contains("bryston") == false
+            })
             .filter({ (netService) -> Bool in
                 // Check if an MPD player is present at the default port
                 let mpd = MPDWrapper()
@@ -84,40 +133,54 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 }
                 return false
             })
-            .flatMap({ (netService) -> Observable<NetService> in
-                return Observable.create { observer in
-                    // Make a request to the player for the state
-                    let session = URLSession.shared
-                    let request = URLRequest(url: URL(string: "http://\(netService.hostName ?? "Unknown"):\(netService.port)/api/v1/getstate")!)
-                    let task = session.dataTask(with: request){
-                        (data, response, error) -> Void in
-                        if error == nil {
-                            if let data = data {
-                                do {
-                                    // When getting back sensible data, we can assume this is a Volumio player
-                                    if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-                                        ,json["album"] != nil, json["artist"] != nil {
-                                        observer.onNext(netService)
+            .map({ (netService) -> (String, String, Int, MPDType) in
+                let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
+                let typeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
+                let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
+                
+                return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
+            })
+            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+                    // Check if this is a Volumio based player
+                    Observable.create { observer in
+                        if type != .unknown {
+                            observer.onNext((name, host, port, type))
+                            observer.onCompleted()
+                        }
+                        else {
+                            // Make a request to the player for the state
+                            let session = URLSession.shared
+                            let request = URLRequest(url: URL(string: "http://\(host):\(port)/api/v1/getstate")!)
+                            let task = session.dataTask(with: request){
+                                (data, response, error) -> Void in
+                                if error == nil {
+                                    if let data = data {
+                                        do {
+                                            // When getting back sensible data, we can assume this is a Volumio player
+                                            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                                                ,json["album"] != nil, json["artist"] != nil {
+                                                observer.onNext((name, host, port, .volumio))
+                                            }
+                                        }
+                                        catch {
+                                        }
                                     }
                                 }
-                                catch {
-                                }
+                                observer.onCompleted()
                             }
+                            task.resume()
                         }
-                        observer.onCompleted()
-                    }
-                    task.resume()
                     
-                    return Disposables.create()
-                }
+                        return Disposables.create()
+                    }
+                })
+            .map({ (name, host, port, type) -> MPDPlayer in
+                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type)
             })
-            .map({ (netService) -> MPDPlayer in
-                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: 6600, type: .volumio)
-            })
-            .asObservable()
-        
+            .share(replay: 1)
+
         // Merge the detected players, and get a version out of them.
-        addPlayerObservable = Observable.merge(addMPDPlayerObservable, addVolumioPlayerObservable, addManualPlayerSubject)
+        addPlayerObservable = Observable.merge(mpdPlayerObservable, httpPlayerObservable, addManualPlayerSubject)
             .observeOn(backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
@@ -134,7 +197,6 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 return player
             })
             .observeOn(MainScheduler.instance)
-            .asObservable()
         
         // Create an observable that monitors when players disappear from the network.
         let removeMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceRemoved
