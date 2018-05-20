@@ -144,7 +144,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     // Check if this is a Volumio based player
                     Observable.create { observer in
                         if type != .unknown {
-                            observer.onNext((name, host, port, type))
+                            observer.onNext((name, host, 6600, type))
                             observer.onCompleted()
                         }
                         else {
@@ -159,7 +159,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                             // When getting back sensible data, we can assume this is a Volumio player
                                             if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                                                 ,json["album"] != nil, json["artist"] != nil {
-                                                observer.onNext((name, host, port, .volumio))
+                                                observer.onNext((name, host, 6600, .volumio))
                                             }
                                         }
                                         catch {
