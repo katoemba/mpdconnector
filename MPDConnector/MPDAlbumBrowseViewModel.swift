@@ -75,7 +75,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
 
     private let extendTriggerSubject = PublishSubject<Int>()
     private var bag = DisposeBag()
-    private var extendSize = 30
+    private var extendSize = 60
     private let _browse: MPDBrowse
     private let _albums: [Album]
     
@@ -136,7 +136,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         var albumsObservable : Observable<[Album]>
         
         if let artist = artist {
-            self.extendSize = 30
+            self.extendSize = 60
             albumsObservable = browse.albumsByArtist(artist)
                 .observeOn(MainScheduler.instance)
                 .share(replay: 1)
@@ -148,7 +148,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 .share(replay: 1)
         }
         else {
-            self.extendSize = 30
+            self.extendSize = 60
             albumsObservable = browse.fetchAlbums(genre: genre, sort: sort)
                 .observeOn(MainScheduler.instance)
                 .share(replay: 1)
