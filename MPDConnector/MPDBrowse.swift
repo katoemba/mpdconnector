@@ -174,15 +174,17 @@ public class MPDBrowse: BrowseProtocol {
             do {
                 try self.mpd.search_db_songs(connection, exact: true)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: artist)
-                if let album = album {
-                    try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album)
-                }
+                // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
+                // Therefor don't add the album as search constraint, instead filter when the songs are retrieved.
+                //if let album = album {
+                //    try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album)
+                //}
                 try self.mpd.search_commit(connection)
                 
                 var mpdSong = self.mpd.recv_song(connection)
                 while mpdSong != nil {
                     if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                        if songIDs[song.id] == nil {
+                        if album == nil || album == song.album, songIDs[song.id] == nil {
                             songIDs[song.id] = 1
                             songs.append(song)
                         }
@@ -333,6 +335,7 @@ public class MPDBrowse: BrowseProtocol {
             .flatMap({ (connection) -> Observable<[Album]> in
                 guard let connection = connection else { return Observable.just([]) }
                 do {
+                    var foundEmptyAlbum = false
                     var albums = [Album]()
                     
                     try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
@@ -364,8 +367,34 @@ public class MPDBrowse: BrowseProtocol {
                                 albums.append(album)
                             }
                         }
+                        else if genre != nil {
+                            foundEmptyAlbum = true
+                        }
                     }
                     _ = self.mpd.response_finish(connection)
+
+                    // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
+                    // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
+                    if foundEmptyAlbum {
+                        try self.mpd.search_db_songs(connection, exact: true)
+                        if let genre = genre, genre != "" {
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                        }
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
+                        try self.mpd.search_commit(connection)
+                        
+                        while let mpdSong = self.mpd.recv_song(connection) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                let albumID = "\(song.albumartist):\(song.album)"
+                                if albumIDs[albumID] == nil {
+                                    albumIDs[albumID] = 1
+                                    albums.append(self.createAlbumFromSong(song))
+                                }
+                            }
+                            self.mpd.song_free(mpdSong)
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    }
                     
                     // Cleanup
                     self.mpd.connection_free(connection)
