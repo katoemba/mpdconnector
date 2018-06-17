@@ -21,7 +21,7 @@ The implementation uses libmpdclient to control mpd-based players of version 0.1
 
 * For now you will have to manually copy MPDConnector into a project.
 * MPDConnector depends on the following libraries:
-	* ConnectorProtocol
+	* ConnectorProtocol https://bitbucket.org/musicremote/connectorprotocol/
     * RxSwift v4
     * RxCocoa v4
     * RxDataSources v3
