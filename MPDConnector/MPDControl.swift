@@ -283,14 +283,30 @@ public class MPDControl: ControlProtocol {
             
             let songsToAdd = shuffle ? songs.shuffled() : songs
             
-            // Add songs in a command list, as this can be a longer list.
-            _ = self.mpd.command_list_begin(connection, discrete_ok: false)
-            for song in songsToAdd {
-                _ = self.mpd.send_add_id_to(connection, uri: song.id, to: pos)
-                pos = pos + 1
+            let batchSize = UInt32(40)
+            // Smaller sizes are added directly, trying to work around an occasional crash in mpd_command_list_end.
+            if songsToAdd.count <= batchSize {
+                for song in songsToAdd {
+                    _ = self.mpd.run_add_id_to(connection, uri: song.id, to: pos)
+                    pos = pos + 1
+                }
             }
-            _ = self.mpd.command_list_end(connection)
-            _ = self.mpd.response_finish(connection)
+            else {
+                // Add songs in a command list, as this can be a longer list.
+                var index = UInt32(0)
+                while index < songsToAdd.count {
+                    _ = self.mpd.command_list_begin(connection, discrete_ok: false)
+                    let last = min(index + batchSize, UInt32(songsToAdd.count))
+                    while index < last {
+                        let song = songsToAdd[Int(index)]
+                        _ = self.mpd.send_add_id_to(connection, uri: song.id, to: pos)
+                        pos = pos + 1
+                        index = index + 1
+                    }
+                    _ = self.mpd.command_list_end(connection)
+                    _ = self.mpd.response_finish(connection)
+                }
+            }
 
             if addMode == .replace {
                 _ = self.mpd.run_play_pos(connection, startWithSong)
@@ -385,6 +401,7 @@ public class MPDControl: ControlProtocol {
     ///   - shuffle: whether or not to shuffle the songs before adding them
     public func addGenre(_ genre: String, addMode: AddMode, shuffle: Bool) {
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(serialScheduler)
             .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
                 guard let connection = connection else { return }
