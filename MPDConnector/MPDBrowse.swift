@@ -66,6 +66,7 @@ public class MPDBrowse: BrowseProtocol {
 
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
+            .subscribeOn(scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<SearchResult> in
                 guard let connection = connection else { return Observable.just(SearchResult()) }
