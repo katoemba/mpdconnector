@@ -297,6 +297,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_send_list_meta(connection, path)
     }
     
+    public func send_list_files(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
+        return mpd_send_list_files(connection, path)
+    }
+
     public func recv_entity(_ connection: OpaquePointer!) -> OpaquePointer! {
         return mpd_recv_entity(connection)
     }

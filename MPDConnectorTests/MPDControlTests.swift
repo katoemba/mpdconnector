@@ -405,15 +405,35 @@ class MPDControlTests: XCTestCase {
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_clear")
-            self.mpdWrapper.assertCall("command_list_begin", expectedParameters: ["discrete_ok": "false"])
-            self.mpdWrapper.assertCall("send_add_id_to", expectedParameters: ["uri": "1", "to": "0"])
-            self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 1)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "0"])
             self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
         }
         
         testScheduler.start()
     }
 
+    func testAddFiftySongsReplace() {
+        testScheduler.scheduleAt(50) {
+            var songs = [Song]()
+            for i in 1...50 {
+                var song = Song()
+                song.title = "Title"
+                song.id = "\(i)"
+                songs.append(song)
+            }
+            self.mpdPlayer?.control.addSongs(songs, addMode: .replace)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_clear")
+            self.mpdWrapper.assertCall("command_list_begin", expectedCallCount: 2, expectedParameters: ["discrete_ok": "false"])
+            self.mpdWrapper.assertCall("send_add_id_to", expectedCallCount: 50)
+            self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 2)
+            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
+        }
+        
+        testScheduler.start()
+    }
+    
     func testAddOneSongNext() {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
@@ -431,9 +451,7 @@ class MPDControlTests: XCTestCase {
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("command_list_begin", expectedParameters: ["discrete_ok": "false"])
-            self.mpdWrapper.assertCall("send_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
-            self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 1)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
             self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
         }
         
@@ -457,9 +475,7 @@ class MPDControlTests: XCTestCase {
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("command_list_begin", expectedParameters: ["discrete_ok": "false"])
-            self.mpdWrapper.assertCall("send_add_id_to", expectedParameters: ["uri": "1", "to": "10"])
-            self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 1)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "10"])
             self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
         }
         
@@ -483,9 +499,7 @@ class MPDControlTests: XCTestCase {
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("command_list_begin", expectedParameters: ["discrete_ok": "false"])
-            self.mpdWrapper.assertCall("send_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
-            self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 1)
+            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
             self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "5"])
         }
         

@@ -58,7 +58,7 @@ class MPDHelperTests: XCTestCase {
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
-        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
             .toBlocking()
             .first() ?? nil
         XCTAssertNotNil(conn, "Expected connection to be present")
@@ -77,7 +77,7 @@ class MPDHelperTests: XCTestCase {
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: "pwd"] as [String: Any]
         
-        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
             .toBlocking()
             .first() ?? nil
         XCTAssertNotNil(conn, "Expected connection to be present")
@@ -99,38 +99,59 @@ class MPDHelperTests: XCTestCase {
                                     ConnectionProperties.Password.rawValue: "pwd"] as [String: Any]
         
         // When connecting to MPD
-        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
             .toBlocking()
             .first() ?? nil
         XCTAssertNil(conn, "Expected connection to be nil")
 
         // And connection_new is called once.
-        mpdWrapper.assertCall("connection_new", expectedCallCount: 1)
+        mpdWrapper.assertCall("connection_new", expectedCallCount: 4)
         // And run_password is called once.
-        mpdWrapper.assertCall("run_password", expectedCallCount: 1)
+        mpdWrapper.assertCall("run_password", expectedCallCount: 4)
         // And connection_free is called once.
-        mpdWrapper.assertCall("connection_free", expectedCallCount: 1)
+        mpdWrapper.assertCall("connection_free", expectedCallCount: 4)
     }
     
     func testConnectToMPDWithConnectionPropertiesTimeout() {
         // Given a timout when connecting
         // Given a problem when connecting
         mpdWrapper.password = ""
-        mpdWrapper.connectionErrorCount = 1
+        mpdWrapper.connectionErrorCount = 4
         let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
                                     ConnectionProperties.Host.rawValue: "host",
                                     ConnectionProperties.Port.rawValue: 1000,
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
         // When connecting to MPD
-        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
             .toBlocking()
             .first() ?? nil
         XCTAssertNil(conn, "Expected connection to be nil")
 
         // And connection_new is called once.
-        mpdWrapper.assertCall("connection_new", expectedCallCount: 1)
+        mpdWrapper.assertCall("connection_new", expectedCallCount: 4)
         // And connection_free is called once.
-        mpdWrapper.assertCall("connection_free", expectedCallCount: 1)
+        mpdWrapper.assertCall("connection_free", expectedCallCount: 4)
+    }
+
+    func testConnectToMPDRetry() {
+        // Given a problem when connecting
+        mpdWrapper.password = ""
+        mpdWrapper.connectionErrorCount = 2
+        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
+                                    ConnectionProperties.Host.rawValue: "host",
+                                    ConnectionProperties.Port.rawValue: 1000,
+                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        
+        // When connecting to MPD
+        let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
+            .toBlocking()
+            .first() ?? nil
+        XCTAssertNotNil(conn, "Expected connection to be present")
+
+        // And connection_new is called once.
+        mpdWrapper.assertCall("connection_new", expectedCallCount: 3)
+        // And connection_free is called once.
+        mpdWrapper.assertCall("connection_free", expectedCallCount: 2)
     }
 }

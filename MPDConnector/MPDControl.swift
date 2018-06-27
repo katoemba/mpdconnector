@@ -400,8 +400,7 @@ public class MPDControl: ControlProtocol {
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
     public func addGenre(_ genre: String, addMode: AddMode, shuffle: Bool) {
-        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
-            .subscribeOn(serialScheduler)
+        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
             .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
                 guard let connection = connection else { return }
@@ -502,8 +501,7 @@ public class MPDControl: ControlProtocol {
         let mpd = self.mpd
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
-        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties)
-            .subscribeOn(serialScheduler)
+        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
             .observeOn(serialScheduler)
             .subscribe(onNext: { (connection) in
                 guard let connection = connection else { return }

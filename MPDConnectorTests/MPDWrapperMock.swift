@@ -325,6 +325,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return true
     }
     
+    func send_list_files(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
+        registerCall("send_list_files", ["path": "\(stringFromMPDString(path))"])
+        return true
+    }
+
     func recv_song(_ connection: OpaquePointer!) -> OpaquePointer! {
         registerCall("recv_song", [:])
         if songs.count > 0 {

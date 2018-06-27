@@ -80,7 +80,7 @@ class MPDBrowseTests: XCTestCase {
         }
         
         self.mpdWrapper.assertCall("search_db_songs", expectedCallCount: 2, expectedParameters: ["exact": "\(true)"])
-        self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 2, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM)", "value": "alb1"])
+        self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 0, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM)", "value": "alb1"])
         self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ARTIST)", "value": "art1"])
         self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM_ARTIST)", "value": "art1"])
         self.mpdWrapper.assertCall("search_commit", expectedCallCount: 2)

@@ -28,8 +28,12 @@ import Foundation
 import RxSwift
 import libmpdclient
 import ConnectorProtocol
+import RxSwiftExt
 
 public class MPDHelper {
+    private enum ConnectError: Error {
+        case error
+    }
     /// Connect to a MPD Player
     ///
     /// - Parameters:
@@ -49,6 +53,10 @@ public class MPDHelper {
         }
         
         guard mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS else {
+            print("Connection error: \(mpd.connection_get_error_message(connection))")
+            if mpd.connection_get_error(connection) == MPD_ERROR_SERVER {
+                print("Server error: \(mpd_connection_get_server_error(connection))")
+            }
             mpd.connection_free(connection)
             return nil
         }
@@ -88,19 +96,23 @@ public class MPDHelper {
     ///   - password: Password to use after connecting, default = "".
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", timeout: Int = 5000) -> Observable<OpaquePointer?> {
+    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000) -> Observable<OpaquePointer?> {
         return Observable<OpaquePointer?>.create { observer in
             if let connection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
                 observer.onNext(connection)
+                observer.onCompleted()
             }
             else {
                 print("Couldn't connect to MPD: \(ConnectionError.internalError).")
-                observer.onNext(nil)
+                observer.onError(ConnectError.error)
             }
-            observer.onCompleted()
 
             return Disposables.create()
         }
+        .subscribeOn(scheduler)
+        .retry(.exponentialDelayed(maxCount: 4, initial: 0.5, multiplier: 1.0), scheduler: scheduler)
+        .catchErrorJustReturn(nil)
+        .asObservable()
     }
     
     /// Reactive connection function using a connectionProperties dictionary
@@ -110,11 +122,12 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> Observable<OpaquePointer?> {
+    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000) -> Observable<OpaquePointer?> {
         return connectToMPD(mpd: mpd,
                             host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
                             port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
                             password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
+                            scheduler: scheduler,
                             timeout: timeout)
     }
     
@@ -199,13 +212,43 @@ public class MPDHelper {
             song.coverURI = CoverURI.fullPathURI("http://\(host)/\(prefix)\(coverURI)")
         }
         else if alternativePostfix == "" {
-            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", [postfix])
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", newPath, [postfix])
         }
         else {
-            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", [postfix, alternativePostfix])
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", newPath, [postfix, alternativePostfix])
         }
 
         return song
+    }
+    
+    private static func coverFileAtPath(mpd: MPDProtocol, connectionProperties: [String: Any], path: String) -> String? {
+        guard let conn = connect(mpd: mpd, connectionProperties: connectionProperties) else { return nil }
+        
+        var coverFile: String? = nil
+        _ = mpd.send_list_files(conn, path: path)
+        while let entity = mpd.recv_entity(conn) {
+            if mpd.entity_get_type(entity) == MPD_ENTITY_TYPE_SONG {
+                let mpdSong = mpd.entity_get_song(entity)
+                let uri = mpd.song_get_uri(mpdSong)
+                
+                let components = uri.split(separator: "/")
+                if components.count > 0 {
+                    let lastComponent = components[components.count - 1]
+                    if lastComponent.contains(".jpg") || lastComponent.contains(".png") {
+                        coverFile = String.init(lastComponent)
+                    }
+                }
+            }
+            mpd.entity_free(entity)
+            
+            if coverFile != nil {
+                break
+            }
+        }
+        _ = mpd.response_finish(conn)
+        mpd.connection_free(conn)
+        
+        return coverFile
     }
     
     /// Fill a generic Playlist object from an mpdPlaylist

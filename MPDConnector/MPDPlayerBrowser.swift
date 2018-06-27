@@ -249,8 +249,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// - Parameter connectionProperties: dictionary of connection properties
     /// - Returns: An observable on which a created Player can published.
     public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
-        return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties)
-            .subscribeOn(backgroundScheduler)
+        return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler)
             .flatMapFirst({ (connection) -> Observable<PlayerProtocol?> in
                 if (connection != nil) {
                     MPDWrapper().connection_free(connection)

@@ -107,8 +107,7 @@ public class MPDStatus: StatusProtocol {
         }
         
         connecting = true
-        MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties)
-            .subscribeOn(statusScheduler)
+        MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties, scheduler: statusScheduler)
             .subscribe(onNext: { [weak self] (connection) in
                 guard let connection = connection else {
                     self?._connectionStatus.accept(.offline)
