@@ -406,12 +406,14 @@ public class MPDBrowse: BrowseProtocol {
                             }
                         }
 
-                        let artistCompare = lhs.artist.caseInsensitiveCompare(rhs.artist)
-                        if artistCompare == .orderedAscending {
-                            return true
-                        }
-                        if artistCompare == .orderedDescending {
-                            return false
+                        if sort == .artist {
+                            let artistCompare = lhs.artist.caseInsensitiveCompare(rhs.artist)
+                            if artistCompare == .orderedAscending {
+                                return true
+                            }
+                            if artistCompare == .orderedDescending {
+                                return false
+                            }
                         }
                         
                         let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)

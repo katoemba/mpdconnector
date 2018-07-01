@@ -68,7 +68,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 return []
             }
             else {
-                return [.artist, .year, .yearReverse]
+                return [.artist, .title, .year, .yearReverse]
             }
         }
     }
