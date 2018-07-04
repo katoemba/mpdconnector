@@ -364,7 +364,8 @@ public class MPDBrowse: BrowseProtocol {
                                 albums.append(album)
                             }
                         }
-                        else if genre != nil {
+                        //else if genre != nil {
+                        else {
                             foundEmptyAlbum = true
                         }
                     }
@@ -382,10 +383,13 @@ public class MPDBrowse: BrowseProtocol {
                         
                         while let mpdSong = self.mpd.recv_song(connection) {
                             if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                                let albumID = "\(song.albumartist):\(song.album)"
-                                if albumIDs[albumID] == nil {
-                                    albumIDs[albumID] = 1
-                                    albums.append(self.createAlbumFromSong(song))
+                                let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
+                                if albumartist != "" {
+                                    let albumID = "\(albumartist):\(song.album)"
+                                    if albumIDs[albumID] == nil {
+                                        albumIDs[albumID] = 1
+                                        albums.append(self.createAlbumFromSong(song))
+                                    }
                                 }
                             }
                             self.mpd.song_free(mpdSong)

@@ -168,6 +168,14 @@ public class MPDHelper {
             }
         }
         song.artist = mpd.song_get_tag(mpdSong, MPD_TAG_ARTIST, 0)
+        // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
+        // In such case, get it from the file path.
+        if song.artist == "", song.source == .Local {
+            let components = song.id.components(separatedBy: "/")
+            if components.count >= 3 {
+                song.artist = components[components.count - 3]
+            }
+        }
         song.albumartist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST, 0)
         song.composer = mpd.song_get_tag(mpdSong, MPD_TAG_COMPOSER, 0)
         song.genre = mpd.song_get_tag(mpdSong, MPD_TAG_GENRE, 0)
