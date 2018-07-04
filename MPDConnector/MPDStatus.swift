@@ -49,10 +49,11 @@ public class MPDStatus: StatusProtocol {
 
     /// PlayerStatus object for the player
     private var _playerStatus = BehaviorRelay<PlayerStatus>(value: PlayerStatus())
-    private var _playerStatusObservable : Observable<PlayerStatus>
     public var playerStatusObservable : Observable<PlayerStatus> {
         get {
-            return _playerStatusObservable
+            return _playerStatus
+                .observeOn(MainScheduler.instance)
+                .asObservable()
         }
     }
     let disconnectHandler = PublishSubject<Int>()
@@ -83,9 +84,6 @@ public class MPDStatus: StatusProtocol {
         }
         
         _connectionStatusObservable = _connectionStatus
-            .observeOn(MainScheduler.instance)
-
-        _playerStatusObservable = _playerStatus
             .observeOn(MainScheduler.instance)
 
         HelpMePlease.allocUp(name: "MPDStatus")
