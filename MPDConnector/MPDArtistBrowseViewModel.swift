@@ -88,21 +88,26 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
                 }
             }
             
-            let albumArtist = filters.contains { (filter) -> Bool in
-                if case .albumArtist = filter {
+            var type = ArtistType.artist
+            if let typeIndex = filters.index(where: { (filter) -> Bool in
+                if case .type(_) = filter {
                     return true
                 }
                 return false
+            }) {
+                if case let .type(artistType) = filters[typeIndex] {
+                    type = artistType
+                }
             }
 
-            reload(genre: genre, albumArtist: albumArtist)
+            reload(genre: genre, type: type)
         }
         else {
-            reload(albumArtist: false)
+            reload(type: .artist)
         }
     }
     
-    private func reload(genre: String? = nil, albumArtist: Bool) {
+    private func reload(genre: String? = nil, type: ArtistType) {
         // Get rid of old disposables
         bag = DisposeBag()
         
@@ -113,10 +118,10 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         // Load new contents
         let browse = _browse
         let artistsSubject = self._artistsSubject
-        let artistsObservable = browse.fetchArtists(genre: genre, albumArtist: albumArtist)
+        let artistsObservable = browse.fetchArtists(genre: genre, type: type)
             .observeOn(MainScheduler.instance)
             .share(replay: 1)
-            
+    
         artistsObservable
             .subscribe(onNext: { (artists) in
                 artistsSubject.onNext(artists)

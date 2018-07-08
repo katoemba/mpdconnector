@@ -168,13 +168,20 @@ public class MPDBrowse: BrowseProtocol {
     ///   - artist: the artist name to search for
     ///   - album: optionally an album title to search for
     /// - Returns: an array of Song objects
-    private func songsForArtistAndOrAlbum(connection: OpaquePointer, artist: String, album: String? = nil) -> [Song] {
+    private func songsForArtistAndOrAlbum(connection: OpaquePointer, artist: Artist, album: String? = nil) -> [Song] {
         var songs = [Song]()
         var songIDs = [String: Int]()
-        for tagType in [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST] {
+        var tagTypes = [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST]
+        if artist.type == .composer {
+            tagTypes = [MPD_TAG_COMPOSER]
+        }
+        else if artist.type == .performer {
+            tagTypes = [MPD_TAG_PERFORMER]
+        }
+        for tagType in tagTypes {
             do {
                 try self.mpd.search_db_songs(connection, exact: true)
-                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: artist)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: artist.name)
                 // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
                 // Therefor don't add the album as search constraint, instead filter when the songs are retrieved.
                 //if let album = album {
@@ -216,7 +223,8 @@ public class MPDBrowse: BrowseProtocol {
             .flatMap({ (connection) -> Observable<[Song]> in
                 guard let connection = connection else { return Observable.just([]) }
 
-                let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: album.artist, album: album.title)
+                let artist = Artist(id: album.artist, type: .artist, source: .Local, name: album.artist)
+                let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist, album: album.title)
                 
                 // Cleanup
                 self.mpd.connection_free(connection)
@@ -236,7 +244,7 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Song]> in
                 guard let connection = connection else { return Observable.just([]) }
-                let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist.name)
+                let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist)
                 
                 // Cleanup
                 self.mpd.connection_free(connection)
@@ -360,7 +368,7 @@ public class MPDBrowse: BrowseProtocol {
                             // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
                             if albumIDs[albumID] == nil {
                                 albumIDs[albumID] = 1
-                                let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: "", length: 0)
+                                let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0)
                                 albums.append(album)
                             }
                         }
@@ -512,7 +520,20 @@ public class MPDBrowse: BrowseProtocol {
         return MPDAlbumBrowseViewModel(browse:self, albums: albums)
     }
 
-    public func fetchArtists(genre: String?, albumArtist: Bool = false) -> Observable<[Artist]> {
+    private func receiveArtistTypePair(_ connection: OpaquePointer, type: ArtistType) -> (String, String)?  {
+        switch type {
+        case .artist:
+            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ARTIST)
+        case .albumArtist:
+            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
+        case .performer:
+            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_PERFORMER)
+        case .composer:
+            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_COMPOSER)
+        }
+    }
+    
+    public func fetchArtists(genre: String?, type: ArtistType) -> Observable<[Artist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
             .flatMap({ (connection) -> Observable<[Artist]> in
@@ -520,16 +541,25 @@ public class MPDBrowse: BrowseProtocol {
                 do {
                     var artists = [Artist]()
                     
-                    try self.mpd.search_db_tags(connection, tagType: albumArtist ? MPD_TAG_ALBUM_ARTIST : MPD_TAG_ARTIST)
+                    switch type {
+                    case .artist:
+                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
+                    case .albumArtist:
+                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM_ARTIST)
+                    case .performer:
+                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
+                    case .composer:
+                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_COMPOSER)
+                    }
                     if let genre = genre, genre != "" {
                         try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
                     }
                     try self.mpd.search_commit(connection)
                     
-                    while let result = self.mpd.recv_pair_tag(connection, tagType: albumArtist ? MPD_TAG_ALBUM_ARTIST : MPD_TAG_ARTIST) {
+                    while let result = self.receiveArtistTypePair(connection, type: type) {
                         let title = result.1
                         if title != "" {
-                            let artist = Artist(id: title, source: .Local, name: title)
+                            let artist = Artist(id: title, type: type, source: .Local, name: title)
                             artists.append(artist)
                         }
                     }
@@ -552,20 +582,20 @@ public class MPDBrowse: BrowseProtocol {
             })
             .observeOn(MainScheduler.instance)
     }
-    
+
     /// Return a view model for a list of artists, which can return artists in batches.
     ///
     /// - Returns: an ArtistBrowseViewModel instance
-    public func artistBrowseViewModel(albumArtist: Bool) -> ArtistBrowseViewModel {
-        return MPDArtistBrowseViewModel(browse: self, filters: [.albumArtist])
+    public func artistBrowseViewModel(type: ArtistType) -> ArtistBrowseViewModel {
+        return MPDArtistBrowseViewModel(browse: self, filters: [.type(type)])
     }
     
     /// Return a view model for a list of artists filtered by genre, which can return artist in batches.
     ///
     /// - Parameter genre: genre to filter on
     /// - Returns: an ArtistBrowseViewModel instance
-    public func artistBrowseViewModel(_ genre: String, albumArtist: Bool) -> ArtistBrowseViewModel {
-        return MPDArtistBrowseViewModel(browse: self, filters: [.genre(genre), .albumArtist])
+    public func artistBrowseViewModel(_ genre: String, type: ArtistType) -> ArtistBrowseViewModel {
+        return MPDArtistBrowseViewModel(browse: self, filters: [.genre(genre), .type(type)])
     }
     
     /// Return a view model for a preloaded list of artists.

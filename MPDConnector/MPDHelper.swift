@@ -190,7 +190,7 @@ public class MPDHelper {
         }
         song.albumartist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST, 0)
         song.composer = mpd.song_get_tag(mpdSong, MPD_TAG_COMPOSER, 0)
-        song.genre = mpd.song_get_tag(mpdSong, MPD_TAG_GENRE, 0)
+        song.genre = [mpd.song_get_tag(mpdSong, MPD_TAG_GENRE, 0)]
         song.length = Int(mpd.song_get_duration(mpdSong))
         song.name = mpd.song_get_tag(mpdSong, MPD_TAG_NAME, 0)
         song.date = mpd.song_get_tag(mpdSong, MPD_TAG_DATE, 0)
