@@ -62,10 +62,10 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 return []
             }
             else if filters.count > 0, case .artist(_) = filters[0] {
-                return []
+                return [.title, .year, .yearReverse]
             }
             else if filters.count > 0, case .genre(_) = filters[0] {
-                return []
+                return [.artist, .title, .year, .yearReverse]
             }
             else {
                 return [.artist, .title, .year, .yearReverse]
@@ -137,7 +137,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         
         if let artist = artist {
             self.extendSize = 60
-            albumsObservable = browse.albumsByArtist(artist)
+            albumsObservable = browse.albumsByArtist(artist, sort: sort)
                 .observeOn(MainScheduler.instance)
                 .share(replay: 1)
         }

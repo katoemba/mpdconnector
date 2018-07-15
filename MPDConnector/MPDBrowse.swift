@@ -287,7 +287,7 @@ public class MPDBrowse: BrowseProtocol {
         return album
     }
     
-    private func albumsFromSongs(_ songs: [Song]) -> [Album] {
+    private func albumsFromSongs(_ songs: [Song], sort: SortType) -> [Album] {
         var albums = [Album]()
         for song in songs {
             let album = createAlbumFromSong(song)
@@ -296,15 +296,34 @@ public class MPDBrowse: BrowseProtocol {
             }
         }
         
-        return albums
+        return albums.sorted(by: { (lhs, rhs) -> Bool in
+            if sort == .year || sort == .yearReverse {
+                if lhs.year < rhs.year {
+                    return sort == .year
+                }
+                else if lhs.year > rhs.year {
+                    return sort == .yearReverse
+                }
+            }
+            
+            let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)
+            if albumCompare == .orderedAscending {
+                return true
+            }
+            
+            return false
+        })
     }
-    
-    public func albumsByArtist(_ artist: Artist) -> Observable<[Album]> {
+    /// - Parameters:
+    ///   - artist: An Artist object.
+    ///   - sort: How to sort the albums.
+    /// - Returns: An observable array of fully populated Album objects.
+    public func albumsByArtist(_ artist: Artist, sort: SortType) -> Observable<[Album]> {
         return songsByArtist(artist)
             .flatMap({ [weak self] (songs) -> Observable<[Album]> in
                 guard let weakself = self else { return Observable.empty() }
                 
-                return Observable.just(weakself.albumsFromSongs(songs))
+                return Observable.just(weakself.albumsFromSongs(songs, sort: sort))
             })
             .observeOn(MainScheduler.instance)
     }
