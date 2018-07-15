@@ -54,6 +54,27 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     private let _browse: MPDBrowse
     private let _artists: [Artist]
     
+    public var artistType: ArtistType {
+        get {
+            var type = ArtistType.artist
+            if _artists.count > 0 {
+                return _artists[0].type
+            }
+
+            if let typeIndex = filters.index(where: { (filter) -> Bool in
+                if case .type(_) = filter {
+                    return true
+                }
+                return false
+            }) {
+                if case let .type(artistType) = filters[typeIndex] {
+                    type = artistType
+                }
+            }
+            return type
+        }
+    }
+    
     deinit {
         print("Cleanup MPDArtistBrowseViewModel")
     }
@@ -88,19 +109,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
                 }
             }
             
-            var type = ArtistType.artist
-            if let typeIndex = filters.index(where: { (filter) -> Bool in
-                if case .type(_) = filter {
-                    return true
-                }
-                return false
-            }) {
-                if case let .type(artistType) = filters[typeIndex] {
-                    type = artistType
-                }
-            }
-
-            reload(genre: genre, type: type)
+            reload(genre: genre, type: self.artistType)
         }
         else {
             reload(type: .artist)

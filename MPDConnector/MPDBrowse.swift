@@ -74,14 +74,18 @@ public class MPDBrowse: BrowseProtocol {
                 let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
                 let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
                 let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
-                
+                let performerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_PERFORMER, filter: filter)
+                let composerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_COMPOSER, filter: filter)
+
                 self.mpd.connection_free(connection)
                 
                 var searchResult = SearchResult()
                 searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
                 searchResult.albums = (albumSearchResult.albums + artistSearchResult.albums + songSearchResult.albums).orderedSet
                 searchResult.songs = (songSearchResult.songs + artistSearchResult.songs + albumSearchResult.songs).orderedSet
-                
+                searchResult.performers = performerSearchResult.performers.orderedSet
+                searchResult.composers = composerSearchResult.composers.orderedSet
+
                 return Observable.just(searchResult)
             })
     }
@@ -90,6 +94,8 @@ public class MPDBrowse: BrowseProtocol {
         var songs = [Song]()
         var albums = [Album]()
         var artists = [Artist]()
+        var performers = [Artist]()
+        var composers = [Artist]()
         do {
             try mpd.search_db_songs(connection, exact: false)
             try mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: tagType, value: search)
@@ -136,6 +142,18 @@ public class MPDBrowse: BrowseProtocol {
                                     artists.append(artist)
                                 }
                             }
+                            else if (tagType == MPD_TAG_PERFORMER) {
+                                let performer = Artist(id: song.performer, type: .performer, source: .Local, name: song.performer)
+                                if performers.contains(performer) == false {
+                                    performers.append(performer)
+                                }
+                            }
+                            else if (tagType == MPD_TAG_COMPOSER) {
+                                let composer = Artist(id: song.composer, type: .composer, source: .Local, name: song.composer)
+                                if composers.contains(composer) == false {
+                                    composers.append(composer)
+                                }
+                            }
                         }
                     }
                 }
@@ -157,6 +175,8 @@ public class MPDBrowse: BrowseProtocol {
         searchResult.songs = songs
         searchResult.albums = albums
         searchResult.artists = artists
+        searchResult.performers = performers
+        searchResult.composers = composers
 
         return searchResult
     }
