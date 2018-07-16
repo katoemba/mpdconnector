@@ -115,7 +115,7 @@ public class MPDPlayer: PlayerProtocol {
     }
 
     static func uniqueIDForPlayer(host: String, port: Int) -> String {
-        return "\(host)"
+        return "\(host):\(port)"
     }
 
     public var model: String {
