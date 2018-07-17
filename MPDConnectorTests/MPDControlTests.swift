@@ -44,7 +44,7 @@ class MPDControlTests: XCTestCase {
         
         testScheduler = TestScheduler(initialClock: 0)
         mpdWrapper = MPDWrapperMock()
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: "", scheduler: testScheduler)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler)
     }
     
     override func tearDown() {

@@ -33,6 +33,7 @@ import RxSwiftExt
 public class MPDHelper {
     private enum ConnectError: Error {
         case error
+        case permission
     }
     /// Connect to a MPD Player
     ///
@@ -99,8 +100,28 @@ public class MPDHelper {
     public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000) -> Observable<OpaquePointer?> {
         return Observable<OpaquePointer?>.create { observer in
             if let connection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
-                observer.onNext(connection)
-                observer.onCompleted()
+                var allIsWell = true
+                // Check if perhaps we need a password
+                if password == "" {
+                    let mpdStatus = mpd.run_status(connection)
+                    if  mpd.connection_get_error(connection) == MPD_ERROR_SERVER,
+                        mpd.connection_get_server_error(connection) == MPD_SERVER_ERROR_PERMISSION {
+                        mpd.connection_free(connection)
+                        print("Connection \(host):\(port) requires a password")
+                        allIsWell = false
+                    }
+                    if mpdStatus != nil {
+                        mpd.status_free(mpdStatus)
+                    }
+                }
+                
+                if allIsWell {
+                    observer.onNext(connection)
+                    observer.onCompleted()
+                }
+                else {
+                    observer.onError(ConnectError.permission)
+                }
             }
             else {
                 print("Couldn't connect to MPD: \(ConnectionError.internalError).")

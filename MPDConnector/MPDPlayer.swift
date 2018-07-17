@@ -84,7 +84,7 @@ public class MPDPlayer: PlayerProtocol {
     
     private var host: String
     private var port: Int
-    private var password: String
+    //private var password: String
     private var _type: MPDType
     public var type: MPDType {
         return _type
@@ -94,6 +94,12 @@ public class MPDPlayer: PlayerProtocol {
     public var version: String {
         return _version
     }
+    
+    private var _connectionWarning = nil as String?
+    public var connectionWarning: String? {
+        return _connectionWarning
+    }
+    
     public var description: String {
         return _type.description + " " + _version
     }
@@ -129,6 +135,7 @@ public class MPDPlayer: PlayerProtocol {
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
             let postfix = (self.loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue) as? StringSetting)?.value ?? ""
             let alternativePostfix = (self.loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue) as? StringSetting)?.value ?? ""
+            let password = (self.loadSetting(id: ConnectionProperties.Password.rawValue) as? StringSetting)?.value ?? ""
             return [ConnectionProperties.Name.rawValue: name,
                     ConnectionProperties.Host.rawValue: host,
                     ConnectionProperties.Port.rawValue: port,
@@ -166,7 +173,8 @@ public class MPDPlayer: PlayerProtocol {
                 coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, using port 80. This webserver must be configured to support browsing the music directories.\n\n" +
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
             }
-            return [PlayerSettingGroup(title: "Player Type", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!]),
+            return [PlayerSettingGroup(title: "Player Type", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
+                                                                                        loadSetting(id: ConnectionProperties.Password.rawValue)!]),
                     PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]),
@@ -209,21 +217,23 @@ public class MPDPlayer: PlayerProtocol {
                 name: String,
                 host: String,
                 port: Int,
-                password: String = "",
                 scheduler: SchedulerType? = nil,
                 type: MPDType = .classic,
                 version: String = "",
-                discoverMode: DiscoverMode = .automatic) {
+                discoverMode: DiscoverMode = .automatic,
+                connectionWarning: String? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self._name = name
         self.host = host
         self.port = port
-        self.password = password
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
+        self._connectionWarning = connectionWarning
         _version = version
         _discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
+        
+        let password = UserDefaults.standard.string(forKey: "\(ConnectionProperties.Password.rawValue).\(initialUniqueID)") ?? ""
         let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
         if defaultTypeInt > 0 {
             _type = MPDType(rawValue: defaultTypeInt)!
@@ -285,7 +295,8 @@ public class MPDPlayer: PlayerProtocol {
                             scheduler: SchedulerType? = nil,
                             type: MPDType = .classic,
                             version: String = "",
-                            discoverMode: DiscoverMode = .automatic) {
+                            discoverMode: DiscoverMode = .automatic,
+                            connectionWarning: String? = nil) {
         guard let name = connectionProperties[ConnectionProperties.Name.rawValue] as? String,
             let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String,
             let port = connectionProperties[ConnectionProperties.Port.rawValue] as? Int else {
@@ -293,11 +304,11 @@ public class MPDPlayer: PlayerProtocol {
                           name: "",
                           host: "",
                           port: 6600,
-                          password: "",
                           scheduler: scheduler,
                           type: type,
                           version: version,
-                          discoverMode: discoverMode)
+                          discoverMode: discoverMode,
+                          connectionWarning: connectionWarning)
                 return
         }
         
@@ -305,11 +316,11 @@ public class MPDPlayer: PlayerProtocol {
                   name: name,
                   host: host,
                   port: port,
-                  password: (connectionProperties[ConnectionProperties.Password.rawValue] as? String) ?? "",
                   scheduler: scheduler,
                   type: type,
                   version: version,
-                  discoverMode: discoverMode)
+                  discoverMode: discoverMode,
+                  connectionWarning: connectionWarning)
     }
     
     deinit {
@@ -318,7 +329,7 @@ public class MPDPlayer: PlayerProtocol {
         print("Cleaning up player \(name)")
         HelpMePlease.allocDown(name: "MPDPlayer")
     }
-
+    
     // MARK: - PlayerProtocol Implementations
 
     /// Upon activation, the status object starts monitoring the player status.
@@ -389,6 +400,10 @@ public class MPDPlayer: PlayerProtocol {
             let stringSetting = setting as! StringSetting
             defaults.set(stringSetting.value, forKey: playerSpecificId)
         }
+        else if setting.id == ConnectionProperties.Password.rawValue {
+            let stringSetting = setting as! StringSetting
+            defaults.set(stringSetting.value, forKey: playerSpecificId)
+        }
     }
     
     /// Get data for a specific setting
@@ -424,6 +439,13 @@ public class MPDPlayer: PlayerProtocol {
                                       description: "Alternative Cover Filename",
                                       placeholder: "Alternative",
                                       value: defaults.string(forKey: playerSpecificId) ?? "")
+        }
+        else if id == ConnectionProperties.Password.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Password",
+                                      placeholder: "Password",
+                                      value: defaults.string(forKey: playerSpecificId) ?? "",
+                                      conceil: true)
         }
 
         return nil

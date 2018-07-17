@@ -44,7 +44,7 @@ class MPDBrowseTests: XCTestCase {
         
         testScheduler = TestScheduler(initialClock: 0)
         mpdWrapper = MPDWrapperMock()
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: "", scheduler: nil)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: nil)
     }
     
     override func tearDown() {
@@ -141,7 +141,7 @@ class MPDBrowseTests: XCTestCase {
                             ["title": "t6", "album": "alb2", "artist": "art1"],
                             ["title": "t7", "album": "alb2", "artist": "art1"]]
         
-        let albumResults = mpdPlayer?.browse.albumsByArtist(artist)
+        let albumResults = mpdPlayer?.browse.albumsByArtist(artist, sort: .artist)
             .toBlocking(timeout: 0.8)
             .materialize()
         
@@ -167,7 +167,7 @@ class MPDBrowseTests: XCTestCase {
     }
     
     func testDeletePlaylist() {
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: "", scheduler: testScheduler)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler)
 
         let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
         testScheduler.scheduleAt(50) {
@@ -188,7 +188,7 @@ class MPDBrowseTests: XCTestCase {
     }
 
     func testRenamePlaylist() {
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, password: "", scheduler: testScheduler)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler)
         
         let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
         testScheduler.scheduleAt(50) {

@@ -27,6 +27,7 @@
 import Foundation
 import ConnectorProtocol
 import RxSwift
+import libmpdclient
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
@@ -185,13 +186,27 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
                 if let connection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties) {
+                    var connectionWarning = nil as String?
                     let version = mpd.connection_get_server_version(connection)
-                    mpd.connection_free(connection)
+                    if version < "0.19.0" {
+                        connectionWarning = "MPD version \(version) too low, 0.19.0 required"
+                    }
                     
+                    let mpdStatus = mpd.run_status(connection)
+                    if  mpd.connection_get_error(connection) == MPD_ERROR_SERVER,
+                        mpd.connection_get_server_error(connection) == MPD_SERVER_ERROR_PERMISSION {
+                        connectionWarning = "Player requires a password"
+                    }
+                    if mpdStatus != nil {
+                        mpd.status_free(mpdStatus)
+                    }
+                    mpd.connection_free(connection)
+
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,
                                           version: version,
-                                          discoverMode: player.discoverMode)
+                                          discoverMode: player.discoverMode,
+                                          connectionWarning: connectionWarning)
                 }
 
                 return player
