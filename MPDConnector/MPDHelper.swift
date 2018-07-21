@@ -275,7 +275,7 @@ public class MPDHelper {
                 let components = uri.split(separator: "/")
                 if components.count > 0 {
                     let lastComponent = components[components.count - 1]
-                    if lastComponent.contains(".jpg") || lastComponent.contains(".png") {
+                    if lastComponent.contains(".jpg") || lastComponent.contains(".jpeg") || lastComponent.contains(".png") {
                         coverFile = String.init(lastComponent)
                     }
                 }
