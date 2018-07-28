@@ -293,6 +293,28 @@ public class MPDWrapper: MPDProtocol {
         return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
     }
     
+    public func recv_pair(_ connection: OpaquePointer!) -> (String, String)? {
+        let mpd_pair = mpd_recv_pair(connection)
+        
+        guard let pointee = mpd_pair?.pointee else {
+            return nil
+        }
+        
+        defer {
+            mpd_return_pair(connection, mpd_pair)
+        }
+        
+        return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
+    }
+    
+    public func tag_name_parse(_ name: UnsafePointer<Int8>!) -> mpd_tag_type {
+        return mpd_tag_name_parse(name)
+    }
+    
+    public func tag_name(tagType: mpd_tag_type) -> String {
+        return stringFromMPDString(mpd_tag_name(tagType))
+    }
+    
     public func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
         return mpd_send_list_meta(connection, path)
     }

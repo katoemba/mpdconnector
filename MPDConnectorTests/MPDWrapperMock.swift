@@ -399,6 +399,21 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return (searchName, searchValue)
     }
 
+    func recv_pair(_ connection: OpaquePointer!) -> (String, String)? {
+        registerCall("recv_pair", [:])
+        return (searchName, searchValue)
+    }
+    
+    func tag_name_parse(_ name: UnsafePointer<Int8>!) -> mpd_tag_type {
+        registerCall("tag_name_parse", ["name": "\(stringFromMPDString(name))"])
+        return mpd_tag_name_parse(name)
+    }
+    
+    func tag_name(tagType: mpd_tag_type) -> String {
+        registerCall("tag_name", ["tag": "\(tagType)"])
+        return stringFromMPDString(mpd_tag_name(tagType))
+    }
+
     func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws {
         registerCall("search_db_songs", ["exact": "\(exact)"])
     }

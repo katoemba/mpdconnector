@@ -559,19 +559,6 @@ public class MPDBrowse: BrowseProtocol {
         return MPDAlbumBrowseViewModel(browse:self, albums: albums)
     }
 
-    private func receiveArtistTypePair(_ connection: OpaquePointer, type: ArtistType) -> (String, String)?  {
-        switch type {
-        case .artist:
-            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ARTIST)
-        case .albumArtist:
-            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
-        case .performer:
-            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_PERFORMER)
-        case .composer:
-            return self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_COMPOSER)
-        }
-    }
-    
     public func fetchArtists(genre: String?, type: ArtistType) -> Observable<[Artist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
@@ -583,8 +570,10 @@ public class MPDBrowse: BrowseProtocol {
                     switch type {
                     case .artist:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
+                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
                     case .albumArtist:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM_ARTIST)
+                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
                     case .performer:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
                     case .composer:
@@ -595,20 +584,41 @@ public class MPDBrowse: BrowseProtocol {
                     }
                     try self.mpd.search_commit(connection)
                     
-                    while let result = self.receiveArtistTypePair(connection, type: type) {
-                        let title = result.1
-                        if title != "" {
-                            let artist = Artist(id: title, type: type, source: .Local, name: title)
-                            artists.append(artist)
+                    // Get pairs instead of looking by tag name, to ensure we also get the sort values if present.
+                    var title = ""
+                    var sortTitle = ""
+                    while let result = self.mpd.recv_pair(connection) {
+                        let tagName = result.0
+                        let value = result.1
+                        let tag = self.mpd.tag_name_parse(tagName)
+                        
+                        if [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST, MPD_TAG_PERFORMER, MPD_TAG_COMPOSER].contains(tag) {
+                            if title != "" {
+                                artists.append(Artist(id: title, type: type, source: .Local, name: title, sortName: sortTitle))
+                            }
+                            title = value
+                        }
+                        else if [MPD_TAG_ARTIST_SORT, MPD_TAG_ALBUM_ARTIST_SORT].contains(tag) {
+                            sortTitle = value
                         }
                     }
+                    if title != "" {
+                        artists.append(Artist(id: title, type: type, source: .Local, name: title, sortName: sortTitle))
+                    }
+                    
                     _ = self.mpd.response_finish(connection)
                     
                     // Cleanup
                     self.mpd.connection_free(connection)
                     
                     return Observable.just(artists.sorted(by: { (lhs, rhs) -> Bool in
-                        return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
+                        let sortOrder = lhs.sortName.caseInsensitiveCompare(rhs.sortName)
+                        if sortOrder == .orderedSame {
+                            return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
+                        }
+                        else {
+                            return sortOrder == .orderedAscending
+                        }
                     }))
                 }
                 catch {
