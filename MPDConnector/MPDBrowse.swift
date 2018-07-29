@@ -894,6 +894,11 @@ public class MPDBrowse: BrowseProtocol {
                                 }
                                 break
                             case MPD_ENTITY_TYPE_PLAYLIST:
+                                if let mpdPlaylist = self.mpd.entity_get_playlist(mpdEntity) {
+                                    if let playlist = MPDHelper.playlistFromMpdPlaylist(mpd: self.mpd, mpdPlaylist: mpdPlaylist) {
+                                        folderContents.append(FolderContent.playlist(playlist))                                        
+                                    }
+                                }
                                 break
                             case MPD_ENTITY_TYPE_UNKNOWN:
                                 break
