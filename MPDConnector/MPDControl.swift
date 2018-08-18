@@ -491,6 +491,17 @@ public class MPDControl: ControlProtocol {
             _ = self.mpd.run_clear(connection)
         }
     }
+    
+    /// Play a station
+    ///
+    /// - Parameter station: the station that has to be played
+    public func playStation(_ station: Station) {
+        runCommand()  { connection in
+            _ = self.mpd.run_clear(connection)
+            _ = self.mpd.run_add(connection, uri: station.url)
+            _ = self.mpd.run_play(connection)
+        }
+    }
 
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///
