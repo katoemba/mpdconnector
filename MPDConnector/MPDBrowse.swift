@@ -809,22 +809,22 @@ public class MPDBrowse: BrowseProtocol {
     /// Fetch an array of genres
     ///
     /// - Returns: an observable String array of genre names
-    func fetchGenres() -> Observable<[String]> {
+    func fetchGenres() -> Observable<[Genre]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[String]> in
+            .flatMap({ (connection) -> Observable<[Genre]> in
                 guard let connection = connection else { return Observable.just([]) }
 
                 do {
-                    var genres = [String]()
+                    var genres = [Genre]()
                     
                     try self.mpd.search_db_tags(connection, tagType: MPD_TAG_GENRE)
                     try self.mpd.search_commit(connection)
                     
                     while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_GENRE) {
-                        let genre = result.1
-                        if genre != "" {
-                            genres.append(genre)
+                        let genreName = result.1
+                        if genreName != "" {
+                            genres.append(Genre(id: genreName, source: .Local, name: genreName))
                         }
                     }
                     _ = self.mpd.response_finish(connection)

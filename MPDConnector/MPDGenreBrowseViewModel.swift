@@ -30,8 +30,8 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
-    private var _genresSubject = PublishSubject<[String]>()
-    public var genresObservable: Observable<[String]> {
+    private var _genresSubject = PublishSubject<[Genre]>()
+    public var genresObservable: Observable<[Genre]> {
         get {
             return _genresSubject.asObservable()
         }
@@ -45,13 +45,18 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
 
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
-    private let _genres: [String]
-    
+    private let _genres: [Genre]
+    public var parentGenre: Genre?
+
     deinit {
         print("Cleanup MPDGenreBrowseViewModel")
     }
     
-    public required init(browse: MPDBrowse, genres: [String] = []) {
+    public required init(browse: MPDBrowse, genres: [Genre] = [], parentGenre: Genre? = nil) {
+        if parentGenre != nil {
+            print("Warning: parentGenre not supported on MPD")
+        }
+        
         _browse = browse
         _genres = genres
     }
