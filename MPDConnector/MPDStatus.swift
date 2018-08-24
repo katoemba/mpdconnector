@@ -291,6 +291,15 @@ public class MPDStatus: StatusProtocol {
                 
                 if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
                     song.position = playerStatus.playqueue.songIndex
+                    
+                    if song.id.starts(with: "http://") {
+                        song.location = song.id
+                        song.id = song.id + song.title
+                        song.source = .Shoutcast
+                        song.artist = song.name
+                        song.album = ""
+                    }
+                    
                     playerStatus.currentSong = song
                 }
             }

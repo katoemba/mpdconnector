@@ -71,6 +71,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_play(connection)
     }
     
+    public func run_stop(_ connection: OpaquePointer!) -> Bool {
+        return mpd_run_stop(connection)
+    }
+    
     public func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool {
         return mpd_run_play_pos(connection, song_pos)
     }

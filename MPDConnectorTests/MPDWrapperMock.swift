@@ -146,6 +146,12 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return true
     }
     
+    func run_stop(_ connection: OpaquePointer!) -> Bool {
+        registerCall("run_stop", [:])
+        self.state = MPD_STATE_STOP
+        return true
+    }
+    
     func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool {
         registerCall("run_play_pos", ["song_pos": "\(song_pos)"])
         self.state = MPD_STATE_PLAY

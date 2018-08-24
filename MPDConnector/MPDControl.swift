@@ -497,8 +497,14 @@ public class MPDControl: ControlProtocol {
     /// - Parameter station: the station that has to be played
     public func playStation(_ station: Station) {
         runCommand()  { connection in
+            _ = self.mpd.run_stop(connection)
             _ = self.mpd.run_clear(connection)
-            _ = self.mpd.run_add(connection, uri: station.url)
+            if station.url.hasSuffix(".m3u") || station.url.hasSuffix(".pls") || station.url.contains(".pls?") || station.url.contains(".m3u?") {
+                _ = self.mpd.run_load(connection, name: station.url)
+            }
+            else {
+                _ = self.mpd.run_add(connection, uri: station.url)
+            }
             _ = self.mpd.run_play(connection)
         }
     }

@@ -42,6 +42,7 @@ public protocol MPDProtocol {
     func connection_clear_error(_ connection: OpaquePointer!) -> Bool
     func run_password(_ connection: OpaquePointer!, password: UnsafePointer<Int8>!) -> Bool
     func run_play(_ connection: OpaquePointer!) -> Bool
+    func run_stop(_ connection: OpaquePointer!) -> Bool
     func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool
     func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
     func run_toggle_pause(_ connection: OpaquePointer!) -> Bool
