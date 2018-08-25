@@ -11,6 +11,8 @@
 		2888ADB7A617890773BC1D3D /* Pods_MPDConnector_MacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97100CCD8849A7762F0655EF /* Pods_MPDConnector_MacOS.framework */; };
 		7B0C4A1FE1E4025BA52FF306 /* Pods_MPDConnector_tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62A245B138BF0F64B427F38B /* Pods_MPDConnector_tvOS.framework */; };
 		C52878281F77F5FA009D6CC4 /* NetService+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */; };
+		C53629DA21318B22004D5C1C /* kvlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C53629D421318B21004D5C1C /* kvlist.h */; };
+		C53629DB21318B22004D5C1C /* kvlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C53629D921318B22004D5C1C /* kvlist.c */; };
 		C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
 		C546B0101F35FAF0003C5B7E /* async.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB51F35FAF0003C5B7E /* async.c */; };
 		C546B0111F35FAF0003C5B7E /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFB61F35FAF0003C5B7E /* buffer.h */; };
@@ -360,6 +362,8 @@
 		B998B96EBFCB040EB2B230E7 /* Pods-MPDConnector_MacOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.debug.xcconfig"; sourceTree = "<group>"; };
 		BA20A4973F3D35D38F4AECF2 /* Pods-MPDConnectorTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnectorTests.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests.release.xcconfig"; sourceTree = "<group>"; };
 		C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetService+Rx.swift"; sourceTree = "<group>"; };
+		C53629D421318B21004D5C1C /* kvlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kvlist.h; sourceTree = "<group>"; };
+		C53629D921318B22004D5C1C /* kvlist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = kvlist.c; sourceTree = "<group>"; };
 		C546AF3C1F35A824003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDPlayer.swift; sourceTree = "<group>"; };
 		C546AFB51F35FAF0003C5B7E /* async.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = async.c; sourceTree = "<group>"; };
@@ -606,6 +610,8 @@
 				C546AFCA1F35FAF0003C5B7E /* isend.h */,
 				C546AFCB1F35FAF0003C5B7E /* iso8601.c */,
 				C546AFCC1F35FAF0003C5B7E /* iso8601.h */,
+				C53629D921318B22004D5C1C /* kvlist.c */,
+				C53629D421318B21004D5C1C /* kvlist.h */,
 				C546AFCD1F35FAF0003C5B7E /* list.c */,
 				C546AFCE1F35FAF0003C5B7E /* message.c */,
 				C546AFCF1F35FAF0003C5B7E /* mixer.c */,
@@ -780,6 +786,7 @@
 				C546B0351F35FAF0003C5B7E /* idle.h in Headers */,
 				C546B02C1F35FAF0003C5B7E /* audio_format.h in Headers */,
 				C546B0411F35FAF0003C5B7E /* recv.h in Headers */,
+				C53629DA21318B22004D5C1C /* kvlist.h in Headers */,
 				C546B0611F35FAF0003C5B7E /* socket.h in Headers */,
 				C546B04B1F35FAF0003C5B7E /* tag.h in Headers */,
 				C546B02B1F35FAF0003C5B7E /* async.h in Headers */,
@@ -1298,6 +1305,7 @@
 				C546B0631F35FAF0003C5B7E /* stats.c in Sources */,
 				C546B04D1F35FAF0003C5B7E /* output.c in Sources */,
 				C546B04E1F35FAF0003C5B7E /* parser.c in Sources */,
+				C53629DB21318B22004D5C1C /* kvlist.c in Sources */,
 				C546B0131F35FAF0003C5B7E /* cmessage.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

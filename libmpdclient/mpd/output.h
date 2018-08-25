@@ -100,11 +100,46 @@ const char *
 mpd_output_get_name(const struct mpd_output *output);
 
 /**
+ * @return the plugin of the specified #mpd_output object, or NULL if
+ * none was specified by the server
+ *
+ * @since libmpdclient 2.14, MPD 0.21
+ */
+mpd_pure
+const char *
+mpd_output_get_plugin(const struct mpd_output *output);
+
+/**
  * @return true if this output is enabled
  */
 mpd_pure
 bool
 mpd_output_get_enabled(const struct mpd_output *output);
+
+/**
+ * Obtains the first attribute for this output.  This rewinds the
+ * current attribute pointer to the start.  Call
+ * mpd_output_next_attribute() to obtain more attributes.
+ *
+ * @return a pointer to the first attribute or NULL if there are no
+ * attributes
+ *
+ * @since libmpdclient 2.14, MPD 0.21
+ */
+const struct mpd_pair *
+mpd_output_first_attribute(struct mpd_output *output);
+
+/**
+ * Obtains the next attribute for this output.  Call this function
+ * repeatedly until it returns NULL to get a full list of attributes.
+ *
+ * @return a pointer to the next attribute or NULL if there are no
+ * more attributes
+ *
+ * @since libmpdclient 2.14, MPD 0.21
+ */
+const struct mpd_pair *
+mpd_output_next_attribute(struct mpd_output *output);
 
 /**
  * Sends the "outputs" command to MPD.  Call mpd_recv_output() to
@@ -196,6 +231,31 @@ mpd_send_toggle_output(struct mpd_connection *connection, unsigned output_id);
  */
 bool
 mpd_run_toggle_output(struct mpd_connection *connection, unsigned output_id);
+
+/**
+ * Sends the "outputset" command to MPD.
+ *
+ * @param connection a valid and connected mpd_connection
+ * @param output_id an identifier for the output device (see
+ * mpd_recv_output())
+ * @param attribute_name the attribute name
+ * @param attribute_value the attribute value
+ * @return true on success
+ *
+ * @since libmpdclient 2.14, MPD 0.21
+ */
+bool
+mpd_send_output_set(struct mpd_connection *connection, unsigned output_id,
+		    const char *attribute_name, const char *attribute_value);
+
+/**
+ * Shortcut for mpd_send_output_set() and mpd_response_finish().
+ *
+ * @since libmpdclient 2.14, MPD 0.21
+ */
+bool
+mpd_run_output_set(struct mpd_connection *connection, unsigned output_id,
+		   const char *attribute_name, const char *attribute_value);
 
 #ifdef __cplusplus
 }

@@ -32,6 +32,7 @@
 
 #include <mpd/output.h>
 #include <mpd/pair.h>
+#include "kvlist.h"
 
 #include <assert.h>
 #include <string.h>
@@ -40,6 +41,10 @@
 struct mpd_output {
 	unsigned id;
 	char *name;
+	char *plugin;
+
+	struct mpd_kvlist attributes;
+
 	bool enabled;
 };
 
@@ -60,6 +65,8 @@ mpd_output_begin(const struct mpd_pair *pair)
 	output->id = atoi(pair->value);
 
 	output->name = NULL;
+	output->plugin = NULL;
+	mpd_kvlist_init(&output->attributes);
 	output->enabled = false;
 
 	return output;
@@ -72,12 +79,21 @@ mpd_output_feed(struct mpd_output *output, const struct mpd_pair *pair)
 		return false;
 
 	if (strcmp(pair->name, "outputname") == 0) {
-		if (output->name != NULL)
-			free(output->name);
-
+        if (output->name != NULL)
+            free(output->name);
 		output->name = strdup(pair->value);
 	} else if (strcmp(pair->name, "outputenabled") == 0)
 		output->enabled = atoi(pair->value) != 0;
+	else if (strcmp(pair->name, "plugin") == 0) {
+		free(output->plugin);
+		output->plugin = strdup(pair->value);
+	} else if (strcmp(pair->name, "attribute") == 0) {
+		const char *eq = strchr(pair->value, '=');
+		if (eq != NULL && eq > pair->value)
+			mpd_kvlist_add(&output->attributes,
+				       pair->value, eq - pair->value,
+				       eq + 1);
+	}
 
 	return true;
 }
@@ -87,8 +103,11 @@ mpd_output_free(struct mpd_output *output)
 {
 	assert(output != NULL);
 
-	if (output->name != NULL)
-		free(output->name);
+    if (output->name != NULL)
+        free(output->name);
+    if (output->plugin != NULL)
+        free(output->plugin);
+	mpd_kvlist_deinit(&output->attributes);
 	free(output);
 }
 
@@ -108,10 +127,34 @@ mpd_output_get_name(const struct mpd_output *output)
 	return output->name;
 }
 
+const char *
+mpd_output_get_plugin(const struct mpd_output *output)
+{
+	assert(output != NULL);
+
+	return output->plugin;
+}
+
 bool
 mpd_output_get_enabled(const struct mpd_output *output)
 {
 	assert(output != NULL);
 
 	return output->enabled;
+}
+
+const struct mpd_pair *
+mpd_output_first_attribute(struct mpd_output *output)
+{
+	assert(output != NULL);
+
+	return mpd_kvlist_first(&output->attributes);
+}
+
+const struct mpd_pair *
+mpd_output_next_attribute(struct mpd_output *output)
+{
+	assert(output != NULL);
+
+	return mpd_kvlist_next(&output->attributes);
 }
