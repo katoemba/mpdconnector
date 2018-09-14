@@ -217,6 +217,7 @@ public class MPDPlayer: PlayerProtocol {
                 name: String,
                 host: String,
                 port: Int,
+                password: String? = nil,
                 scheduler: SchedulerType? = nil,
                 type: MPDType = .classic,
                 version: String = "",
@@ -233,6 +234,9 @@ public class MPDPlayer: PlayerProtocol {
         _discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
         
+        if password != nil {
+            UserDefaults.standard.set(password, forKey: ConnectionProperties.Password.rawValue + "." + initialUniqueID)
+        }
         let password = UserDefaults.standard.string(forKey: "\(ConnectionProperties.Password.rawValue).\(initialUniqueID)") ?? ""
         let defaultTypeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
         if defaultTypeInt > 0 {
@@ -316,6 +320,7 @@ public class MPDPlayer: PlayerProtocol {
                   name: name,
                   host: host,
                   port: port,
+                  password: connectionProperties[ConnectionProperties.Password.rawValue] as? String,
                   scheduler: scheduler,
                   type: type,
                   version: version,
