@@ -41,8 +41,10 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     public let removePlayerObservable : Observable<PlayerProtocol>
     
     private var isListening = false
+    private var userDefaults: UserDefaults
 
-    public init() {
+    public init(userDefaults: UserDefaults) {
+        self.userDefaults = userDefaults
         mpdNetServiceBrowser = NetServiceBrowser()
         volumioNetServiceBrowser = NetServiceBrowser()
 
@@ -50,7 +52,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         let mpdPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
             .map({ (netService) -> (String, String, Int, MPDType) in
                 let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
-                let typeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
+                let typeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
                 let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
 
                 return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
@@ -115,7 +117,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 }
             })
             .map({ (name, host, port, type) -> MPDPlayer in
-                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type)
+                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
             })
             .share(replay: 1)
 
@@ -136,7 +138,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             })
             .map({ (netService) -> (String, String, Int, MPDType) in
                 let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
-                let typeInt = UserDefaults.standard.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
+                let typeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
                 let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
                 
                 return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
@@ -176,7 +178,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     }
                 })
             .map({ (name, host, port, type) -> MPDPlayer in
-                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type)
+                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
             })
             .share(replay: 1)
 
@@ -206,7 +208,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                           type: player.type,
                                           version: version,
                                           discoverMode: player.discoverMode,
-                                          connectionWarning: connectionWarning)
+                                          connectionWarning: connectionWarning,
+                                          userDefaults: userDefaults)
                 }
 
                 return player
@@ -216,14 +219,14 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         // Create an observable that monitors when players disappear from the network.
         let removeMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceRemoved
             .map({ (netService) -> PlayerProtocol in
-                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: netService.port)
+                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: netService.port, userDefaults: userDefaults)
             })
             .asObservable()
 
         // Create an observable that monitors when players disappear from the network.
         let removeVolumioPlayerObservable = volumioNetServiceBrowser.rx.serviceRemoved
             .map({ (netService) -> PlayerProtocol in
-                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: 6600)
+                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: 6600, userDefaults: userDefaults)
             })
             .asObservable()
         
@@ -242,9 +245,9 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "")
         volumioNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
         
-        let persistedPlayers = UserDefaults.standard.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
+        let persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         for persistedPlayer in persistedPlayers.keys {
-            addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: persistedPlayers[persistedPlayer] as! [String: Any], discoverMode: .manual))
+            addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: persistedPlayers[persistedPlayer] as! [String: Any], discoverMode: .manual, userDefaults: userDefaults))
         }
     }
     
@@ -265,10 +268,11 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// - Returns: An observable on which a created Player can published.
     public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
         return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler)
-            .flatMapFirst({ (connection) -> Observable<PlayerProtocol?> in
+            .flatMapFirst({ [weak self] (connection) -> Observable<PlayerProtocol?> in
+                guard let weakSelf = self else { return Observable.just(nil) }
                 if (connection != nil) {
                     MPDWrapper().connection_free(connection)
-                    return Observable.just(MPDPlayer.init(connectionProperties: connectionProperties))
+                    return Observable.just(MPDPlayer.init(connectionProperties: connectionProperties, userDefaults: weakSelf.userDefaults))
                 }
                 return Observable.just(nil)
             })
@@ -276,24 +280,24 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     }
     
     public func persistPlayer(_ connectionProperties: [String: Any]) {
-        var persistedPlayers = UserDefaults.standard.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
+        var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         
         if persistedPlayers[connectionProperties[ConnectionProperties.Name.rawValue] as! String] != nil {
-            removeManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties))
+            removeManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties, userDefaults: userDefaults))
         }
         persistedPlayers[connectionProperties[ConnectionProperties.Name.rawValue] as! String] = connectionProperties
-        addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties, discoverMode: .manual))
+        addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties, discoverMode: .manual, userDefaults: userDefaults))
 
-        UserDefaults.standard.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
+        userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
     }
     
     public func removePlayer(_ player: PlayerProtocol) {
-        var persistedPlayers = UserDefaults.standard.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
+        var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         
         if persistedPlayers[player.name] != nil {
             removeManualPlayerSubject.onNext(player)
             persistedPlayers.removeValue(forKey: player.name)
-            UserDefaults.standard.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
+            userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
         }
     }
 }
