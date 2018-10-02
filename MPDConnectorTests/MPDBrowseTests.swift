@@ -44,7 +44,7 @@ class MPDBrowseTests: XCTestCase {
         
         testScheduler = TestScheduler(initialClock: 0)
         mpdWrapper = MPDWrapperMock()
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: nil)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: nil, userDefaults: UserDefaults.standard)
     }
     
     override func tearDown() {
@@ -167,7 +167,7 @@ class MPDBrowseTests: XCTestCase {
     }
     
     func testDeletePlaylist() {
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler, userDefaults: UserDefaults.standard)
 
         let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
         testScheduler.scheduleAt(50) {
@@ -188,7 +188,7 @@ class MPDBrowseTests: XCTestCase {
     }
 
     func testRenamePlaylist() {
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler, userDefaults: UserDefaults.standard)
         
         let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
         testScheduler.scheduleAt(50) {
@@ -296,13 +296,17 @@ class MPDBrowseTests: XCTestCase {
         case .failed(let folderContentsOnNext, let error):
             if error.localizedDescription == RxError.timeout.localizedDescription {
                 let folderContents = folderContentsOnNext.last
-                XCTAssert(folderContents!.count == 5, "Expected 5 items, got \(folderContents!.count)")
+                XCTAssert(folderContents!.count == 6, "Expected 6 items, got \(folderContents!.count)")
 
                 var songCount = 0
+                var playlistCount = 0
                 var folderCount = 0
                 for folderContent in folderContents! {
                     if case .song(_) = folderContent {
                         songCount = songCount + 1
+                    }
+                    else if case .playlist(_) = folderContent {
+                        playlistCount = playlistCount + 1
                     }
                     else if case .folder(_) = folderContent {
                         folderCount = folderCount + 1
@@ -310,6 +314,7 @@ class MPDBrowseTests: XCTestCase {
                 }
                 
                 XCTAssert(songCount == 3, "Expected 3 songs, got \(songCount)")
+                XCTAssert(playlistCount == 1, "Expected 1 playlist, got \(playlistCount)")
                 XCTAssert(folderCount == 2, "Expected 2 folders, got \(folderCount)")
             }
             else {

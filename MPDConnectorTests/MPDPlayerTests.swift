@@ -67,7 +67,7 @@ class MPDPlayerTests: XCTestCase {
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDPlayer object and connecting to it
-        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         
         // It holds a shared Status object
         let status1 = mpdPlayer.status as! MPDStatus
@@ -84,7 +84,7 @@ class MPDPlayerTests: XCTestCase {
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDPlayer object and connecting to it
-        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         
         // It holds a shared Status object
         let control1 = mpdPlayer.control as! MPDControl
@@ -101,7 +101,7 @@ class MPDPlayerTests: XCTestCase {
                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDPlayer object and connecting to it
-        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         
         // It holds a shared Status object
         let browse1 = mpdPlayer.browse as! MPDBrowse
@@ -122,8 +122,8 @@ class MPDPlayerTests: XCTestCase {
                                      ConnectionProperties.Password.rawValue: ""] as [String: Any]
 
         // When creating player objects for them
-        let mpdPlayer1 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties1)
-        let mpdPlayer2 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties2)
+        let mpdPlayer1 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties1, userDefaults: UserDefaults.standard)
+        let mpdPlayer2 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties2, userDefaults: UserDefaults.standard)
 
         // They are viewed as equal
         XCTAssert(mpdPlayer1 == mpdPlayer2, "Expected players to be equal, got that they are different")
@@ -141,8 +141,8 @@ class MPDPlayerTests: XCTestCase {
                                      ConnectionProperties.Password.rawValue: ""] as [String: Any]
         
         // When creating player objects for them
-        let mpdPlayer1 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties1)
-        let mpdPlayer2 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties2)
+        let mpdPlayer1 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties1, userDefaults: UserDefaults.standard)
+        let mpdPlayer2 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties2, userDefaults: UserDefaults.standard)
         
         // They are viewed as equal
         XCTAssert(mpdPlayer1 != mpdPlayer2, "Expected players to be different, got that they are equal")
@@ -157,7 +157,7 @@ class MPDPlayerTests: XCTestCase {
         self.mpdWrapper.songIndex = 5
         
         // When creating a new MPDStatus object and starting it
-        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         mpdPlayer.activate()
         
         // And changing the songIndex, stopping and changing the songIndex again

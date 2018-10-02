@@ -224,6 +224,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_load(connection, name)
     }
     
+    public func run_playlist_add(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, path: UnsafePointer<Int8>!) -> Bool {
+        return mpd_run_playlist_add(connection, name, path)
+    }
+    
     public func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws {
         if mpd_search_db_songs(connection, exact) == false {
             throw MPDError.commandFailed

@@ -326,6 +326,17 @@ public class MPDControl: ControlProtocol {
         addSongs([song], addMode: addMode, shuffle: false)
     }
     
+    /// Add a song to a playlist
+    ///
+    /// - Parameters:
+    ///   - song: the song to add
+    ///   - playlist: the playlist to add the song to
+    public func addSongToPlaylist(_ song: Song, playlist: Playlist) {
+        runCommand()  { connection in
+            _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
+        }
+    }
+    
     /// Add a batch of songs to the play queue
     ///
     /// - Parameters:

@@ -79,6 +79,7 @@ public protocol MPDProtocol {
     func response_finish(_ connection: OpaquePointer!) -> Bool
     func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
+    func run_playlist_add(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, path: UnsafePointer<Int8>!) -> Bool
     func search_db_songs(_ connection: OpaquePointer!, exact: Bool) throws
     func search_add_db_songs(_ connection: OpaquePointer!, exact: Bool) throws
     func search_db_tags(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
