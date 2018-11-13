@@ -130,6 +130,13 @@ public class MPDControl: ControlProtocol {
         }
     }
     
+    /// Stop playback.
+    public func stop() {
+        runCommand()  { connection in
+            _ = self.mpd.run_stop(connection)
+        }
+    }
+    
     /// Toggle between play and pause: when paused -> start to play, when playing -> pause.
     public func togglePlayPause() {
         runCommand()  { connection in
