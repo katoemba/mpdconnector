@@ -42,6 +42,7 @@ public class MPDControl: ControlProtocol {
     private let endIndex = BehaviorRelay<Int>(value: 0)
     private let repeatMode = BehaviorRelay<RepeatMode>(value: .Off)
     private let randomMode = BehaviorRelay<RandomMode>(value: .Off)
+    private let consumeMode = BehaviorRelay<ConsumeMode>(value: .Off)
     private let currentSong = BehaviorRelay<Song?>(value: nil)
     
     public init(mpd: MPDProtocol? = nil,
@@ -87,6 +88,14 @@ public class MPDControl: ControlProtocol {
             .bind(to: randomMode)
             .disposed(by: bag)
         
+        playerStatusObservable
+            .map { (playerStatus) -> ConsumeMode in
+                playerStatus.playing.consumeMode
+            }
+            .distinctUntilChanged()
+            .bind(to: consumeMode)
+            .disposed(by: bag)
+
         playerStatusObservable
             .map { (playerStatus) -> Song in
                 playerStatus.currentSong
@@ -229,6 +238,24 @@ public class MPDControl: ControlProtocol {
         }
         else if from == .Single {
             self.setRepeat(repeatMode: .Off)
+        }
+    }
+    
+    /// Set the random mode of the player.
+    ///
+    /// - Parameter consumeMode: The consume mode to use.
+    public func setConsume(consumeMode: ConsumeMode) {
+        runCommand()  { connection in
+            _ = self.mpd.run_consume(connection, (consumeMode == .On) ? true : false)
+        }
+    }
+    
+    /// Toggle the consume mode (off -> on -> off)
+    ///
+    /// - Parameter from: The current consume mode.
+    public func toggleConsume() {
+        runCommand()  { connection in
+            _ = self.mpd.run_consume(connection, (self.consumeMode.value == .On) ? false : true)
         }
     }
     

@@ -111,6 +111,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_single(connection, mode)
     }
     
+    public func run_consume(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
+        return mpd_run_consume(connection, mode)
+    }
+    
     public func run_set_volume(_ connection: OpaquePointer!, _ volume: UInt32) -> Bool {
         return mpd_run_set_volume(connection, volume)
     }
@@ -147,6 +151,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_status_get_single(status)
     }
     
+    public func status_get_consume(_ status: OpaquePointer!) -> Bool {
+        return mpd_status_get_consume(status)
+    }
+
     public func status_get_state(_ status: OpaquePointer!) -> mpd_state {
         return mpd_status_get_state(status)
     }

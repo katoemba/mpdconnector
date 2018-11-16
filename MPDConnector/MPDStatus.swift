@@ -245,6 +245,7 @@ public class MPDStatus: StatusProtocol {
                 let repeatStatus = self.mpd.status_get_repeat(status)
                 let singleStatus = self.mpd.status_get_single(status)
                 playerStatus.playing.repeatMode = (repeatStatus == true && singleStatus == true) ? .Single : ((repeatStatus == true) ? .All : .Off)
+                playerStatus.playing.consumeMode = (self.mpd.status_get_consume(status) == true) ? .On : .Off
                 
                 playerStatus.playqueue.length = Int(self.mpd.status_get_queue_length(status))
                 playerStatus.playqueue.version = Int(self.mpd.status_get_queue_version(status))

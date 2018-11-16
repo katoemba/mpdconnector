@@ -52,6 +52,7 @@ public protocol MPDProtocol {
     func run_shuffle(_ connection: OpaquePointer!) -> Bool
     func run_repeat(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
     func run_single(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
+    func run_consume(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
     func run_set_volume(_ connection: OpaquePointer!, _ volume: UInt32) -> Bool
     func run_status(_ connection: OpaquePointer!) -> OpaquePointer!
     func status_free(_ status: OpaquePointer!)
@@ -61,6 +62,7 @@ public protocol MPDProtocol {
     func status_get_repeat(_ status: OpaquePointer!) -> Bool
     func status_get_single(_ status: OpaquePointer!) -> Bool
     func status_get_random(_ status: OpaquePointer!) -> Bool
+    func status_get_consume(_ status: OpaquePointer!) -> Bool
     func status_get_state(_ status: OpaquePointer!) -> mpd_state
     func status_get_song_pos(_ status: OpaquePointer!) -> Int32
     func status_get_elapsed_time(_ status: OpaquePointer!) -> UInt32
