@@ -1027,7 +1027,7 @@
 					C546AF3B1F35A824003C5B7E = {
 						CreatedOnToolsVersion = 8.3.3;
 						DevelopmentTeam = N7DKJ3YJS4;
-						LastSwiftMigration = 0920;
+						LastSwiftMigration = 1010;
 						ProvisioningStyle = Automatic;
 					};
 					C546B1581F37AAA9003C5B7E = {
@@ -1586,8 +1586,7 @@
 				PRODUCT_NAME = MPDConnector;
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
 		};
@@ -1624,8 +1623,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.katoemba.MPDConnector-iOS";
 				PRODUCT_NAME = MPDConnector;
 				SKIP_INSTALL = YES;
-				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
 		};
