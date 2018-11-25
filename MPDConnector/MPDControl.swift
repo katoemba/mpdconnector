@@ -521,6 +521,29 @@ public class MPDControl: ControlProtocol {
         }
     }
     
+    /// Move a song in a playlist to a different position
+    ///
+    /// - Parameters:
+    ///   - playlist: the playlist in which to make the move
+    ///   - from: the position of the song to change
+    ///   - to: the position to move the song to
+    public func moveSong(playlist: Playlist, from: Int, to: Int) {
+        runCommand()  { connection in
+            _ = self.mpd.run_playlist_move(connection, name: playlist.id, from: UInt32(from), to: UInt32(to))
+        }
+    }
+    
+    /// Remove song from a playlist
+    ///
+    /// - Parameters:
+    ///   - playlist: the playlist from which to remove the song
+    ///   - at: the position of the song to remove
+    public func deleteSong(playlist: Playlist, at: Int) {
+        runCommand()  { connection in
+            _ = self.mpd.run_playlist_delete(connection, name: playlist.id, pos: UInt32(at))
+        }
+    }
+    
     /// Save the current playqueue as a playlist
     ///
     /// - Parameter name: name for the playlist

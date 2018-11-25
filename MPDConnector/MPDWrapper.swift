@@ -438,6 +438,14 @@ public class MPDWrapper: MPDProtocol {
     public func run_rename(_ connection: OpaquePointer!, from: UnsafePointer<Int8>!, to: UnsafePointer<Int8>!) -> Bool {
         return mpd_run_rename(connection, from, to)
     }
+    
+    public func run_playlist_move(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, from: UInt32, to: UInt32) -> Bool {
+        return mpd_run_playlist_move(connection, name, from, to)
+    }
+    
+    public func run_playlist_delete(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, pos: UInt32) -> Bool {
+        return mpd_run_playlist_delete(connection, name, pos)
+    }
 
     public func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         return mpd_run_rm(connection, name)

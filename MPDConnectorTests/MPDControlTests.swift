@@ -396,6 +396,53 @@ class MPDControlTests: XCTestCase {
         testScheduler.start()
     }
     
+    func testConsumeOnOffSentToMPD() {
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setConsume(consumeMode: .On)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_consume", expectedParameters: ["mode": "\(true)"])
+        }
+        testScheduler.scheduleAt(150) {
+            self.mpdWrapper.clearAllCalls()
+            self.mpdPlayer?.control.setConsume(consumeMode: .Off)
+        }
+        testScheduler.scheduleAt(200) {
+            self.mpdWrapper.assertCall("run_consume", expectedParameters: ["mode": "\(false)"])
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testToggleConsumeSentToMPD() {
+        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
+        var playerStatus = PlayerStatus()
+        
+        testScheduler.scheduleAt(10) {
+            playerStatus.playing.consumeMode = .Off
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.toggleConsume()
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_consume", expectedParameters: ["mode": "\(true)"])
+        }
+        testScheduler.scheduleAt(110) {
+            playerStatus.playing.consumeMode = .On
+            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+        }
+        testScheduler.scheduleAt(150) {
+            self.mpdWrapper.clearAllCalls()
+            self.mpdPlayer?.control.toggleConsume()
+        }
+        testScheduler.scheduleAt(200) {
+            self.mpdWrapper.assertCall("run_consume", expectedParameters: ["mode": "\(false)"])
+        }
+        
+        testScheduler.start()
+    }
+    
     func testAddOneSongReplace() {
         testScheduler.scheduleAt(50) {
             var song = Song()
@@ -523,6 +570,32 @@ class MPDControlTests: XCTestCase {
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_delete", expectedParameters: ["pos": "5"])
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testMoveSongPlaylist() {
+        testScheduler.scheduleAt(50) {
+            var playlist = Playlist()
+            playlist.id = "mplist"
+            _ = self.mpdPlayer?.control.moveSong(playlist: playlist, from: 3, to: 7)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_playlist_move", expectedParameters: ["name": "mplist", "from": "3", "to": "7"])
+        }
+        
+        testScheduler.start()
+    }
+    
+    func testDeleteSongPlaylist() {
+        testScheduler.scheduleAt(50) {
+            var playlist = Playlist()
+            playlist.id = "dplist"
+            _ = self.mpdPlayer?.control.deleteSong(playlist: playlist, at: 5)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_playlist_delete", expectedParameters: ["name": "dplist", "pos": "5"])
         }
         
         testScheduler.start()

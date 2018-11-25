@@ -123,6 +123,8 @@ public protocol MPDProtocol {
     func playlist_get_last_modified(_ playlist: OpaquePointer!) -> Date
     func send_list_playlist_meta(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_rename(_ connection: OpaquePointer!, from: UnsafePointer<Int8>!, to: UnsafePointer<Int8>!) -> Bool
+    func run_playlist_move(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, from: UInt32, to: UInt32) -> Bool
+    func run_playlist_delete(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, pos: UInt32) -> Bool
     func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool
     func command_list_end(_ connection: OpaquePointer!) -> Bool
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool

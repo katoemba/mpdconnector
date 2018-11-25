@@ -30,7 +30,7 @@ import libmpdclient
 import RxSwift
 import RxTest
 
-class MPDWrapperMock: MockBase, MPDProtocol {    
+class MPDWrapperMock: MockBase, MPDProtocol {
     /// Dictionary of calls (functionName as key) and parameters as value.
     /// Values is an array of dictionaries, where key=parameter-name, value=parameter-value
     var volume = Int32(0)
@@ -42,6 +42,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var repeatValue = false
     var singleValue = false
     var random = false
+    var consumeMode = false
     var state = MPD_STATE_UNKNOWN
     var connectionErrorCount = 0
     var connectionError = MPD_ERROR_SUCCESS
@@ -207,6 +208,12 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return true
     }
     
+    func run_consume(_ connection: OpaquePointer!, _ mode: Bool) -> Bool {
+        registerCall("run_consume", ["mode": "\(mode)"])
+        self.consumeMode = mode
+        return true
+    }
+    
     func run_set_volume(_ connection: OpaquePointer!, _ volume: UInt32) -> Bool {
         registerCall("run_set_volume", ["volume": "\(volume)"])
         return true
@@ -254,6 +261,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func status_get_random(_ status: OpaquePointer!) -> Bool {
         registerCall("status_get_random", ["status": "\(status)"])
         return random
+    }
+    
+    func status_get_consume(_ status: OpaquePointer!) -> Bool {
+        registerCall("status_get_consume", ["status": "\(status)"])
+        return consumeMode
     }
     
     func status_get_state(_ status: OpaquePointer!) -> mpd_state {
@@ -595,6 +607,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool {
         registerCall("run_rm", ["name": "\(stringFromMPDString(name))"])
+        return true
+    }
+    
+    func run_playlist_move(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, from: UInt32, to: UInt32) -> Bool {
+        registerCall("run_playlist_move", ["name": "\(stringFromMPDString(name))", "from": "\(from)", "to": "\(to)"])
+        return true
+    }
+    
+    func run_playlist_delete(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, pos: UInt32) -> Bool {
+        registerCall("run_playlist_delete", ["name": "\(stringFromMPDString(name))", "pos": "\(pos)"])
         return true
     }
     

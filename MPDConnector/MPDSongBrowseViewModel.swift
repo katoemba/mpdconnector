@@ -30,7 +30,7 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDSongBrowseViewModel: SongBrowseViewModel {
-    private var _songsSubject = PublishSubject<[Song]>()
+    private var _songsSubject = BehaviorSubject<[Song]>(value: [])
     public var songsObservable: Observable<[Song]> {
         get {
             return _songsSubject.asObservable()
@@ -131,5 +131,23 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
     }
     
     public func extend() {
+    }
+    
+    public func removeSong(at: Int) {
+        Observable.just(at)
+            .withLatestFrom(_songsSubject) { (at, songs) in
+                (at, songs)
+            }
+            .map({ (arg) -> [Song] in
+                let (at, songs) = arg
+                var newSongs = songs
+                newSongs.remove(at: at)
+                return newSongs
+            })
+            .subscribe(onNext: { [weak self] (songs) in
+                guard let weakSelf = self else { return }
+                weakSelf._songsSubject.onNext(songs)
+            })
+            .disposed(by: bag)
     }
 }
