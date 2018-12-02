@@ -134,7 +134,7 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
-            let coverHttpPort = (self.loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue) as? IntSetting)?.value ?? 80
+            let coverHttpPort = (self.loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue) as? StringSetting)?.value ?? ""
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
             let postfix = (self.loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue) as? StringSetting)?.value ?? ""
             let alternativePostfix = (self.loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue) as? StringSetting)?.value ?? ""
@@ -143,7 +143,7 @@ public class MPDPlayer: PlayerProtocol {
                     ConnectionProperties.Host.rawValue: host,
                     ConnectionProperties.Port.rawValue: port,
                     ConnectionProperties.Password.rawValue: password,
-                    MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort == 0 ? 80 : coverHttpPort,
+                    MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
                     MPDConnectionProperties.coverPostfix.rawValue: postfix,
                     MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
@@ -277,7 +277,7 @@ public class MPDPlayer: PlayerProtocol {
         _type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
 
         // Note: using _name here instead of _uniqueId because that is not yet available.
-        let coverHttpPort = userDefaults.integer(forKey: "\(MPDConnectionProperties.coverHttpPort.rawValue).\(initialUniqueID)") ?? 80
+        let coverHttpPort = userDefaults.string(forKey: "\(MPDConnectionProperties.coverHttpPort.rawValue).\(initialUniqueID)") ?? ""
         let prefix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(initialUniqueID)") ?? ""
         let postfix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(initialUniqueID)") ?? ""
         let alternativePostfix = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverPostfix.rawValue).\(initialUniqueID)") ?? ""
@@ -404,8 +404,8 @@ public class MPDPlayer: PlayerProtocol {
             }
         }
         else if setting.id == MPDConnectionProperties.coverHttpPort.rawValue {
-            let intSetting = setting as! IntSetting
-            userDefaults.set(intSetting.value, forKey: playerSpecificId)
+            let stringSetting = setting as! StringSetting
+            userDefaults.set(stringSetting.value, forKey: playerSpecificId)
         }
         else if setting.id == MPDConnectionProperties.coverPrefix.rawValue {
             let stringSetting = setting as! StringSetting
@@ -441,13 +441,11 @@ public class MPDPlayer: PlayerProtocol {
                                           value: userDefaults.integer(forKey: playerSpecificId))
         }
         else if id == MPDConnectionProperties.coverHttpPort.rawValue {
-            var coverHttpPort = userDefaults.integer(forKey: playerSpecificId)
-            if coverHttpPort == 0 {
-                coverHttpPort = 80
-            }
-            return IntSetting.init(id: id,
+            return StringSetting.init(id: id,
                                       description: "Cover Http Port",
-                                      value: coverHttpPort)
+                                      placeholder: "Optional Port Number",
+                                      value: userDefaults.string(forKey: playerSpecificId) ?? "",
+                                      restriction: .numeric)
         }
         else if id == MPDConnectionProperties.coverPrefix.rawValue {
             return StringSetting.init(id: id,
@@ -472,7 +470,7 @@ public class MPDPlayer: PlayerProtocol {
                                       description: "Password",
                                       placeholder: "Password",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "",
-                                      conceil: true)
+                                      restriction: .password)
         }
 
         return nil
