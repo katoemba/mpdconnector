@@ -245,18 +245,22 @@ public class MPDHelper {
         
         let coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
         let host = connectionProperties[ConnectionProperties.Host.rawValue] as! String
+        var coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? Int ?? 80
+        if coverHttpPort == 0 {
+            coverHttpPort = 80
+        }
         let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as! String
         let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as! String
         let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as! String
 
         if postfix == "" && alternativePostfix == "" {
-            song.coverURI = CoverURI.fullPathURI("http://\(host)/\(prefix)\(coverURI)")
+            song.coverURI = CoverURI.fullPathURI("http://\(host):\(coverHttpPort)/\(prefix)\(coverURI)")
         }
         else if alternativePostfix == "" {
-            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", newPath, [postfix])
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(host):\(coverHttpPort)/\(prefix)\(coverURI)", newPath, [postfix])
         }
         else {
-            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)/\(prefix)\(coverURI)", newPath, [postfix, alternativePostfix])
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(host):\(coverHttpPort)/\(prefix)\(coverURI)", newPath, [postfix, alternativePostfix])
         }
 
         return song

@@ -61,6 +61,7 @@ public enum MPDType: Int {
 
 public enum MPDConnectionProperties: String {
     case MPDType = "type"
+    case coverHttpPort = "MPD.Uri.Port"
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"
     case alternativeCoverPostfix = "MPD.Uri.AlternativePostfix"
@@ -133,6 +134,7 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
+            let coverHttpPort = (self.loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue) as? IntSetting)?.value ?? 80
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
             let postfix = (self.loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue) as? StringSetting)?.value ?? ""
             let alternativePostfix = (self.loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue) as? StringSetting)?.value ?? ""
@@ -141,6 +143,7 @@ public class MPDPlayer: PlayerProtocol {
                     ConnectionProperties.Host.rawValue: host,
                     ConnectionProperties.Port.rawValue: port,
                     ConnectionProperties.Password.rawValue: password,
+                    MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort == 0 ? 80 : coverHttpPort,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
                     MPDConnectionProperties.coverPostfix.rawValue: postfix,
                     MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
@@ -171,12 +174,13 @@ public class MPDPlayer: PlayerProtocol {
                 coverArtDescription = "For a Volumio based player, the default cover art settings should not be changed."
             }
             else if type == .classic {
-                coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, using port 80. This webserver must be configured to support browsing the music directories.\n\n" +
+                coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, normally on port 80. This webserver must be configured to support browsing the music directories.\n\n" +
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
             }
             return [PlayerSettingGroup(title: "Player Type", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
                                                                                         loadSetting(id: ConnectionProperties.Password.rawValue)!]),
                     PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
+                                                                                                       loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]),
                     PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
@@ -273,6 +277,7 @@ public class MPDPlayer: PlayerProtocol {
         _type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
 
         // Note: using _name here instead of _uniqueId because that is not yet available.
+        let coverHttpPort = userDefaults.integer(forKey: "\(MPDConnectionProperties.coverHttpPort.rawValue).\(initialUniqueID)") ?? 80
         let prefix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(initialUniqueID)") ?? ""
         let postfix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(initialUniqueID)") ?? ""
         let alternativePostfix = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverPostfix.rawValue).\(initialUniqueID)") ?? ""
@@ -280,6 +285,7 @@ public class MPDPlayer: PlayerProtocol {
                 ConnectionProperties.Host.rawValue: host,
                 ConnectionProperties.Port.rawValue: port,
                 ConnectionProperties.Password.rawValue: password,
+                MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                 MPDConnectionProperties.coverPrefix.rawValue: prefix,
                 MPDConnectionProperties.coverPostfix.rawValue: postfix,
                 MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
@@ -397,6 +403,10 @@ public class MPDPlayer: PlayerProtocol {
                 }
             }
         }
+        else if setting.id == MPDConnectionProperties.coverHttpPort.rawValue {
+            let intSetting = setting as! IntSetting
+            userDefaults.set(intSetting.value, forKey: playerSpecificId)
+        }
         else if setting.id == MPDConnectionProperties.coverPrefix.rawValue {
             let stringSetting = setting as! StringSetting
             userDefaults.set(stringSetting.value, forKey: playerSpecificId)
@@ -429,6 +439,15 @@ public class MPDPlayer: PlayerProtocol {
                                                   MPDType.bryston.rawValue: MPDType.bryston.description,
                                                   MPDType.runeaudio.rawValue: MPDType.runeaudio.description],
                                           value: userDefaults.integer(forKey: playerSpecificId))
+        }
+        else if id == MPDConnectionProperties.coverHttpPort.rawValue {
+            var coverHttpPort = userDefaults.integer(forKey: playerSpecificId)
+            if coverHttpPort == 0 {
+                coverHttpPort = 80
+            }
+            return IntSetting.init(id: id,
+                                      description: "Cover Http Port",
+                                      value: coverHttpPort)
         }
         else if id == MPDConnectionProperties.coverPrefix.rawValue {
             return StringSetting.init(id: id,
