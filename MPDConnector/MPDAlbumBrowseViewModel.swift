@@ -113,6 +113,8 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 reload(artist: artist, sort: sort)
             case let .recent(duration):
                 reload(recent: duration, sort: sort)
+            case let .random(count):
+                reload(random: count, sort: sort)
             default:
                 fatalError("MPDAlbumBrowseViewModel: unsupported filter type")
             }
@@ -122,7 +124,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         }
     }
     
-    private func reload(genre: String? = nil, artist: Artist? = nil, recent: Int? = nil, sort: SortType) {
+    private func reload(genre: String? = nil, artist: Artist? = nil, recent: Int? = nil, random: Int? = nil, sort: SortType) {
         // Get rid of old disposables
         bag = DisposeBag()
         
@@ -145,6 +147,19 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             self.extendSize = 200
             albumsObservable = browse.fetchRecentAlbums(numberOfDays: recent)
                 .observeOn(MainScheduler.instance)
+                .share(replay: 1)
+        }
+        else if let random = random {
+            self.extendSize = random
+            albumsObservable = browse.fetchAlbums(genre: nil, sort: sort)
+                .flatMap { (albums) -> Observable<[Album]> in
+                    var randomAlbums = [Album]()
+                    for _ in 1...10 {
+                        randomAlbums.append(albums.randomElement()!)
+                    }
+                    print("Albums found: \(albums.count)")
+                    return Observable.just(randomAlbums)
+                }
                 .share(replay: 1)
         }
         else {
