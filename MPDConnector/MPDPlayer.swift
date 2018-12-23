@@ -40,6 +40,7 @@ public enum MPDType: Int {
     case volumio = 3
     case bryston = 4
     case runeaudio = 5
+    case moodeaudio = 6
     
     var description: String {
         switch self {
@@ -55,6 +56,8 @@ public enum MPDType: Int {
             return "Bryston"
         case .runeaudio:
             return "Rune Audio"
+        case .moodeaudio:
+            return "moOde"
         }
     }
 }
@@ -173,6 +176,9 @@ public class MPDPlayer: PlayerProtocol {
             else if type == .volumio {
                 coverArtDescription = "For a Volumio based player, the default cover art settings should not be changed."
             }
+            else if type == .moodeaudio {
+                coverArtDescription = "For a moOde based player, the default cover art settings should not be changed."
+            }
             else if type == .classic {
                 coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, normally on port 80. This webserver must be configured to support browsing the music directories.\n\n" +
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
@@ -264,6 +270,11 @@ public class MPDPlayer: PlayerProtocol {
             else if type == MPDType.runeaudio {
                 userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
+                userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+            }
+            else if type == MPDType.moodeaudio {
+                userDefaults.set("coverart.php/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
+                userDefaults.set("<track>", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
             }
             else {
@@ -395,6 +406,12 @@ public class MPDPlayer: PlayerProtocol {
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     _type = MPDType.runeaudio
                 }
+                else if selectionSetting.value == MPDType.moodeaudio.rawValue {
+                    userDefaults.set("coverart.php/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    userDefaults.set("<track>", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    _type = MPDType.moodeaudio
+                }
                 else {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
@@ -437,7 +454,8 @@ public class MPDPlayer: PlayerProtocol {
                                           items: [MPDType.classic.rawValue: MPDType.classic.description,
                                                   MPDType.volumio.rawValue: MPDType.volumio.description,
                                                   MPDType.bryston.rawValue: MPDType.bryston.description,
-                                                  MPDType.runeaudio.rawValue: MPDType.runeaudio.description],
+                                                  MPDType.runeaudio.rawValue: MPDType.runeaudio.description,
+                                                  MPDType.moodeaudio.rawValue: MPDType.moodeaudio.description],
                                           value: userDefaults.integer(forKey: playerSpecificId))
         }
         else if id == MPDConnectionProperties.coverHttpPort.rawValue {

@@ -28,11 +28,12 @@ import Foundation
 import ConnectorProtocol
 import RxSwift
 import libmpdclient
+import SWXMLHash
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
     private let mpdNetServiceBrowser : NetServiceBrowser
-    private let volumioNetServiceBrowser : NetServiceBrowser
+    private let httpNetServiceBrowser : NetServiceBrowser
     private let backgroundScheduler = ConcurrentDispatchQueueScheduler.init(qos: .background)
 
     private let addManualPlayerSubject = PublishSubject<MPDPlayer>()
@@ -46,7 +47,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
         mpdNetServiceBrowser = NetServiceBrowser()
-        volumioNetServiceBrowser = NetServiceBrowser()
+        httpNetServiceBrowser = NetServiceBrowser()
 
         // Create an observable that monitors when new players are discovered.
         let mpdPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
@@ -122,7 +123,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .share(replay: 1)
 
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
-        let httpPlayerObservable = volumioNetServiceBrowser.rx.serviceAdded
+        let httpPlayerObservable = httpNetServiceBrowser.rx.serviceAdded
             .observeOn(backgroundScheduler)
             .filter({ (netService) -> Bool in
                 netService.name.contains("[runeaudio]") == false && netService.name.contains("bryston") == false
@@ -143,6 +144,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 
                 return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
             })
+            
+        let volumioHttpPlayerObservable = httpPlayerObservable
             .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
                     // Check if this is a Volumio based player
                     Observable.create { observer in
@@ -182,8 +185,44 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             })
             .share(replay: 1)
 
+        let moodeAudioHttpPlayerObservable = httpPlayerObservable
+            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+                // Check if this is a Volumio based player
+                Observable.create { observer in
+                    if type != .unknown {
+                        observer.onNext((name, host, 6600, type))
+                        observer.onCompleted()
+                    }
+                    else {
+                        // Make a request to the player for the state
+                        let session = URLSession.shared
+                        let request = URLRequest(url: URL(string: "http://\(host):\(port)/browserconfig.xml")!)
+                        let task = session.dataTask(with: request){
+                            (data, response, error) -> Void in
+                            if error == nil {
+                                if let data = data {
+                                    let xml = SWXMLHash.parse(data)
+                                    let browserConfig = xml["browserconfig"]
+                                    if browserConfig.children.count > 0 {
+                                        observer.onNext((name, host, 6600, .moodeaudio))
+                                    }
+                                }
+                            }
+                            observer.onCompleted()
+                        }
+                        task.resume()
+                    }
+                    
+                    return Disposables.create()
+                }
+            })
+            .map({ (name, host, port, type) -> MPDPlayer in
+                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
+            })
+            .share(replay: 1)
+
         // Merge the detected players, and get a version out of them.
-        addPlayerObservable = Observable.merge(mpdPlayerObservable, httpPlayerObservable, addManualPlayerSubject)
+        addPlayerObservable = Observable.merge(mpdPlayerObservable, volumioHttpPlayerObservable, moodeAudioHttpPlayerObservable, addManualPlayerSubject)
             .observeOn(backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
@@ -224,13 +263,13 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .asObservable()
 
         // Create an observable that monitors when players disappear from the network.
-        let removeVolumioPlayerObservable = volumioNetServiceBrowser.rx.serviceRemoved
+        let removeHttpPlayerObservable = httpNetServiceBrowser.rx.serviceRemoved
             .map({ (netService) -> PlayerProtocol in
                 return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: 6600, userDefaults: userDefaults)
             })
             .asObservable()
         
-        removePlayerObservable = Observable.merge(removeMPDPlayerObservable, removeVolumioPlayerObservable, removeManualPlayerSubject)
+        removePlayerObservable = Observable.merge(removeMPDPlayerObservable, removeHttpPlayerObservable, removeManualPlayerSubject)
             .observeOn(MainScheduler.instance)
             .asObservable()
     }
@@ -243,7 +282,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         isListening = true
         mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "")
-        volumioNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
+        httpNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
         
         let persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         for persistedPlayer in persistedPlayers.keys {
@@ -259,7 +298,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
 
         isListening = false
         mpdNetServiceBrowser.stop()
-        volumioNetServiceBrowser.stop()
+        httpNetServiceBrowser.stop()
     }
     
     /// Manually create a player based on the connection properties
