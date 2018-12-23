@@ -154,10 +154,11 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             albumsObservable = browse.fetchAlbums(genre: nil, sort: sort)
                 .flatMap { (albums) -> Observable<[Album]> in
                     var randomAlbums = [Album]()
-                    for _ in 1...10 {
-                        randomAlbums.append(albums.randomElement()!)
+                    for _ in 1...random {
+                        if let album = albums.randomElement() {
+                            randomAlbums.append(album)
+                        }
                     }
-                    print("Albums found: \(albums.count)")
                     return Observable.just(randomAlbums)
                 }
                 .share(replay: 1)
