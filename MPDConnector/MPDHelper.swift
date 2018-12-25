@@ -356,4 +356,24 @@ public class MPDHelper {
         
         return folder
     }
+
+    /// Fill a generic Output object from an mpdOutput
+    ///
+    /// - Parameters:
+    ///   - mpd: MPDProtocol object
+    ///   - mpdOutput: pointer to a mpd output data structure
+    /// - Returns: the filled Output object
+    public static func outputFromMPDOutput(mpd: MPDProtocol, mpdOutput: OpaquePointer!) -> Output? {
+        guard mpdOutput != nil else  {
+            return nil
+        }
+        
+        var output = Output()
+        
+        output.id = "\(mpd.output_get_id(mpdOutput))"
+        output.name = mpd.output_get_name(mpdOutput)
+        output.enabled = mpd.output_get_enabled(mpdOutput)
+        
+        return output
+    }
 }

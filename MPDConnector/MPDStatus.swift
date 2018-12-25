@@ -151,7 +151,7 @@ public class MPDStatus: StatusProtocol {
                         break
                     }
 
-                    let mask = weakSelf.mpd.run_idle_mask(connection, mask: mpd_idle(rawValue: mpd_idle.RawValue(UInt8(MPD_IDLE_QUEUE.rawValue) | UInt8(MPD_IDLE_PLAYER.rawValue) | UInt8(MPD_IDLE_MIXER.rawValue) | UInt8(MPD_IDLE_OPTIONS.rawValue))))
+                    let mask = weakSelf.mpd.run_idle_mask(connection, mask: mpd_idle(rawValue: mpd_idle.RawValue(UInt8(MPD_IDLE_QUEUE.rawValue) | UInt8(MPD_IDLE_PLAYER.rawValue) | UInt8(MPD_IDLE_MIXER.rawValue) | UInt8(MPD_IDLE_OPTIONS.rawValue) | UInt8(MPD_IDLE_OUTPUT.rawValue))))
                     if mask.rawValue == 0 {
                         break
                     }
@@ -304,6 +304,18 @@ public class MPDStatus: StatusProtocol {
                     playerStatus.currentSong = song
                 }
             }
+            
+            var outputs = [Output]()
+            if mpd.send_outputs(connection) == true {
+                while let mpdOutput = mpd.recv_output(connection) {
+                    if let output = MPDHelper.outputFromMPDOutput(mpd: mpd, mpdOutput: mpdOutput) {
+                        outputs.append(output)
+                    }
+                    mpd.output_free(mpdOutput)
+                }
+                _ = mpd.response_finish(connection)
+            }
+            playerStatus.outputs = outputs
         }
         
         return playerStatus

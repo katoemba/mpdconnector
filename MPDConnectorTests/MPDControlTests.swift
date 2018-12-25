@@ -670,4 +670,49 @@ class MPDControlTests: XCTestCase {
         
         testScheduler.start()
     }
+    
+    func testEnableOutputSentToMPD() {
+        var output = Output()
+        output.id = "1"
+        
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setOutput(output, enabled: true)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_enable_output", expectedParameters: ["output_id": "1"])
+            self.mpdWrapper.assertCall("output_free", expectedCallCount: 0)
+        }
+
+        testScheduler.start()
+    }
+
+    func testDisableOutputSentToMPD() {
+        var output = Output()
+        output.id = "2"
+        
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.setOutput(output, enabled: false)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_disable_output", expectedParameters: ["output_id": "2"])
+            self.mpdWrapper.assertCall("output_free", expectedCallCount: 0)
+        }
+        
+        testScheduler.start()
+    }
+
+    func testToggleOutputSentToMPD() {
+        var output = Output()
+        output.id = "3"
+        
+        testScheduler.scheduleAt(50) {
+            self.mpdPlayer?.control.toggleOutput(output)
+        }
+        testScheduler.scheduleAt(100) {
+            self.mpdWrapper.assertCall("run_toggle_output", expectedParameters: ["output_id": "3"])
+            self.mpdWrapper.assertCall("output_free", expectedCallCount: 0)
+        }
+        
+        testScheduler.start()
+    }
 }

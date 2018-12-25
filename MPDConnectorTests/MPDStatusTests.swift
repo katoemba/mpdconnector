@@ -183,6 +183,7 @@ class MPDStatusTests: XCTestCase {
             self.mpdWrapper.samplerate = 192000
             self.mpdWrapper.encoding = 24
             self.mpdWrapper.channels = 1
+            self.mpdWrapper.outputs = [(1, "out1", true), (2, "out2", false)]
             
             self.mpdWrapper.statusChanged()
         }
@@ -210,6 +211,16 @@ class MPDStatusTests: XCTestCase {
             XCTAssert(playerStatus.quality.samplerate == "192kHz", "Expected bitrate 192kHz, got \(playerStatus.quality.samplerate)")
             XCTAssert(playerStatus.quality.encoding == "24bit", "Expected encoding 24bit, got \(playerStatus.quality.encoding)")
             XCTAssert(playerStatus.quality.channels == "Mono", "Expected channels Mono, got \(playerStatus.quality.channels)")
+            XCTAssert(playerStatus.outputs.count == 2, "Expected 2 outputs, got \(playerStatus.outputs.count)")
+            if playerStatus.outputs.count == 2 {
+                XCTAssert(playerStatus.outputs[0].id == "1", "Expected output id 1, got \(playerStatus.outputs[0].id)")
+                XCTAssert(playerStatus.outputs[0].name == "out1", "Expected output name out1, got \(playerStatus.outputs[0].name)")
+                XCTAssert(playerStatus.outputs[0].enabled == true, "Expected output enabled true, got \(playerStatus.outputs[0].enabled)")
+
+                XCTAssert(playerStatus.outputs[1].id == "2", "Expected output id 2, got \(playerStatus.outputs[1].id)")
+                XCTAssert(playerStatus.outputs[1].name == "out2", "Expected output name out2, got \(playerStatus.outputs[1].name)")
+                XCTAssert(playerStatus.outputs[1].enabled == false, "Expected output enabled false, got \(playerStatus.outputs[1].enabled)")
+            }
 
             // Check that all song data is freed
             let songCount = self.mpdWrapper.callCount("run_current_song") +

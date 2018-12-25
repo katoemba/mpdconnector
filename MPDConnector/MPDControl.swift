@@ -576,6 +576,36 @@ public class MPDControl: ControlProtocol {
             _ = self.mpd.run_play(connection)
         }
     }
+    
+    /// Enable or disable an output
+    ///
+    /// - Parameters:
+    ///   - output: the output to set
+    ///   - enabled: true to enable the output, false to disable it
+    public func setOutput(_ output: Output, enabled: Bool) {
+        runCommand()  { connection in
+            if let output_id = UInt32(output.id) {
+                if enabled {
+                    _ = self.mpd.run_enable_output(connection, output_id: output_id)
+                }
+                else {
+                    _ = self.mpd.run_disable_output(connection, output_id: output_id)
+                }
+            }
+        }
+    }
+    
+    /// Toggle an output on or off
+    ///
+    /// - Parameter output: the output to toggle
+    public func toggleOutput(_ output: Output) {
+        runCommand()  { connection in
+            if let output_id = UInt32(output.id) {
+                _ = self.mpd.run_toggle_output(connection, output_id: output_id)
+            }
+        }
+    }
+
 
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///

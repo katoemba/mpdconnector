@@ -484,6 +484,43 @@ public class MPDWrapper: MPDProtocol {
         }
     }
     
+    public func run_enable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool {
+        return mpd_run_enable_output(connection, output_id)
+    }
+    
+    public func run_disable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool {
+        return mpd_run_disable_output(connection, output_id)
+    }
+    
+    public func run_toggle_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool {
+        return mpd_run_toggle_output(connection, output_id)
+    }
+    
+    public func send_outputs(_ connection: OpaquePointer!) -> Bool {
+        return mpd_send_outputs(connection)
+    }
+    
+    public func recv_output(_ connection: OpaquePointer!) -> OpaquePointer! {
+        return mpd_recv_output(connection)
+    }
+    
+    public func output_get_id(_ output: OpaquePointer!) -> UInt32 {
+        return mpd_output_get_id(output)
+    }
+    
+    public func output_get_name(_ output: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_output_get_name(output))
+    }
+    
+    public func output_get_enabled(_ output: OpaquePointer!) -> Bool {
+        return mpd_output_get_enabled(output)
+    }
+    
+    public func output_free(_ output: OpaquePointer!) {
+        mpd_output_free(output)
+    }
+
+    
     /// Convert a raw mpd-string to a standard Swift string.
     ///
     /// - Parameter mpdString: Pointer to a null-terminated (unsigned char) string.

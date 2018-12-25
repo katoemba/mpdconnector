@@ -76,6 +76,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var currentEntity: mpd_entity_type?
     var directories = [[String:String]]()
     var currentDirectory: [String:String]?
+    var outputs = [(UInt32, String, Bool)]()
     
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -635,6 +636,56 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return playerVersion
     }
     
+    public func run_enable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool {
+        registerCall("run_enable_output", ["output_id": "\(output_id)"])
+        return true
+    }
+    
+    public func run_disable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool {
+        registerCall("run_disable_output", ["output_id": "\(output_id)"])
+        return true
+    }
+    
+    public func run_toggle_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool {
+        registerCall("run_toggle_output", ["output_id": "\(output_id)"])
+        return true
+    }
+
+    public func send_outputs(_ connection: OpaquePointer!) -> Bool {
+        registerCall("send_outputs", [:])
+        return true
+    }
+    
+    public func recv_output(_ connection: OpaquePointer!) -> OpaquePointer! {
+        registerCall("recv_output", [:])
+        if outputs.count > 0 {
+            return OpaquePointer.init(bitPattern: 7)
+        }
+        else {
+            return nil
+        }
+    }
+    
+    public func output_get_id(_ output: OpaquePointer!) -> UInt32 {
+        registerCall("output_get_id", [:])
+        return outputs[0].0
+    }
+    
+    public func output_get_name(_ output: OpaquePointer!) -> String {
+        registerCall("output_get_name", [:])
+        return outputs[0].1
+    }
+    
+    public func output_get_enabled(_ output: OpaquePointer!) -> Bool {
+        registerCall("output_get_enabled", [:])
+        return outputs[0].2
+    }
+    
+    public func output_free(_ output: OpaquePointer!) {
+        outputs.removeFirst()
+        registerCall("output_free", [:])
+    }
+
     func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle {
         registerCall("run_idle_mask", ["mask": "\(mask)"])
         let _volume = volume

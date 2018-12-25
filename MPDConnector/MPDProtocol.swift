@@ -133,4 +133,13 @@ public protocol MPDProtocol {
     func stats_free(_ stats: OpaquePointer!)
     func stats_get_db_update_time(_ stats: OpaquePointer!) -> Date
     func connection_get_server_version(_ connection: OpaquePointer!) -> String
+    func run_enable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool
+    func run_disable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool
+    func run_toggle_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool
+    func send_outputs(_ connection: OpaquePointer!) -> Bool
+    func recv_output(_ connection: OpaquePointer!) -> OpaquePointer!
+    func output_get_id(_ output: OpaquePointer!) -> UInt32
+    func output_get_name(_ output: OpaquePointer!) -> String
+    func output_get_enabled(_ output: OpaquePointer!) -> Bool
+    func output_free(_ output: OpaquePointer!)
 }
