@@ -232,6 +232,12 @@ class MPDStatusTests: XCTestCase {
             let statusCount = self.mpdWrapper.callCount("run_status")
             let statusFreeCount = self.mpdWrapper.callCount("status_free")
             XCTAssert(statusCount == statusFreeCount, "Expected \(statusCount) for statusFreeCount, got \(statusFreeCount)")
+
+            // Check that all output data is freed
+            let outputCount = self.mpdWrapper.callCount("recv_output")
+            let outputFreeCount = self.mpdWrapper.callCount("output_free")
+            let fetchCount = self.mpdWrapper.callCount("send_outputs")
+            XCTAssert(outputCount - fetchCount == outputFreeCount, "Expected \(outputCount - fetchCount) for statusFreeCount, got \(outputFreeCount)")
         default:
             print("Default")
         }
