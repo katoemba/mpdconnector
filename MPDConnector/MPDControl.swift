@@ -142,6 +142,7 @@ public class MPDControl: ControlProtocol {
     /// Stop playback.
     public func stop() {
         runCommand()  { connection in
+            _ = self.mpd.run_seek(connection, pos: 0, t: 0)
             _ = self.mpd.run_stop(connection)
         }
     }
