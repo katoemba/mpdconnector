@@ -262,7 +262,7 @@ public class MPDWrapper: MPDProtocol {
     
     public func search_add_modified_since_constraint(_ connection: OpaquePointer!, oper: mpd_operator, since: Date) throws {
         //Int(Date(timeIntervalSinceNow: -180 * 24 * 60 * 60).timeIntervalSince1970)
-        if mpd_search_add_modified_since_constraint(connection, oper, Int(since.timeIntervalSince1970)) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+        if mpd_search_add_modified_since_constraint(connection, oper, time_t(since.timeIntervalSince1970)) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
             throw MPDError.commandFailed
         }
     }
