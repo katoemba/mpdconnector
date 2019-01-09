@@ -242,6 +242,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                         mpd.status_free(mpdStatus)
                     }
                     mpd.connection_free(connection)
+                    
+                    // Check for tag-type albumartist here, and set warning in case not found.
 
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,

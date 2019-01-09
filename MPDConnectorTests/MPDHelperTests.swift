@@ -154,4 +154,56 @@ class MPDHelperTests: XCTestCase {
         // And connection_free is called once.
         mpdWrapper.assertCall("connection_free", expectedCallCount: 2)
     }
+    
+    func testCompareVersion() {
+        var result: ComparisonResult
+        
+        result = MPDHelper.compareVersion(leftVersion: "0.1.0", rightVersion: "0.1.0")
+        XCTAssert(result == .orderedSame, "Expected 0.1.0 and 0.1.0 to be equal")
+
+        result = MPDHelper.compareVersion(leftVersion: "0.1", rightVersion: "0.1")
+        XCTAssert(result == .orderedSame, "Expected 0.1 and 0.1 to be equal")
+        
+        result = MPDHelper.compareVersion(leftVersion: "0.1.23", rightVersion: "0.1")
+        XCTAssert(result == .orderedSame, "Expected 0.1.23 and 0.1 to be equal")
+        
+        result = MPDHelper.compareVersion(leftVersion: "1", rightVersion: "1.1.1")
+        XCTAssert(result == .orderedSame, "Expected 1 and 1.1.1 to be equal")
+        
+        result = MPDHelper.compareVersion(leftVersion: "1.3.28", rightVersion: "2")
+        XCTAssert(result == .orderedAscending, "Expected 1.3.28 and 2 to be ascending")
+        
+        result = MPDHelper.compareVersion(leftVersion: "0.1.0", rightVersion: "0.1.1")
+        XCTAssert(result == .orderedAscending, "Expected 0.1.0 and 0.1.1 to be ascending")
+
+        result = MPDHelper.compareVersion(leftVersion: "0.1.255", rightVersion: "0.2.0")
+        XCTAssert(result == .orderedAscending, "Expected 0.1.255 and 0.2.0 to be ascending")
+        
+        result = MPDHelper.compareVersion(leftVersion: "1.1.255", rightVersion: "1.2.0")
+        XCTAssert(result == .orderedAscending, "Expected 1.1.255 and 1.2.0 to be ascending")
+        
+        result = MPDHelper.compareVersion(leftVersion: "2.16.28", rightVersion: "3.0.0")
+        XCTAssert(result == .orderedAscending, "Expected 2.16.28 and 3.0.0 to be ascending")
+        
+        result = MPDHelper.compareVersion(leftVersion: "2.16.28", rightVersion: "2.16.29")
+        XCTAssert(result == .orderedAscending, "Expected 2.16.28 and 2.16.29 to be ascending")
+
+        result = MPDHelper.compareVersion(leftVersion: "2", rightVersion: "1.3.28")
+        XCTAssert(result == .orderedDescending, "Expected 2 and 1.3.28 to be descending")
+        
+        result = MPDHelper.compareVersion(leftVersion: "0.1.1", rightVersion: "0.1.0")
+        XCTAssert(result == .orderedDescending, "Expected 0.1.1 and 0.1.0 to be descending")
+
+        result = MPDHelper.compareVersion(leftVersion: "0.2.0", rightVersion: "0.1.255")
+        XCTAssert(result == .orderedDescending, "Expected 0.2.0 and 0.1.255 to be descending")
+
+        result = MPDHelper.compareVersion(leftVersion: "1.2.0", rightVersion: "1.1.255")
+        XCTAssert(result == .orderedDescending, "Expected 1.2.0 and 1.1.255 to be descending")
+
+        result = MPDHelper.compareVersion(leftVersion: "3.0.0", rightVersion: "2.16.28")
+        XCTAssert(result == .orderedDescending, "Expected 3.0.0 and 2.16.28 to be descending")
+
+        result = MPDHelper.compareVersion(leftVersion: "2.16.29", rightVersion: "2.16.28")
+        XCTAssert(result == .orderedDescending, "Expected 2.16.29 and 2.16.28 to be descending")
+    }
 }

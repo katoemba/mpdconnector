@@ -376,4 +376,30 @@ public class MPDHelper {
         
         return output
     }
+    
+    /// Compare two mpd version strings
+    ///
+    /// - Parameters:
+    ///   - leftVersion: the left version string to compare
+    ///   - rightVersion: the right version string to compare
+    /// - Returns: The ordering of the two versions
+    public static func compareVersion(leftVersion: String, rightVersion: String) -> ComparisonResult {
+        let leftComponents = leftVersion.split(separator: ".")
+        let rightComponents = rightVersion.split(separator: ".")
+        let numberOfComponents = min(leftComponents.count, rightComponents.count)
+        
+        for x in 0..<numberOfComponents {
+            let leftValue = Int(leftComponents[x]) ?? 0
+            let rightValue = Int(rightComponents[x]) ?? 0
+            
+            if leftValue < rightValue {
+                return .orderedAscending
+            }
+            else if leftValue > rightValue {
+                return .orderedDescending
+            }
+        }
+        
+        return .orderedSame
+    }
 }

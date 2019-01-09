@@ -68,6 +68,7 @@ public enum MPDConnectionProperties: String {
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"
     case alternativeCoverPostfix = "MPD.Uri.AlternativePostfix"
+    case version = "MPD.Version"
 }
 
 public class MPDPlayer: PlayerProtocol {
@@ -150,7 +151,8 @@ public class MPDPlayer: PlayerProtocol {
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
                     MPDConnectionProperties.coverPostfix.rawValue: postfix,
                     MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
-                    MPDConnectionProperties.MPDType.rawValue: type.rawValue]
+                    MPDConnectionProperties.MPDType.rawValue: type.rawValue,
+                    MPDConnectionProperties.version.rawValue: version]
         }
     }
     
@@ -300,7 +302,8 @@ public class MPDPlayer: PlayerProtocol {
                 MPDConnectionProperties.coverPrefix.rawValue: prefix,
                 MPDConnectionProperties.coverPostfix.rawValue: postfix,
                 MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
-                MPDConnectionProperties.MPDType.rawValue: _type] as [String : Any]
+                MPDConnectionProperties.MPDType.rawValue: _type,
+                MPDConnectionProperties.version.rawValue: version] as [String : Any]
 
         self.mpdStatus = MPDStatus.init(mpd: mpd,
                                         connectionProperties: connectionProperties,
