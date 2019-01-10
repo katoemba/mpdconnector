@@ -229,7 +229,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 if let connection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties) {
                     var connectionWarning = nil as String?
                     let version = mpd.connection_get_server_version(connection)
-                    if version < "0.19.0" {
+                    if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.19.0") == .orderedAscending {
                         connectionWarning = "MPD version \(version) too low, 0.19.0 required"
                     }
                     
@@ -241,9 +241,22 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     if mpdStatus != nil {
                         mpd.status_free(mpdStatus)
                     }
-                    mpd.connection_free(connection)
                     
                     // Check for tag-type albumartist here, and set warning in case not found.
+                    if connectionWarning == nil {
+                        var tagTypes = [String]()
+                        _ = mpd.send_list_tag_types(connection)
+                        while let pair = mpd.recv_tag_type_pair(connection) {
+                            tagTypes.append(pair.1)
+                        }
+                        _ = mpd.response_finish(connection)
+                        if tagTypes.contains("AlbumArtist") == false &&
+                            tagTypes.contains("albumartist") == false {
+                            connectionWarning = "id3-tag albumartist is not configured"
+                        }
+                    }
+                    
+                    mpd.connection_free(connection)
 
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,

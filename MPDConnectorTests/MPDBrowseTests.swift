@@ -334,5 +334,26 @@ class MPDBrowseTests: XCTestCase {
         let fetchCount = self.mpdWrapper.callCount("send_list_meta")
         XCTAssert(entityCount - fetchCount == entityFreeCount, "Expected \(entityCount - fetchCount) for playlistFreeCount, got \(entityFreeCount)")
     }
+    
+    func testAvailableTagTypes() {
+        mpdWrapper.tagTypes = ["AlbumArtist", "Title"]
+        
+        let tagTypeResult = (mpdPlayer?.browse as! MPDBrowse).availableTagTypes()
+            .toBlocking(timeout: 0.8)
+            .materialize()
+        
+        switch tagTypeResult {
+        case .completed(let tagTypesOnNext):
+            let tagTypes = tagTypesOnNext[0]
+            XCTAssert(tagTypes.count == 2, "Expected 2 tagTypes, got \(tagTypes.count)")
+            XCTAssert(tagTypes[0] == "AlbumArtist", "Expected first tagType=AlbumArtist, got \(tagTypes[0])")
+            XCTAssert(tagTypes[1] == "Title", "Expected second tagType=Title, got \(tagTypes[1])")
+        default:
+            XCTAssert(false, "songsInPlaylist failed")
+        }
+        
+        self.mpdWrapper.assertCall("send_list_tag_types", expectedCallCount: 1)
+        self.mpdWrapper.assertCall("recv_tag_type_pair", expectedCallCount: 3)
+    }
 }
 

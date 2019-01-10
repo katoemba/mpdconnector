@@ -295,6 +295,24 @@ public class MPDWrapper: MPDProtocol {
         mpd_search_cancel(connection)
     }
     
+    public func send_list_tag_types(_ connection: OpaquePointer!) -> Bool {
+        return mpd_send_list_tag_types(connection)
+    }
+    
+    public func recv_tag_type_pair(_ connection: OpaquePointer!) -> (String, String)? {
+        let mpd_pair = mpd_recv_tag_type_pair(connection)
+        
+        guard let pointee = mpd_pair?.pointee else {
+            return nil
+        }
+        
+        defer {
+            mpd_return_pair(connection, mpd_pair)
+        }
+        
+        return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
+    }
+    
     public func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
         let mpd_pair = mpd_recv_pair_tag(connection, tagType)
         

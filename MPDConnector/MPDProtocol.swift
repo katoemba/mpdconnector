@@ -92,6 +92,8 @@ public protocol MPDProtocol {
     func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
     func search_commit(_ connection: OpaquePointer!) throws
     func search_cancel(_ connection: OpaquePointer!)
+    func send_list_tag_types(_ connection: OpaquePointer!) -> Bool
+    func recv_tag_type_pair(_ connection: OpaquePointer!) -> (String, String)?
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
     func recv_pair(_ connection: OpaquePointer!) -> (String, String)?
     func tag_name_parse(_ name: UnsafePointer<Int8>!) -> mpd_tag_type

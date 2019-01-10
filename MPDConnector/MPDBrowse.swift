@@ -1067,6 +1067,29 @@ public class MPDBrowse: BrowseProtocol {
     public func albumFromSong(_ song: Song) -> Observable<Album> {
         return Observable.just(createAlbumFromSong(song))
     }
+
+    /// Return the tagtypes that are supported by a player
+    ///
+    /// - Returns: an array of tagtypes (strings)
+    public func availableTagTypes() -> Observable<[String]> {
+        let mpd = self.mpd
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (connection) -> Observable<[String]> in
+                guard let connection = connection else { return Observable.just([]) }
+                
+                var tagTypes = [String]()
+                _ = mpd.send_list_tag_types(connection)
+                while let pair = mpd.recv_tag_type_pair(connection) {
+                    tagTypes.append(pair.1)
+                }
+                
+                _ = mpd.response_finish(connection)
+                mpd.connection_free(connection)
+                
+                return Observable.just(tagTypes)
+            })
+    }
     
     /// Preprocess a CoverURI. This allows additional processing of base URI data.
     ///

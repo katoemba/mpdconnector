@@ -77,7 +77,8 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var directories = [[String:String]]()
     var currentDirectory: [String:String]?
     var outputs = [(UInt32, String, Bool)]()
-    
+    var tagTypes = [String]()
+
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
             let data = Data(bytesNoCopy: UnsafeMutableRawPointer(mutating: string), count: Int(strlen(string)), deallocator: .none)
@@ -418,6 +419,23 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("search_cancel", [:])
     }
     
+    public func send_list_tag_types(_ connection: OpaquePointer!) -> Bool {
+        registerCall("send_list_tag_types", [:])
+        return true
+    }
+    
+    public func recv_tag_type_pair(_ connection: OpaquePointer!) -> (String, String)? {
+        registerCall("recv_tag_type_pair", [:])
+        if tagTypes.count > 0 {
+            let currentTagType = tagTypes[0]
+            tagTypes.removeFirst()
+            return ("tagtype", currentTagType)
+        }
+        else {
+            return nil
+        }
+    }
+
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)? {
         registerCall("recv_pair_tag", ["tagType": "\(tagType)"])
         return (searchName, searchValue)
