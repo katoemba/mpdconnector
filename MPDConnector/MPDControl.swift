@@ -479,7 +479,7 @@ public class MPDControl: ControlProtocol {
     /// Add a folder to the play queue
     ///
     /// - Parameters:
-    ///   - album: the album to add
+    ///   - folder: the folder to add
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
     ///   - startWithSong: the position of the song (within the folder) to start playing
@@ -501,6 +501,53 @@ public class MPDControl: ControlProtocol {
             })
             .disposed(by: bag)
     }
+    
+    /// Add a folder recursively to the play queue
+    ///
+    /// - Parameters:
+    ///   - folder: the folder to add
+    ///   - addMode: how to add the songs to the playqueue
+    ///   - shuffle: whether or not to shuffle the songs before adding them
+    public func addRecursiveFolder(_ folder: Folder, addMode: AddMode, shuffle: Bool) {
+        runCommand()  { connection in
+            var pos = UInt32(0)
+
+            switch addMode {
+            case .replace:
+                _ = self.mpd.run_clear(connection)
+            case .addNext:
+                pos = UInt32(self.songIndex.value + 1)
+            case .addNextAndPlay:
+                pos = UInt32(self.songIndex.value + 1)
+            case .addAtEnd:
+                pos = UInt32(self.endIndex.value)
+            }
+            
+            _ = self.mpd.run_add(connection, uri: folder.path)
+            if addMode == .replace {
+                if shuffle == true {
+                    _ = self.mpd.run_shuffle(connection)
+                }
+                _ = self.mpd.run_play_pos(connection, 0)
+            }
+            else if addMode == .addNext || addMode == .addNextAndPlay {
+                var end = UInt32(0)
+                if let status = self.mpd.run_status(connection) {
+                    defer {
+                        self.mpd.status_free(status)
+                    }
+                    end = self.mpd.status_get_queue_length(status)
+                }
+                _ = self.mpd.run_move_range(connection, start: UInt32(self.endIndex.value), end: end, to: pos)
+
+                if addMode == .addNextAndPlay {
+                    _ = self.mpd.run_play_pos(connection, pos)
+                }
+                
+            }
+        }
+    }
+
     
     /// Move a song in the playqueue to a different position
     ///

@@ -421,6 +421,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_run_move(connection, from, to)
     }
     
+    public func run_move_range(_ connection: OpaquePointer!, start: UInt32, end: UInt32, to: UInt32) -> Bool {
+        return mpd_run_move_range(connection, start, end, to)
+    }
+    
     public func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool {
         return mpd_run_delete(connection, pos)
     }
