@@ -469,7 +469,7 @@ public class MPDBrowse: BrowseProtocol {
                         }
                         
                         if sort == .artist {
-                            let artistCompare = lhs.artist.caseInsensitiveCompare(rhs.artist)
+                            let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
                             if artistCompare == .orderedAscending {
                                 return true
                             }
@@ -590,7 +590,7 @@ public class MPDBrowse: BrowseProtocol {
                         }
 
                         if sort == .artist {
-                            let artistCompare = lhs.artist.caseInsensitiveCompare(rhs.artist)
+                            let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
                             if artistCompare == .orderedAscending {
                                 return true
                             }
@@ -658,6 +658,13 @@ public class MPDBrowse: BrowseProtocol {
                 return Observable.just(completeAlbums)
             })
             .observeOn(MainScheduler.instance)
+    }
+
+    /// Return a view model for a sectioned list of albums.
+    ///
+    /// - Returns: an AlbumSectionBrowseViewModel instance
+    public func albumSectionBrowseViewModel() -> AlbumSectionBrowseViewModel {
+        return MPDAlbumSectionBrowseViewModel(browse: self)
     }
     
     /// Return a view model for a list of albums, which can return albums in batches.
