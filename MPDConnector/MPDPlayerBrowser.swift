@@ -187,10 +187,11 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
 
         let moodeAudioHttpPlayerObservable = httpPlayerObservable
             .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
-                // Check if this is a Volumio based player
+                // Check if this is a Moode based player
                 Observable.create { observer in
                     if type != .unknown {
-                        observer.onNext((name, host, 6600, type))
+                        let abbreviatedName = name.replacingOccurrences(of: "moOde audio player: ", with: "")
+                        observer.onNext((abbreviatedName, host, 6600, type))
                         observer.onCompleted()
                     }
                     else {
@@ -204,7 +205,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                     let xml = SWXMLHash.parse(data)
                                     let browserConfig = xml["browserconfig"]
                                     if browserConfig.children.count > 0 {
-                                        observer.onNext((name, host, 6600, .moodeaudio))
+                                        let abbreviatedName = name.replacingOccurrences(of: "moOde audio player: ", with: "")
+                                        observer.onNext((abbreviatedName, host, 6600, .moodeaudio))
                                     }
                                 }
                             }
