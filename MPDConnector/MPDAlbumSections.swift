@@ -29,7 +29,19 @@ import RxSwift
 import ConnectorProtocol
 
 public class MPDAlbumSections: AlbumSections {
-    private var albumTuples = [[(LoadStatus, BehaviorSubject<Album>, Album)]]()
+    private class AlbumTuple {
+        var loadStatus: LoadStatus
+        var albumSubject: BehaviorSubject<Album>
+        var album: Album
+        
+        init(loadStatus: LoadStatus, album: Album) {
+            self.loadStatus = loadStatus
+            self.albumSubject = BehaviorSubject<Album>(value: album)
+            self.album = album
+        }
+    }
+    
+    private var albumTuples = [[AlbumTuple]]()
     private var _sectionTitles = [String]()
     public var sectionTitles: [String] {
         return _sectionTitles
@@ -57,9 +69,9 @@ public class MPDAlbumSections: AlbumSections {
     init(_ sectionDictionary: [(String, [Album])], browse: MPDBrowse?) {
         self.browse = browse
         for albumSection in sectionDictionary {
-            var section = [(LoadStatus, BehaviorSubject<Album>, Album)]()
+            var section = [AlbumTuple]()
             for album in albumSection.1 {
-                section.append((.initial, BehaviorSubject<Album>(value: album), album))
+                section.append(AlbumTuple(loadStatus: .initial, album: album))
             }
             albumTuples.append(section)
             _sectionTitles.append(albumSection.0)
@@ -96,15 +108,14 @@ public class MPDAlbumSections: AlbumSections {
             indexPath.row < albumTuples[indexPath.section].count else { return Observable.empty() }
         
         let tuple = albumTuples[indexPath.section][indexPath.row]
-        if tuple.0 != .initial {
-            return tuple.1
+        if tuple.loadStatus != .initial {
+            return tuple.albumSubject
         }
         
         var albumIndexes = [String: IndexPath]()
-        albumTuples[indexPath.section][indexPath.row] = (.completionInProgress, tuple.1, tuple.2)
-        albumIndexes[tuple.2.id] = indexPath
+        tuple.loadStatus = .completionInProgress
         
-        var albumsToFetch = [tuple.2]
+        var albumsToFetch = [tuple.album]
         var indexPathDown: IndexPath? = indexPath
         for _ in 0..<30 {
             indexPathDown = nextIndexPathDown(indexPathDown!)
@@ -113,10 +124,9 @@ public class MPDAlbumSections: AlbumSections {
             }
             
             let downTuple = albumTuples[indexPathDown!.section][indexPathDown!.row]
-            if downTuple.0 == .initial {
-                albumsToFetch.append(albumTuples[indexPathDown!.section][indexPathDown!.row].2)
-                albumTuples[indexPathDown!.section][indexPathDown!.row] = (.completionInProgress, downTuple.1, downTuple.2)
-                albumIndexes[downTuple.2.id] = indexPathDown!
+            if downTuple.loadStatus == .initial {
+                albumsToFetch.append(downTuple.album)
+                downTuple.loadStatus = .completionInProgress
             }
         }
         var indexPathUp: IndexPath? = indexPath
@@ -127,10 +137,9 @@ public class MPDAlbumSections: AlbumSections {
             }
             
             let upTuple = albumTuples[indexPathUp!.section][indexPathUp!.row]
-            if upTuple.0 == .initial {
-                albumsToFetch.append(albumTuples[indexPathUp!.section][indexPathUp!.row].2)
-                albumTuples[indexPathUp!.section][indexPathUp!.row] = (.completionInProgress, upTuple.1, upTuple.2)
-                albumIndexes[upTuple.2.id] = indexPathUp!
+            if upTuple.loadStatus == .initial {
+                albumsToFetch.append(upTuple.album)
+                upTuple.loadStatus = .completionInProgress
             }
         }
 
@@ -144,13 +153,14 @@ public class MPDAlbumSections: AlbumSections {
                         indexPath.section < weakSelf.albumTuples.count,
                         indexPath.row < weakSelf.albumTuples[indexPath.section].count {
                         let tuple = weakSelf.albumTuples[indexPath.section][indexPath.row]
-                        weakSelf.albumTuples[indexPath.section][indexPath.row] = (.complete, tuple.1, album)
-                        tuple.1.onNext(album)
+                        tuple.loadStatus = .complete
+                        tuple.album = album
+                        tuple.albumSubject.onNext(album)
                     }
                 }
             })
             .disposed(by: bag)
 
-        return tuple.1
+        return tuple.albumSubject
     }
 }
