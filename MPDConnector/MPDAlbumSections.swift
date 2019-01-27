@@ -114,6 +114,7 @@ public class MPDAlbumSections: AlbumSections {
         
         var albumIndexes = [String: IndexPath]()
         tuple.loadStatus = .completionInProgress
+        albumIndexes[tuple.album.id] = indexPath
         
         var albumsToFetch = [tuple.album]
         var indexPathDown: IndexPath? = indexPath
@@ -126,6 +127,7 @@ public class MPDAlbumSections: AlbumSections {
             let downTuple = albumTuples[indexPathDown!.section][indexPathDown!.row]
             if downTuple.loadStatus == .initial {
                 albumsToFetch.append(downTuple.album)
+                albumIndexes[downTuple.album.id] = indexPathDown!
                 downTuple.loadStatus = .completionInProgress
             }
         }
@@ -139,6 +141,7 @@ public class MPDAlbumSections: AlbumSections {
             let upTuple = albumTuples[indexPathUp!.section][indexPathUp!.row]
             if upTuple.loadStatus == .initial {
                 albumsToFetch.append(upTuple.album)
+                albumIndexes[upTuple.album.id] = indexPathUp!
                 upTuple.loadStatus = .completionInProgress
             }
         }
