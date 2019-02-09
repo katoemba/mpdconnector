@@ -1191,4 +1191,99 @@ public class MPDBrowse: BrowseProtocol {
             })
             .observeOn(MainScheduler.instance)
     }
+    
+    /// Create a diagnostics string that can help troubleshooting data issues
+    ///
+    /// - Parameter album: an album for which to get diagnostics
+    /// - Returns: an observable String containing the diagnostics data
+    public func diagnostics(album: Album) -> Observable<String> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMapFirst({ (connection) -> Observable<String> in
+                guard let connection = connection else { return Observable.just("") }
+                
+                var diagnostics = ""
+                
+                diagnostics += "player type: \(self.connectionProperties[MPDConnectionProperties.MPDType.rawValue] ?? "Type unknown")\n"
+                diagnostics += "mpd version: \(self.connectionProperties[MPDConnectionProperties.version.rawValue] ?? "Version unknown")\n"
+                diagnostics += "\nsearch MPD_TAG_ALBUM_ARTIST, album.title = \(album.title)\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM_ARTIST)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+
+                diagnostics += "\nsearch MPD_TAG_ARTIST, album.title = \(album.title)\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+
+                diagnostics += "\nsearch MPD_TAG_COMPOSER, album.title = \(album.title)\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_COMPOSER)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+                
+                diagnostics += "\nsearch MPD_TAG_PERFORMER, album.title = \(album.title)\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+                
+                diagnostics += "\nsearch MPD_TAG_TITLE, album.title = \(album.title),\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_TITLE)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+                
+                diagnostics += "\nsearch MPD_TAG_TITLE, album.title = \(album.title), album.artist = \(album.artist)\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_TITLE)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: album.artist)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+                
+                diagnostics += "\nsearch MPD_TAG_TITLE, album.title = \(album.title), album.albumartist = \(album.artist)\n"
+                try self.mpd.search_db_tags(connection, tagType: MPD_TAG_TITLE)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: album.artist)
+                try self.mpd.search_commit(connection)
+                while let result = self.mpd.recv_pair(connection) {
+                    diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
+                }
+                _ = self.mpd.response_finish(connection)
+                
+                diagnostics += "\nsearch songs, album.title = \(album.title), album.artist = \(album.artist)\n"
+                let artist = Artist(id: album.artist, type: .artist, source: .Local, name: album.artist)
+                let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist, album: album.title)
+                for song in songs {
+                    diagnostics += "title='\(song.title)', artist='\(song.artist)', albumartist='\(song.albumartist)', album='\(song.album)', sortartist='\(song.sortArtist)', sortalbum='\(song.sortAlbum)', sortalbumartist='\(song.sortAlbumArtist)', year='\(song.year)'\n"
+                    diagnostics += "file='\(song.id)'\n"
+                }
+
+                // Cleanup
+                self.mpd.connection_free(connection)
+
+                return Observable.just(diagnostics)
+            })
+            .observeOn(MainScheduler.instance)
+    }
 }
