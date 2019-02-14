@@ -30,11 +30,63 @@ import libmpdclient
 import ConnectorProtocol
 import RxSwiftExt
 
+public class MPDConnection {
+    private static let playerSemaphoreMutex = DispatchSemaphore(value: 1)
+    private static var playerSemaphores = [String: DispatchSemaphore]()
+    private static func semaphoreForPlayer(host: String, port: Int) -> DispatchSemaphore {
+        defer {
+            playerSemaphoreMutex.signal()
+        }
+        
+        playerSemaphoreMutex.wait()
+        let key = "\(host):\(port)"
+        if playerSemaphores[key] == nil {
+            playerSemaphores[key] = DispatchSemaphore(value: 7)
+        }
+        return playerSemaphores[key]!
+    }
+    
+    private var mpd: MPDProtocol
+    private var _connection: OpaquePointer?
+    public var connection: OpaquePointer? {
+        get {
+            return _connection
+        }
+    }
+    
+    private var host: String
+    private var port: Int
+    
+    init(mpd: MPDProtocol, host: String, port: Int, timeout: Int) {
+        MPDConnection.semaphoreForPlayer(host: host, port: port).wait()
+
+        self.mpd = mpd
+        self.host = host
+        self.port = port
+        _connection = mpd.connection_new(host, UInt32(port), UInt32(timeout))
+        
+        if _connection == nil {
+            MPDConnection.semaphoreForPlayer(host: host, port: port).signal()
+        }
+    }
+    
+    deinit {
+        if let connection = connection {
+            mpd.connection_free(connection)
+            _connection = nil
+
+            MPDConnection.semaphoreForPlayer(host: host, port: port).signal()
+        }
+    }
+}
+
 public class MPDHelper {
     private enum ConnectError: Error {
         case error
         case permission
     }
+    
+    
     /// Connect to a MPD Player
     ///
     /// - Parameters:
@@ -44,12 +96,13 @@ public class MPDHelper {
     ///   - password: Password to use after connecting.
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000) -> OpaquePointer? {
+    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000) -> MPDConnection? {
         if Thread.current.isMainThread {
             print("Warning: connecting to MPD on the main thread could cause blocking")
         }
         
-        guard let connection = mpd.connection_new(host, UInt32(port), UInt32(timeout)) else {
+        let mpdConnection = MPDConnection(mpd: mpd, host: host, port: port, timeout: timeout)
+        guard let connection = mpdConnection.connection else {
             return nil
         }
         
@@ -58,19 +111,17 @@ public class MPDHelper {
             if mpd.connection_get_error(connection) == MPD_ERROR_SERVER {
                 print("Server error: \(mpd_connection_get_server_error(connection))")
             }
-            mpd.connection_free(connection)
             return nil
         }
         
         if password != "" {
             guard mpd.run_password(connection, password: password) == true,
                 mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS else {
-                    mpd.connection_free(connection)
                     return nil
             }
         }
         
-        return connection
+        return mpdConnection
     }
     
     /// Connect to a MPD Player using a connectionProperties dictionary
@@ -80,7 +131,7 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> OpaquePointer? {
+    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> MPDConnection? {
         return connect(mpd: mpd,
                        host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
                        port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
@@ -97,16 +148,15 @@ public class MPDHelper {
     ///   - password: Password to use after connecting, default = "".
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000) -> Observable<OpaquePointer?> {
-        return Observable<OpaquePointer?>.create { observer in
-            if let connection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
+    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000) -> Observable<MPDConnection?> {
+        return Observable<MPDConnection?>.create { observer in
+            if let mpdConnection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
                 var allIsWell = true
                 // Check if perhaps we need a password
                 if password == "" {
-                    let mpdStatus = mpd.run_status(connection)
-                    if  mpd.connection_get_error(connection) == MPD_ERROR_SERVER,
-                        mpd.connection_get_server_error(connection) == MPD_SERVER_ERROR_PERMISSION {
-                        mpd.connection_free(connection)
+                    let mpdStatus = mpd.run_status(mpdConnection.connection)
+                    if  mpd.connection_get_error(mpdConnection.connection) == MPD_ERROR_SERVER,
+                        mpd.connection_get_server_error(mpdConnection.connection) == MPD_SERVER_ERROR_PERMISSION {
                         print("Connection \(host):\(port) requires a password")
                         allIsWell = false
                     }
@@ -116,7 +166,7 @@ public class MPDHelper {
                 }
                 
                 if allIsWell {
-                    observer.onNext(connection)
+                    observer.onNext(mpdConnection)
                     observer.onCompleted()
                 }
                 else {
@@ -143,7 +193,7 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000) -> Observable<OpaquePointer?> {
+    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000) -> Observable<MPDConnection?> {
         return connectToMPD(mpd: mpd,
                             host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
                             port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
@@ -267,35 +317,35 @@ public class MPDHelper {
         return song
     }
     
-    private static func coverFileAtPath(mpd: MPDProtocol, connectionProperties: [String: Any], path: String) -> String? {
-        guard let conn = connect(mpd: mpd, connectionProperties: connectionProperties) else { return nil }
-        
-        var coverFile: String? = nil
-        _ = mpd.send_list_files(conn, path: path)
-        while let entity = mpd.recv_entity(conn) {
-            if mpd.entity_get_type(entity) == MPD_ENTITY_TYPE_SONG {
-                let mpdSong = mpd.entity_get_song(entity)
-                let uri = mpd.song_get_uri(mpdSong)
-                
-                let components = uri.split(separator: "/")
-                if components.count > 0 {
-                    let lastComponent = components[components.count - 1]
-                    if lastComponent.contains(".jpg") || lastComponent.contains(".jpeg") || lastComponent.contains(".png") {
-                        coverFile = String.init(lastComponent)
-                    }
-                }
-            }
-            mpd.entity_free(entity)
-            
-            if coverFile != nil {
-                break
-            }
-        }
-        _ = mpd.response_finish(conn)
-        mpd.connection_free(conn)
-        
-        return coverFile
-    }
+//    private static func coverFileAtPath(mpd: MPDProtocol, connectionProperties: [String: Any], path: String) -> String? {
+//        guard let conn = connect(mpd: mpd, connectionProperties: connectionProperties) else { return nil }
+//
+//        var coverFile: String? = nil
+//        _ = mpd.send_list_files(conn, path: path)
+//        while let entity = mpd.recv_entity(conn) {
+//            if mpd.entity_get_type(entity) == MPD_ENTITY_TYPE_SONG {
+//                let mpdSong = mpd.entity_get_song(entity)
+//                let uri = mpd.song_get_uri(mpdSong)
+//
+//                let components = uri.split(separator: "/")
+//                if components.count > 0 {
+//                    let lastComponent = components[components.count - 1]
+//                    if lastComponent.contains(".jpg") || lastComponent.contains(".jpeg") || lastComponent.contains(".png") {
+//                        coverFile = String.init(lastComponent)
+//                    }
+//                }
+//            }
+//            mpd.entity_free(entity)
+//
+//            if coverFile != nil {
+//                break
+//            }
+//        }
+//        _ = mpd.response_finish(conn)
+//        mpd.connection_free(conn)
+//
+//        return coverFile
+//    }
     
     /// Fill a generic Playlist object from an mpdPlaylist
     ///

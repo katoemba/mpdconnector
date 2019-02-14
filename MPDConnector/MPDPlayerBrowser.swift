@@ -131,8 +131,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .filter({ (netService) -> Bool in
                 // Check if an MPD player is present at the default port
                 let mpd = MPDWrapper()
-                if let connection = MPDHelper.connect(mpd: mpd, host: netService.hostName ?? "Unknown", port: 6600, password: "") {
-                    mpd.connection_free(connection)
+                if MPDHelper.connect(mpd: mpd, host: netService.hostName ?? "Unknown", port: 6600, password: "") != nil {
                     return true
                 }
                 return false
@@ -228,7 +227,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .observeOn(backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
-                if let connection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties) {
+                let mpdConnection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties)
+                if let connection = mpdConnection?.connection {
                     var connectionWarning = nil as String?
                     let version = mpd.connection_get_server_version(connection)
                     if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.19.0") == .orderedAscending {
@@ -258,8 +258,6 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                         }
                     }
                     
-                    mpd.connection_free(connection)
-
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,
                                           version: version,
@@ -324,13 +322,11 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// - Returns: An observable on which a created Player can published.
     public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
         return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler)
-            .flatMapFirst({ [weak self] (connection) -> Observable<PlayerProtocol?> in
+            .flatMap({ [weak self] (mpdConnection) -> Observable<PlayerProtocol?> in
+                guard mpdConnection != nil else { return Observable.just(nil) }
                 guard let weakSelf = self else { return Observable.just(nil) }
-                if (connection != nil) {
-                    MPDWrapper().connection_free(connection)
-                    return Observable.just(MPDPlayer.init(connectionProperties: connectionProperties, userDefaults: weakSelf.userDefaults))
-                }
-                return Observable.just(nil)
+
+                return Observable.just(MPDPlayer.init(connectionProperties: connectionProperties, userDefaults: weakSelf.userDefaults))
             })
             .observeOn(MainScheduler.instance)
     }

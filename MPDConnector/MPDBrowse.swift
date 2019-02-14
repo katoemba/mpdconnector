@@ -68,17 +68,15 @@ public class MPDBrowse: BrowseProtocol {
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<SearchResult> in
-                guard let connection = connection else { return Observable.just(SearchResult()) }
-                
+            .flatMap({ (mpdConnection) -> Observable<SearchResult> in
+                guard let connection = mpdConnection?.connection else { return Observable.just(SearchResult()) }
+
                 let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
                 let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
                 let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
                 let performerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_PERFORMER, filter: filter)
                 let composerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_COMPOSER, filter: filter)
 
-                self.mpd.connection_free(connection)
-                
                 var searchResult = SearchResult()
                 searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
                 searchResult.albums = (albumSearchResult.albums + artistSearchResult.albums + songSearchResult.albums).orderedSet
@@ -240,14 +238,11 @@ public class MPDBrowse: BrowseProtocol {
     public func songsOnAlbum(_ album: Album) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Song]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Song]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
 
                 let artist = Artist(id: album.artist, type: .artist, source: .Local, name: album.artist)
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist, album: album.title)
-                
-                // Cleanup
-                self.mpd.connection_free(connection)
                 
                 return Observable.just(songs)
             })
@@ -262,12 +257,10 @@ public class MPDBrowse: BrowseProtocol {
     public func songsByArtist(_ artist: Artist) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Song]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Song]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist)
-                
-                // Cleanup
-                self.mpd.connection_free(connection)
                 
                 return Observable.just(songs)
             })
@@ -331,8 +324,9 @@ public class MPDBrowse: BrowseProtocol {
     func fetchRecentAlbums(numberOfDays: Int = 0) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Album]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Album]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 do {
                     var albums = [Album]()
                     
@@ -355,9 +349,6 @@ public class MPDBrowse: BrowseProtocol {
                     }
                     _ = self.mpd.response_finish(connection)
                     
-                    // Cleanup
-                    self.mpd.connection_free(connection)
-                    
                     return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
                         return lhs.lastModified > rhs.lastModified
                     }))
@@ -365,7 +356,6 @@ public class MPDBrowse: BrowseProtocol {
                 catch {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
-                    self.mpd.connection_free(connection)
                     
                     return Observable.empty()
                 }
@@ -387,8 +377,9 @@ public class MPDBrowse: BrowseProtocol {
     func fetchAlbums_below_20_22(genre: String?, sort: SortType) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Album]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Album]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 do {
                     var foundEmptyAlbum = false
                     var albums = [Album]()
@@ -455,9 +446,6 @@ public class MPDBrowse: BrowseProtocol {
                         _ = self.mpd.response_finish(connection)
                     }
                     
-                    // Cleanup
-                    self.mpd.connection_free(connection)
-                    
                     return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
                         if sort == .year || sort == .yearReverse {
                             if lhs.year < rhs.year {
@@ -489,7 +477,6 @@ public class MPDBrowse: BrowseProtocol {
                 catch {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
-                    self.mpd.connection_free(connection)
                     
                     return Observable.empty()
                 }
@@ -502,8 +489,9 @@ public class MPDBrowse: BrowseProtocol {
     func fetchAlbums_20_22_and_above(genre: String?, sort: SortType) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Album]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Album]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 do {
                     var foundEmptyAlbum = false
                     var albums = [Album]()
@@ -576,9 +564,6 @@ public class MPDBrowse: BrowseProtocol {
                         _ = self.mpd.response_finish(connection)
                     }
                     
-                    // Cleanup
-                    self.mpd.connection_free(connection)
-                    
                     return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
                         if sort == .year || sort == .yearReverse {
                             if lhs.year < rhs.year {
@@ -610,7 +595,6 @@ public class MPDBrowse: BrowseProtocol {
                 catch {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
-                    self.mpd.connection_free(connection)
                     
                     return Observable.empty()
                 }
@@ -618,11 +602,46 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
     
+    fileprivate func completeCoverURI(_ connection: OpaquePointer, _ coverURI: CoverURI) -> CoverURI {
+        if case let .filenameOptionsURI(baseURI, path, filenames) = coverURI {
+            var coverFiles = [String]()
+            _ = self.mpd.send_list_files(connection, path: path)
+            while let entity = self.mpd.recv_entity(connection) {
+                if self.mpd.entity_get_type(entity) == MPD_ENTITY_TYPE_SONG {
+                    let mpdSong = self.mpd.entity_get_song(entity)
+                    let uri = self.mpd.song_get_uri(mpdSong)
+                    
+                    let components = uri.split(separator: "/")
+                    if components.count > 0 {
+                        let lastComponent = components[components.count - 1]
+                        if lastComponent.contains(".jpg") || lastComponent.contains(".png") {
+                            coverFiles.append(String(lastComponent))
+                        }
+                    }
+                }
+                self.mpd.entity_free(entity)
+            }
+            _ = self.mpd.response_finish(connection)
+            
+            for bestOption in filenames {
+                if coverFiles.contains(bestOption) {
+                    return CoverURI.filenameOptionsURI(baseURI, path, [bestOption])
+                }
+            }
+            if coverFiles.count > 0 {
+                return CoverURI.filenameOptionsURI(baseURI, path, [coverFiles[0]])
+            }
+        }
+        
+        return coverURI
+    }
+    
     public func completeAlbums(_ albums: [Album]) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Album]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Album]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 var completeAlbums = [Album]()
                 for album in albums {
                     var song : Song?
@@ -654,7 +673,6 @@ public class MPDBrowse: BrowseProtocol {
                     }
                 }
                 
-                self.mpd.connection_free(connection)
                 return Observable.just(completeAlbums)
             })
             .observeOn(MainScheduler.instance)
@@ -701,8 +719,9 @@ public class MPDBrowse: BrowseProtocol {
     public func fetchArtists(genre: String?, type: ArtistType) -> Observable<[Artist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Artist]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Artist]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 do {
                     var artists = [Artist]()
                     
@@ -747,9 +766,6 @@ public class MPDBrowse: BrowseProtocol {
                     
                     _ = self.mpd.response_finish(connection)
                     
-                    // Cleanup
-                    self.mpd.connection_free(connection)
-                    
                     return Observable.just(artists.sorted(by: { (lhs, rhs) -> Bool in
                         let sortOrder = lhs.sortName.caseInsensitiveCompare(rhs.sortName)
                         if sortOrder == .orderedSame {
@@ -763,7 +779,6 @@ public class MPDBrowse: BrowseProtocol {
                 catch {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
-                    self.mpd.connection_free(connection)
                     
                     return Observable.empty()
                 }
@@ -815,8 +830,9 @@ public class MPDBrowse: BrowseProtocol {
     func fetchPlaylists() -> Observable<[Playlist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Playlist]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Playlist]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 var playlists = [Playlist]()
                 
                 if self.mpd.send_list_playlists(connection) == true {
@@ -831,8 +847,6 @@ public class MPDBrowse: BrowseProtocol {
                     }
                 }
                 
-                self.mpd.connection_free(connection)
-
                 return Observable.just(playlists.sorted(by: { (lhs, rhs) -> Bool in
                     return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
                 }))
@@ -863,12 +877,10 @@ public class MPDBrowse: BrowseProtocol {
     public func songsInPlaylist(_ playlist: Playlist) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Song]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Song]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 let songs = self.songsForPlaylist(connection: connection, playlist: playlist.id)
-                
-                // Cleanup
-                self.mpd.connection_free(connection)
                 
                 return Observable.just(songs)
             })
@@ -914,11 +926,10 @@ public class MPDBrowse: BrowseProtocol {
     func deletePlaylist(_ playlist: Playlist) {
         _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .subscribe(onNext: { (connection) in
-                guard let connection = connection else { return }
-                
+            .subscribe(onNext: { (mpdConnection) in
+                guard let connection = mpdConnection?.connection else { return }
+
                 _ = self.mpd.run_rm(connection, name: playlist.id)
-                self.mpd.connection_free(connection)
             })
     }
     
@@ -930,11 +941,10 @@ public class MPDBrowse: BrowseProtocol {
     func renamePlaylist(_ playlist: Playlist, newName: String) {
         _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .subscribe(onNext: { (connection) in
-                guard let connection = connection else { return }
+            .subscribe(onNext: { (mpdConnection) in
+                guard let connection = mpdConnection?.connection else { return }
 
                 _ = self.mpd.run_rename(connection, from: playlist.id, to: newName)
-                self.mpd.connection_free(connection)
             })
     }
     
@@ -951,8 +961,8 @@ public class MPDBrowse: BrowseProtocol {
     func fetchGenres() -> Observable<[Genre]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[Genre]> in
-                guard let connection = connection else { return Observable.just([]) }
+            .flatMap({ (mpdConnection) -> Observable<[Genre]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
 
                 do {
                     var genres = [Genre]()
@@ -968,9 +978,6 @@ public class MPDBrowse: BrowseProtocol {
                     }
                     _ = self.mpd.response_finish(connection)
                     
-                    // Cleanup
-                    self.mpd.connection_free(connection)
-                    
                     return Observable.just(genres)
                     //return Observable.just(genres.sorted(by: { (lhs, rhs) -> Bool in
                     //    return lhs.caseInsensitiveCompare(rhs) == .orderedAscending
@@ -979,7 +986,6 @@ public class MPDBrowse: BrowseProtocol {
                 catch {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
-                    self.mpd.connection_free(connection)
                     
                     return Observable.empty()
                 }
@@ -1008,9 +1014,9 @@ public class MPDBrowse: BrowseProtocol {
     func fetchFolderContents(parentFolder: Folder? = nil) -> Observable<[FolderContent]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[FolderContent]> in
-                guard let connection = connection else { return Observable.just([]) }
-                
+            .flatMap({ (mpdConnection) -> Observable<[FolderContent]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 do {
                     var folderContents = [FolderContent]()
                     
@@ -1050,9 +1056,6 @@ public class MPDBrowse: BrowseProtocol {
                         }
                     }
                     
-                    // Cleanup
-                    self.mpd.connection_free(connection)
-                    
                     return Observable.just(folderContents)
                 }
             })
@@ -1082,9 +1085,9 @@ public class MPDBrowse: BrowseProtocol {
         let mpd = self.mpd
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMap({ (connection) -> Observable<[String]> in
-                guard let connection = connection else { return Observable.just([]) }
-                
+            .flatMap({ (mpdConnection) -> Observable<[String]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
                 var tagTypes = [String]()
                 _ = mpd.send_list_tag_types(connection)
                 while let pair = mpd.recv_tag_type_pair(connection) {
@@ -1092,7 +1095,6 @@ public class MPDBrowse: BrowseProtocol {
                 }
                 
                 _ = mpd.response_finish(connection)
-                mpd.connection_free(connection)
                 
                 return Observable.just(tagTypes)
             })
@@ -1103,55 +1105,27 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter coverURI: the CoverURI to pre-process
     /// - Returns: the processed cover URI
     public func preprocessCoverURI(_ coverURI: CoverURI) -> Observable<CoverURI> {
-        if case let .filenameOptionsURI(baseURI, path, filenames) = coverURI {
-            let mpd = self.mpd
-            return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-                .observeOn(scheduler)
-                .flatMap({ (connection) -> Observable<CoverURI> in
-                    guard let connection = connection else { return Observable.just(coverURI) }
-                    
-                    var coverFiles = [String]()
-                    _ = mpd.send_list_files(connection, path: path)
-                    while let entity = mpd.recv_entity(connection) {
-                        if mpd.entity_get_type(entity) == MPD_ENTITY_TYPE_SONG {
-                            let mpdSong = mpd.entity_get_song(entity)
-                            let uri = mpd.song_get_uri(mpdSong)
-                            
-                            let components = uri.split(separator: "/")
-                            if components.count > 0 {
-                                let lastComponent = components[components.count - 1]
-                                if lastComponent.contains(".jpg") || lastComponent.contains(".png") {
-                                    coverFiles.append(String(lastComponent))
-                                }
-                            }
-                        }
-                        mpd.entity_free(entity)
-                    }
-                    _ = mpd.response_finish(connection)
-                    mpd.connection_free(connection)
-                    
-                    for bestOption in filenames {
-                        if coverFiles.contains(bestOption) {
-                            return Observable.just(CoverURI.filenameOptionsURI(baseURI, path, [bestOption]))
-                        }
-                    }
-                    if coverFiles.count > 0 {
-                        return Observable.just(CoverURI.filenameOptionsURI(baseURI, path, [coverFiles[0]]))
-                    }
-                    
+        let mpd = self.mpd
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ [weak self] (mpdConnection) -> Observable<CoverURI> in
+                guard let connection = mpdConnection?.connection else { return Observable.just(coverURI) }
+
+                guard let weakSelf = self else {
                     return Observable.just(coverURI)
-                })
-            
-        }
-        
-        return Observable.just(coverURI)
+                }
+
+                let updatedCoverURI = weakSelf.completeCoverURI(connection, coverURI)
+                return Observable.just(updatedCoverURI)
+            })
     }
     
     func updateDB() {
         _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .subscribe(onNext: { (connection) in
-                guard let connection = connection else { return }
+            .subscribe(onNext: { (mpdConnection) in
+                guard let connection = mpdConnection?.connection else { return }
+
                 _ = self.mpd.run_update(connection, path: nil)
             })
     }
@@ -1159,8 +1133,8 @@ public class MPDBrowse: BrowseProtocol {
     func databaseStatus() -> Observable<String> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMapFirst({ (connection) -> Observable<String> in
-                guard let connection = connection else { return Observable.just("") }
+            .flatMapFirst({ (mpdConnection) -> Observable<String> in
+                guard let connection = mpdConnection?.connection else { return Observable.just("") }
 
                 var updateId = UInt32(0)
                 var lastUpdateDate = Date(timeIntervalSince1970: 0)
@@ -1177,9 +1151,6 @@ public class MPDBrowse: BrowseProtocol {
                         lastUpdateDate = self.mpd.stats_get_db_update_time(mpdStats)
                     }
                 }
-                
-                // Cleanup
-                self.mpd.connection_free(connection)
                 
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateStyle = .medium
@@ -1199,9 +1170,9 @@ public class MPDBrowse: BrowseProtocol {
     public func diagnostics(album: Album) -> Observable<String> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
-            .flatMapFirst({ (connection) -> Observable<String> in
-                guard let connection = connection else { return Observable.just("") }
-                
+            .flatMapFirst({ (mpdConnection) -> Observable<String> in
+                guard let connection = mpdConnection?.connection else { return Observable.just("") }
+
                 var diagnostics = ""
                 
                 diagnostics += "player type: \(self.connectionProperties[MPDConnectionProperties.MPDType.rawValue] ?? "Type unknown")\n"
@@ -1278,9 +1249,6 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "title='\(song.title)', artist='\(song.artist)', albumartist='\(song.albumartist)', album='\(song.album)', sortartist='\(song.sortArtist)', sortalbum='\(song.sortAlbum)', sortalbumartist='\(song.sortAlbumArtist)', year='\(song.year)'\n"
                     diagnostics += "file='\(song.id)'\n"
                 }
-
-                // Cleanup
-                self.mpd.connection_free(connection)
 
                 return Observable.just(diagnostics)
             })

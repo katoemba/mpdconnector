@@ -45,7 +45,7 @@ public class MPDStatus: StatusProtocol {
         }
     }
     private var connecting = false
-    private var statusConnection: OpaquePointer?
+    private var statusConnection: MPDConnection?
 
     /// PlayerStatus object for the player
     private var _playerStatus = BehaviorRelay<PlayerStatus>(value: PlayerStatus())
@@ -106,13 +106,13 @@ public class MPDStatus: StatusProtocol {
         
         connecting = true
         MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties, scheduler: statusScheduler)
-            .subscribe(onNext: { [weak self] (connection) in
-                guard let connection = connection else {
+            .subscribe(onNext: { [weak self] (mpdConnection) in
+                guard let mpdConnection = mpdConnection else {
                     self?._connectionStatus.accept(.offline)
                     self?.connecting = false
                     return
                 }
-                self?.statusConnection = connection
+                self?.statusConnection = mpdConnection
                 self?._connectionStatus.accept(.online)
                 self?.connecting = false
                 self?.startMonitoring()
@@ -141,12 +141,12 @@ public class MPDStatus: StatusProtocol {
                 return Disposables.create()
             }
             
-            if let connection = weakSelf.statusConnection {
+            if let connection = weakSelf.statusConnection?.connection {
                 observer.onNext(weakSelf.fetchPlayerStatus(connection))
             }
                 
             while true {
-                if let connection = weakSelf.statusConnection {
+                if let connection = weakSelf.statusConnection?.connection {
                     if weakSelf.mpd.connection_get_error(connection) != MPD_ERROR_SUCCESS {
                         break
                     }
@@ -184,7 +184,7 @@ public class MPDStatus: StatusProtocol {
         
         disconnectHandler.asObservable()
             .subscribe(onNext: { [weak self] (_) in
-                guard let weakSelf = self, let connection = weakSelf.statusConnection else {
+                guard let weakSelf = self, let connection = weakSelf.statusConnection?.connection else {
                     return
                 }
                 
@@ -332,11 +332,12 @@ public class MPDStatus: StatusProtocol {
             return []
         }
         
-        guard let connection = MPDHelper.connect(mpd: mpd,
+        let mpdConnection = MPDHelper.connect(mpd: mpd,
                                                  host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
                                                  port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
                                                  password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
-                                                 timeout: 1000) else {
+                                                 timeout: 1000)
+        guard let connection = mpdConnection?.connection else {
             return []
         }
         
@@ -358,16 +359,12 @@ public class MPDStatus: StatusProtocol {
             
             _ = mpd.response_finish(connection)
         }
-        mpd.connection_free(connection)
         
         return songs
     }
     
     private func disconnectFromMPD() {
-        if let connection = statusConnection {
-            mpd.connection_free(connection)
-            statusConnection = nil
-        }
+        statusConnection = nil
     }
 
     /// Force a refresh of the status.

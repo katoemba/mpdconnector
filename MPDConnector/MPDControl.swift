@@ -448,8 +448,9 @@ public class MPDControl: ControlProtocol {
     public func addGenre(_ genre: String, addMode: AddMode, shuffle: Bool) {
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
             .observeOn(serialScheduler)
-            .subscribe(onNext: { (connection) in
-                guard let connection = connection else { return }
+            .subscribe(onNext: { (mpdConnection) in
+                guard let connection = mpdConnection?.connection else { return }
+                
                 do {
                     _ = self.mpd.run_clear(connection)
 
@@ -464,13 +465,10 @@ public class MPDControl: ControlProtocol {
                     }
                     
                     _ = self.mpd.run_play_pos(connection, 0)
-
-                    self.mpd.connection_free(connection)
                 }
                 catch {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
-                    self.mpd.connection_free(connection)
                 }
             })
             .disposed(by: bag)
@@ -666,10 +664,10 @@ public class MPDControl: ControlProtocol {
         // Connect and run the command on the serial scheduler to prevent any blocking.
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
             .observeOn(serialScheduler)
-            .subscribe(onNext: { (connection) in
-                guard let connection = connection else { return }
+            .subscribe(onNext: { (mpdConnection) in
+                guard let connection = mpdConnection?.connection else { return }
+
                 command(connection)
-                mpd.connection_free(connection)
             }, onError: { (error) in
             })
             .disposed(by: bag)
