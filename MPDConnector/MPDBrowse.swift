@@ -1246,8 +1246,9 @@ public class MPDBrowse: BrowseProtocol {
                 let artist = Artist(id: album.artist, type: .artist, source: .Local, name: album.artist)
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist, album: album.title)
                 for song in songs {
-                    diagnostics += "title='\(song.title)', artist='\(song.artist)', albumartist='\(song.albumartist)', album='\(song.album)', sortartist='\(song.sortArtist)', sortalbum='\(song.sortAlbum)', sortalbumartist='\(song.sortAlbumArtist)', year='\(song.year)'\n"
                     diagnostics += "file='\(song.id)'\n"
+                    diagnostics += "title='\(song.title)', artist='\(song.artist)', albumartist='\(song.albumartist)', album='\(song.album)', year='\(song.year)', "
+                    diagnostics += "sortartist='\(song.sortArtist)', sortalbum='\(song.sortAlbum)', sortalbumartist='\(song.sortAlbumArtist)', performer='\(song.performer)', composer='\(song.composer)'\n"
                 }
 
                 return Observable.just(diagnostics)
