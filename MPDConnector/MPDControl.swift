@@ -495,10 +495,10 @@ public class MPDControl: ControlProtocol {
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
     ///   - startWithSong: the position of the song (within the folder) to start playing
-    public func addFolder(_ folder: Folder, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
+    public func addFolder(_ folder: Folder, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) -> Observable<(Folder, Song, AddMode, Bool, PlayerStatus)> {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
-        browse.fetchFolderContents(parentFolder: folder)
+        return browse.fetchFolderContents(parentFolder: folder)
             .map({ (folderContents) -> [Song] in
                 var songs = [Song]()
                 for folderContent in folderContents {
@@ -508,15 +508,12 @@ public class MPDControl: ControlProtocol {
                 }
                 return songs
             })
-            .flatMap({ (songs) -> Observable<PlayerStatus> in
+            .flatMap({ (songs) -> Observable<(Folder, Song, AddMode, Bool, PlayerStatus)> in
                 self.addSongs(songs, addMode: addMode, shuffle: shuffle, startWithSong: startWithSong)
-                    .map({ (songs, song, addMode, shuffle, playerStatus) -> PlayerStatus in
-                        playerStatus
+                    .map({ (songs, song, addMode, shuffle, playerStatus) -> (Folder, Song, AddMode, Bool, PlayerStatus) in
+                        (folder, song, addMode, shuffle, playerStatus)
                     })
             })
-            .subscribe(onNext: { (_) in
-            })
-            .disposed(by: bag)
     }
     
     /// Add a folder recursively to the play queue
@@ -525,44 +522,47 @@ public class MPDControl: ControlProtocol {
     ///   - folder: the folder to add
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
-    public func addRecursiveFolder(_ folder: Folder, addMode: AddMode, shuffle: Bool) {
-        runCommand()  { connection in
-            var pos = UInt32(0)
+    public func addRecursiveFolder(_ folder: Folder, addMode: AddMode, shuffle: Bool) -> Observable<(Folder, AddMode, Bool, PlayerStatus)> {
+        return runCommandWithStatus()  { connection in
+                var pos = UInt32(0)
 
-            switch addMode {
-            case .replace:
-                _ = self.mpd.run_clear(connection)
-            case .addNext:
-                pos = UInt32(self.songIndex.value + 1)
-            case .addNextAndPlay:
-                pos = UInt32(self.songIndex.value + 1)
-            case .addAtEnd:
-                pos = UInt32(self.endIndex.value)
-            }
-            
-            _ = self.mpd.run_add(connection, uri: folder.path)
-            if addMode == .replace {
-                if shuffle == true {
-                    _ = self.mpd.run_shuffle(connection)
-                }
-                _ = self.mpd.run_play_pos(connection, 0)
-            }
-            else if addMode == .addNext || addMode == .addNextAndPlay {
-                var end = UInt32(0)
-                if let status = self.mpd.run_status(connection) {
-                    defer {
-                        self.mpd.status_free(status)
-                    }
-                    end = self.mpd.status_get_queue_length(status)
-                }
-                _ = self.mpd.run_move_range(connection, start: UInt32(self.endIndex.value), end: end, to: pos)
-
-                if addMode == .addNextAndPlay {
-                    _ = self.mpd.run_play_pos(connection, pos)
+                switch addMode {
+                case .replace:
+                    _ = self.mpd.run_clear(connection)
+                case .addNext:
+                    pos = UInt32(self.songIndex.value + 1)
+                case .addNextAndPlay:
+                    pos = UInt32(self.songIndex.value + 1)
+                case .addAtEnd:
+                    pos = UInt32(self.endIndex.value)
                 }
                 
+                _ = self.mpd.run_add(connection, uri: folder.path)
+                if addMode == .replace {
+                    if shuffle == true {
+                        _ = self.mpd.run_shuffle(connection)
+                    }
+                    _ = self.mpd.run_play_pos(connection, 0)
+                }
+                else if addMode == .addNext || addMode == .addNextAndPlay {
+                    var end = UInt32(0)
+                    if let status = self.mpd.run_status(connection) {
+                        defer {
+                            self.mpd.status_free(status)
+                        }
+                        end = self.mpd.status_get_queue_length(status)
+                    }
+                    _ = self.mpd.run_move_range(connection, start: UInt32(self.endIndex.value), end: end, to: pos)
+
+                    if addMode == .addNextAndPlay {
+                        _ = self.mpd.run_play_pos(connection, pos)
+                    }
+                    
+                }
             }
-        }
+            .map({ (playerStatus) -> (Folder, AddMode, Bool, PlayerStatus) in
+                (folder, addMode, shuffle, playerStatus)
+            })
     }
 
     
