@@ -302,7 +302,7 @@ public class MPDControl: ControlProtocol {
     ///   - songs: an array of Song objects
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
-    private func addSongs(_ songs: [Song], addMode: AddMode, shuffle: Bool, startWithSong: UInt32 = 0) -> Observable<PlayerStatus> {
+    private func addSongs(_ songs: [Song], addMode: AddMode, shuffle: Bool, startWithSong: UInt32 = 0) -> Observable<([Song], Song, AddMode, Bool, PlayerStatus)> {
         return runCommandWithStatus()  { connection in
                 var pos = UInt32(0)
             
@@ -351,6 +351,9 @@ public class MPDControl: ControlProtocol {
                     _ = self.mpd.run_play_pos(connection, UInt32(self.songIndex.value + 1))
                 }
             }
+            .map({ (playerStatus) -> ([Song], Song, AddMode, Bool, PlayerStatus) in
+                (songs, songs[Int(startWithSong)], addMode, shuffle, playerStatus)
+            })
     }
 
     /// Add a song to the play queue
@@ -358,8 +361,11 @@ public class MPDControl: ControlProtocol {
     /// - Parameters:
     ///   - song: the song to add
     ///   - addMode: how to add the songs to the playqueue
-    public func addSong(_ song: Song, addMode: AddMode) -> Observable<PlayerStatus> {
+    public func addSong(_ song: Song, addMode: AddMode) -> Observable<(Song, AddMode, PlayerStatus)> {
         return addSongs([song], addMode: addMode, shuffle: false)
+            .map({ (songs, song, addMode, shuffle, playerStatus) -> (Song, AddMode, PlayerStatus) in
+                (song, addMode, playerStatus)
+            })
     }
     
     /// Add a song to a playlist
@@ -378,8 +384,11 @@ public class MPDControl: ControlProtocol {
     /// - Parameters:
     ///   - songs: array of songs to add
     ///   - addMode: how to add the song to the playqueue
-    public func addSongs(_ songs: [Song], addMode: AddMode) -> Observable<PlayerStatus> {
+    public func addSongs(_ songs: [Song], addMode: AddMode) -> Observable<([Song], AddMode, PlayerStatus)> {
         return addSongs(songs, addMode: addMode, shuffle: false)
+            .map({ (songs, song, addMode, shuffle, playerStatus) -> ([Song], AddMode, PlayerStatus) in
+                (songs, addMode, playerStatus)
+            })
     }
     
     /// Add an album to the play queue
@@ -389,12 +398,15 @@ public class MPDControl: ControlProtocol {
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
     ///   - startWithSong: the position of the song (within the album) to start playing
-    public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) -> Observable<PlayerStatus> {
+    public func addAlbum(_ album: Album, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) -> Observable<(Album, Song, AddMode, Bool, PlayerStatus)> {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
         return browse.songsOnAlbum(album)
-            .flatMap({ (songs) -> Observable<PlayerStatus> in
+            .flatMap({ (songs) -> Observable<(Album, Song, AddMode, Bool, PlayerStatus)> in
                 self.addSongs(songs, addMode: addMode, shuffle: shuffle, startWithSong: startWithSong)
+                    .map({ (songs, song, addMode, shuffle, playerStatus) -> (Album, Song, AddMode, Bool, PlayerStatus) in
+                        (album, song, addMode, shuffle, playerStatus)
+                    })
             })
     }
     
@@ -404,13 +416,16 @@ public class MPDControl: ControlProtocol {
     ///   - artist: the artist to add
     ///   - addMode: how to add the songs to the playqueue
     ///   - shuffle: whether or not to shuffle the songs before adding them
-    public func addArtist(_ artist: Artist, addMode: AddMode, shuffle: Bool) -> Observable<PlayerStatus> {
+    public func addArtist(_ artist: Artist, addMode: AddMode, shuffle: Bool) -> Observable<(Artist, AddMode, Bool, PlayerStatus)> {
         // First we need to get all the songs on an album, then add them one by one
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
         return browse.songsByArtist(artist)
-            .flatMap({ (songs) -> Observable<PlayerStatus> in
+            .flatMap({ (songs) -> Observable<(Artist, AddMode, Bool, PlayerStatus)> in
                 self.addSongs(songs, addMode: addMode, shuffle: shuffle)
-            })
+                    .map({ (songs, song, addMode, shuffle, playerStatus) -> (Artist, AddMode, Bool, PlayerStatus) in
+                        (artist, addMode, shuffle, playerStatus)
+                    })
+        })
     }
     
     /// Add a playlist to the play queue
@@ -495,6 +510,9 @@ public class MPDControl: ControlProtocol {
             })
             .flatMap({ (songs) -> Observable<PlayerStatus> in
                 self.addSongs(songs, addMode: addMode, shuffle: shuffle, startWithSong: startWithSong)
+                    .map({ (songs, song, addMode, shuffle, playerStatus) -> PlayerStatus in
+                        playerStatus
+                    })
             })
             .subscribe(onNext: { (_) in
             })
