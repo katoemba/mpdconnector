@@ -53,7 +53,6 @@ public class MPDStatus: StatusProtocol {
         get {
             return _playerStatus
                 .observeOn(MainScheduler.instance)
-                .asObservable()
         }
     }
     let disconnectHandler = PublishSubject<Int>()
@@ -217,7 +216,7 @@ public class MPDStatus: StatusProtocol {
     /// Get the current status of a controller
     ///
     /// - Returns: a filled PlayerStatus struct
-    private func fetchPlayerStatus(_ connection: OpaquePointer) -> PlayerStatus {
+    public func fetchPlayerStatus(_ connection: OpaquePointer) -> PlayerStatus {
         var playerStatus = PlayerStatus()
         
         if validateConnection(connection) {
