@@ -435,22 +435,19 @@ public class MPDControl: ControlProtocol {
     ///   - addMode: how to add the song to the playqueue
     ///   - shuffle: whether or not to shuffle the playlist
     ///   - startWithSong: the position of the song (within the playlist) to start playing
-    public func addPlaylist(_ playlist: Playlist, addMode: AddMode, shuffle: Bool, startWithSong: UInt32) {
-        runCommand()  { connection in
-            switch addMode {
-            case .replace:
+    public func addPlaylist(_ playlist: Playlist, shuffle: Bool, startWithSong: UInt32) -> Observable<(Playlist, Song, Bool, PlayerStatus)> {
+        return runCommandWithStatus()  { connection in
                 _ = self.mpd.run_clear(connection)
-            default:
-                break
-            }
-
-            _ = self.mpd.run_load(connection, name: playlist.id)
-            if shuffle {
-                _ = self.mpd.run_shuffle(connection)
-            }
+                _ = self.mpd.run_load(connection, name: playlist.id)
+                if shuffle {
+                    _ = self.mpd.run_shuffle(connection)
+                }
             
-            _ = self.mpd.run_play_pos(connection, startWithSong)
-        }
+                _ = self.mpd.run_play_pos(connection, startWithSong)
+            }
+            .map({ (playerStatus) -> (Playlist, Song, Bool, PlayerStatus) in
+                (playlist, playerStatus.currentSong, shuffle, playerStatus)
+            })
     }
 
     /// Add a genre to the play queue
@@ -536,7 +533,7 @@ public class MPDControl: ControlProtocol {
                 case .addAtEnd:
                     pos = UInt32(self.endIndex.value)
                 }
-                
+            
                 _ = self.mpd.run_add(connection, uri: folder.path)
                 if addMode == .replace {
                     if shuffle == true {
