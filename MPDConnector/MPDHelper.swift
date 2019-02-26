@@ -281,12 +281,9 @@ public class MPDHelper {
         song.lastModified = mpd.song_get_last_modified(mpdSong)
         
         // Get a sensible coverURI
-        let sections = song.id.split(separator: ":")
-        guard let path = sections.last else {
-            return song
-        }
-        let pathSections = path.split(separator: "/")
+        guard song.source == .Local else { return song }
         
+        let pathSections = song.id.split(separator: "/")
         var newPath = ""
         for index in 0..<(pathSections.count - 1) {
             newPath.append(contentsOf: pathSections[index])
