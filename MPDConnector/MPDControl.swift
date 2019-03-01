@@ -373,10 +373,13 @@ public class MPDControl: ControlProtocol {
     /// - Parameters:
     ///   - song: the song to add
     ///   - playlist: the playlist to add the song to
-    public func addSongToPlaylist(_ song: Song, playlist: Playlist) {
-        runCommand()  { connection in
-            _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
-        }
+    public func addSongToPlaylist(_ song: Song, playlist: Playlist) -> Observable<(Song, Playlist)> {
+        return runCommandWithStatus()  { connection in
+                _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
+            }
+            .map({ (_) -> (Song, Playlist) in
+                (song, playlist)
+            })
     }
     
     /// Add a batch of songs to the play queue
@@ -408,6 +411,28 @@ public class MPDControl: ControlProtocol {
                         (album, song, addMode, shuffle, playerStatus)
                     })
             })
+    }
+    
+    /// Add an album to a playlist
+    ///
+    /// - Parameters:
+    ///   - album: the album to add
+    ///   - playlist: the playlist to add the album to
+    public func addAlbumToPlaylist(_ album: Album, playlist: Playlist) -> Observable<(Album, Playlist)> {
+        // First we need to get all the songs on an album, then add them one by one
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        return browse.songsOnAlbum(album)
+            .flatMap({ (songs) -> Observable<(Album, Playlist)> in
+                    return self.runCommandWithStatus()  { connection in
+                        for song in songs {
+                            _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
+                        }
+                    }
+                    .map({ (_) -> (Album, Playlist) in
+                        (album, playlist)
+                    })
+            })
+
     }
     
     /// Add an artist to the play queue
