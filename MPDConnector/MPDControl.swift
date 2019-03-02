@@ -183,8 +183,8 @@ public class MPDControl: ControlProtocol {
     /// Set the random mode of the player.
     ///
     /// - Parameter randomMode: The random mode to use.
-    public func setRandom(randomMode: RandomMode) {
-        runCommand()  { connection in
+    public func setRandom(randomMode: RandomMode) -> Observable<PlayerStatus> {
+        return runCommandWithStatus()  { connection in
             _ = self.mpd.run_random(connection, (randomMode == .On) ? true : false)
         }
     }
@@ -192,15 +192,15 @@ public class MPDControl: ControlProtocol {
     /// Toggle the random mode (off -> on -> off)
     ///
     /// - Parameter from: The current random mode.
-    public func toggleRandom() {
-        runCommand()  { connection in
+    public func toggleRandom() -> Observable<PlayerStatus> {
+        return runCommandWithStatus()  { connection in
             _ = self.mpd.run_random(connection, (self.randomMode.value == .On) ? false : true)
         }
     }
     
     /// Shuffle the current playqueue
-    public func shufflePlayqueue() {
-        runCommand()  { connection in
+    public func shufflePlayqueue() -> Observable<PlayerStatus> {
+        return runCommandWithStatus()  { connection in
             _ = self.mpd.run_shuffle(connection)
         }
     }
@@ -208,8 +208,8 @@ public class MPDControl: ControlProtocol {
     /// Set the repeat mode of the player.
     ///
     /// - Parameter repeatMode: The repeat mode to use.
-    public func setRepeat(repeatMode: RepeatMode) {
-        runCommand()  { connection in
+    public func setRepeat(repeatMode: RepeatMode) -> Observable<PlayerStatus> {
+        return runCommandWithStatus()  { connection in
             switch repeatMode {
                 case .Off:
                     _ = self.mpd.run_single(connection, false)
@@ -230,17 +230,19 @@ public class MPDControl: ControlProtocol {
     /// Toggle the repeat mode (off -> all -> single -> off)
     ///
     /// - Parameter from: The current repeat mode.
-    public func toggleRepeat() {
+    public func toggleRepeat() -> Observable<PlayerStatus> {
         let from = self.repeatMode.value
         if from == .Off {
-            self.setRepeat(repeatMode: .All)
+            return self.setRepeat(repeatMode: .All)
         }
         else if from == .All {
-            self.setRepeat(repeatMode: .Single)
+            return self.setRepeat(repeatMode: .Single)
         }
         else if from == .Single {
-            self.setRepeat(repeatMode: .Off)
+            return self.setRepeat(repeatMode: .Off)
         }
+        
+        return Observable.empty()
     }
     
     /// Set the random mode of the player.
