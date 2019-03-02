@@ -734,7 +734,7 @@ public class MPDControl: ControlProtocol {
             .flatMap { (mpdConnection) -> Observable<PlayerStatus> in
                 guard let connection = mpdConnection?.connection else { return Observable.empty() }
                 
-                return Observable.just(MPDStatus(connectionProperties: connectionProperties).fetchPlayerStatus(connection))
+                return Observable.just(MPDStatus(mpd: mpd, connectionProperties: connectionProperties).fetchPlayerStatus(connection))
             }
             .observeOn(MainScheduler.instance)
     }

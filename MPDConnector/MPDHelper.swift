@@ -285,18 +285,20 @@ public class MPDHelper {
         
         let pathSections = song.id.split(separator: "/")
         var newPath = ""
-        for index in 0..<(pathSections.count - 1) {
-            newPath.append(contentsOf: pathSections[index])
-            newPath.append(contentsOf: "/")
+        if pathSections.count > 0 {
+            for index in 0..<(pathSections.count - 1) {
+                newPath.append(contentsOf: pathSections[index])
+                newPath.append(contentsOf: "/")
+            }
         }
         
         let coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
-        let host = connectionProperties[ConnectionProperties.Host.rawValue] as! String
-        let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as! String
+        let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String ?? ""
+        let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
         let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"
-        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as! String
-        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as! String
-        let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as! String
+        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as? String ?? ""
+        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as? String ?? ""
+        let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as? String ?? ""
 
         if postfix == "" && alternativePostfix == "" {
             song.coverURI = CoverURI.fullPathURI("http://\(host)\(portExtension)/\(prefix)\(coverURI)")

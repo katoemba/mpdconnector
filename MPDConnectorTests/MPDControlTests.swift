@@ -171,229 +171,175 @@ class MPDControlTests: XCTestCase {
     }
     
     func testPlaySentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.play()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_play")
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.play()
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_play")
+            })
+            .disposed(by: self.bag)
     }
     
     func testPlayWithIndexSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.play(index: 3)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 1, expectedParameters: ["song_pos": "3"])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.play(index: 3)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 1, expectedParameters: ["song_pos": "3"])
+            })
+            .disposed(by: self.bag)
     }
     
     func testPlayWithInvalidIndexNotSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.play(index: -1)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.play(index: -1)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
+            })
+            .disposed(by: self.bag)
     }
     
     func testPauseSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.pause()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_pause", expectedParameters: ["mode": "\(true)"])
-        }
-
-        testScheduler.start()
+        self.mpdPlayer?.control.pause()
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_pause", expectedParameters: ["mode": "\(true)"])
+            })
+            .disposed(by: self.bag)
     }
 
     func testTogglePauseSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.togglePlayPause()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_toggle_pause")
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.togglePlayPause()
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_toggle_pause")
+            })
+            .disposed(by: self.bag)
     }
     
     func testSkipSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.skip()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_next")
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.skip()
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_next")
+            })
+            .disposed(by: self.bag)
     }
     
     func testBackSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.back()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_previous")
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.back()
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_previous")
+            })
+            .disposed(by: self.bag)
     }
 
     func testShuffleSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.shufflePlayqueue()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_shuffle", expectedParameters: [:])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.shufflePlayqueue()
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_shuffle", expectedParameters: [:])
+            })
+            .disposed(by: self.bag)
     }
     
     func testRepeatOffSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setRepeat(repeatMode: .Off)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.setRepeat(repeatMode: .Off)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
+            })
+            .disposed(by: self.bag)
     }
     
     func testRepeatSingleSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setRepeat(repeatMode: .Single)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(true)"])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.setRepeat(repeatMode: .Single)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(true)"])
+            })
+            .disposed(by: self.bag)
     }
     
     func testRepeatAllSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setRepeat(repeatMode: .All)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.setRepeat(repeatMode: .All)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
+            })
+            .disposed(by: self.bag)
     }
     
     func testRepeatAlbumSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setRepeat(repeatMode: .Album)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.setRepeat(repeatMode: .Album)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
+            })
+            .disposed(by: self.bag)
     }
     
     func testRepeatToggleSentToMPD() {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
 
-        testScheduler.scheduleAt(10) {
-            playerStatus.playing.repeatMode = .Off
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.toggleRepeat()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
-        }
-        testScheduler.scheduleAt(110) {
-            playerStatus.playing.repeatMode = .All
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(150) {
-            self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.toggleRepeat()
-        }
-        testScheduler.scheduleAt(200) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(true)"])
-        }
-        testScheduler.scheduleAt(210) {
-            playerStatus.playing.repeatMode = .Single
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(250) {
-            self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.toggleRepeat()
-        }
-        testScheduler.scheduleAt(300) {
-            self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
-            self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
-        }
+        playerStatus.playing.repeatMode = .Off
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
 
-        testScheduler.start()
+        self.mpdPlayer?.control.toggleRepeat()
+            .flatMap({ (_) -> Observable<PlayerStatus> in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
+
+                playerStatus.playing.repeatMode = .All
+                mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+                self.mpdWrapper.clearAllCalls()
+                return self.mpdPlayer!.control.toggleRepeat()
+            })
+            .flatMap({ (_) -> Observable<PlayerStatus> in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(true)"])
+
+                playerStatus.playing.repeatMode = .Single
+                mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+                self.mpdWrapper.clearAllCalls()
+                return self.mpdPlayer!.control.toggleRepeat()
+            })
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
+                self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
+            })
+            .disposed(by: bag)
     }
     
     func testRandomOnOffSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setRandom(randomMode: .On)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
-        }
-        testScheduler.scheduleAt(150) {
-            self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.setRandom(randomMode: .Off)
-        }
-        testScheduler.scheduleAt(200) {
-            self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
-        }
+        self.mpdPlayer?.control.setRandom(randomMode: .On)
+            .flatMap({ (_) -> Observable<PlayerStatus> in
+                self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
 
-        testScheduler.start()
+                self.mpdWrapper.clearAllCalls()
+                return self.mpdPlayer!.control.setRandom(randomMode: .Off)
+            })
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
+            })
+            .disposed(by: bag)
     }
  
     func testToggleRandomSentToMPD() {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
         
-        testScheduler.scheduleAt(10) {
-            playerStatus.playing.randomMode = .Off
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.toggleRandom()
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
-        }
-        testScheduler.scheduleAt(110) {
-            playerStatus.playing.randomMode = .On
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(150) {
-            self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.toggleRandom()
-        }
-        testScheduler.scheduleAt(200) {
-            self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
-        }
-        
-        testScheduler.start()
+        playerStatus.playing.randomMode = .Off
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+        self.mpdPlayer?.control.toggleRandom()
+            .flatMap({ (_) -> Observable<PlayerStatus> in
+                self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
+
+                playerStatus.playing.randomMode = .On
+                mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+                self.mpdWrapper.clearAllCalls()
+                return self.mpdPlayer!.control.toggleRandom()
+            })
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
+            })
+            .disposed(by: bag)
     }
     
     func testConsumeOnOffSentToMPD() {
@@ -444,113 +390,95 @@ class MPDControlTests: XCTestCase {
     }
     
     func testAddOneSongReplace() {
-        testScheduler.scheduleAt(50) {
-            var song = Song()
-            song.title = "Title"
-            song.id = "1"
-            self.mpdPlayer?.control.addSong(song, addMode: .replace)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear")
-            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "0"])
-            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
-        }
-        
-        testScheduler.start()
+        var song = Song()
+        song.title = "Title"
+        song.id = "1"
+        self.mpdPlayer?.control.addSong(song, addMode: .replace)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_clear")
+                self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "0"])
+                self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
+            })
+            .disposed(by: bag)
     }
 
     func testAddFiftySongsReplace() {
-        testScheduler.scheduleAt(50) {
-            var songs = [Song]()
-            for i in 1...50 {
-                var song = Song()
-                song.title = "Title"
-                song.id = "\(i)"
-                songs.append(song)
-            }
-            self.mpdPlayer?.control.addSongs(songs, addMode: .replace)
+        var songs = [Song]()
+        for i in 1...50 {
+            var song = Song()
+            song.title = "Title"
+            song.id = "\(i)"
+            songs.append(song)
         }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear")
-            self.mpdWrapper.assertCall("command_list_begin", expectedCallCount: 2, expectedParameters: ["discrete_ok": "false"])
-            self.mpdWrapper.assertCall("send_add_id_to", expectedCallCount: 50)
-            self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 2)
-            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
-        }
-        
-        testScheduler.start()
+        self.mpdPlayer?.control.addSongs(songs, addMode: .replace)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_clear")
+                self.mpdWrapper.assertCall("command_list_begin", expectedCallCount: 2, expectedParameters: ["discrete_ok": "false"])
+                self.mpdWrapper.assertCall("send_add_id_to", expectedCallCount: 50)
+                self.mpdWrapper.assertCall("command_list_end", expectedCallCount: 2)
+                self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
+            })
+            .disposed(by: bag)
     }
     
     func testAddOneSongNext() {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
 
-        testScheduler.scheduleAt(10) {
-            playerStatus.playqueue.length = 10
-            playerStatus.playqueue.songIndex = 4
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            var song = Song()
-            song.title = "Title"
-            song.id = "1"
-            self.mpdPlayer?.control.addSong(song, addMode: .addNext)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
-            self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
-        }
-        
-        testScheduler.start()
+        playerStatus.playqueue.length = 10
+        playerStatus.playqueue.songIndex = 4
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+        var song = Song()
+        song.title = "Title"
+        song.id = "1"
+        self.mpdPlayer?.control.addSong(song, addMode: .addNext)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+                self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
+                self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
+            })
+            .disposed(by: bag)
     }
 
     func testAddOneSongAtEnd() {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
         
-        testScheduler.scheduleAt(10) {
-            playerStatus.playqueue.length = 10
-            playerStatus.playqueue.songIndex = 4
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            var song = Song()
-            song.title = "Title"
-            song.id = "1"
-            self.mpdPlayer?.control.addSong(song, addMode: .addAtEnd)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "10"])
-            self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
-        }
-        
-        testScheduler.start()
+        playerStatus.playqueue.length = 10
+        playerStatus.playqueue.songIndex = 4
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+        var song = Song()
+        song.title = "Title"
+        song.id = "1"
+        self.mpdPlayer?.control.addSong(song, addMode: .addAtEnd)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+                self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "10"])
+                self.mpdWrapper.assertCall("run_play_pos", expectedCallCount: 0)
+            })
+            .disposed(by: bag)
     }
     
     func testAddOneSongNextAndPlay() {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
         
-        testScheduler.scheduleAt(10) {
-            playerStatus.playqueue.length = 10
-            playerStatus.playqueue.songIndex = 4
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            var song = Song()
-            song.title = "Title"
-            song.id = "1"
-            self.mpdPlayer?.control.addSong(song, addMode: .addNextAndPlay)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
-            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "5"])
-        }
-        
-        testScheduler.start()
+        playerStatus.playqueue.length = 10
+        playerStatus.playqueue.songIndex = 4
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+        var song = Song()
+        song.title = "Title"
+        song.id = "1"
+        self.mpdPlayer?.control.addSong(song, addMode: .addNextAndPlay)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+                self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
+                self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "5"])
+            })
+            .disposed(by: bag)
     }
     
     func testMoveSong() {
@@ -624,51 +552,42 @@ class MPDControlTests: XCTestCase {
     }
     
     func testAddPlaylist() {
-        testScheduler.scheduleAt(50) {
-            var playlist = Playlist()
-            playlist.id = "plist"
-            _ = self.mpdPlayer?.control.addPlaylist(playlist, addMode: .replace, shuffle: false, startWithSong: 3)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 1)
-            self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
-            self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "3"])
-        }
-        
-        testScheduler.start()
+        var playlist = Playlist()
+        playlist.id = "plist"
+        _ = self.mpdPlayer?.control.addPlaylist(playlist, shuffle: false, startWithSong: 3)
+            .subscribe(onNext: { (_, _, _, _) in
+                self.mpdWrapper.assertCall("run_clear", expectedCallCount: 1)
+                self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
+                self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 0)
+                self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "3"])
+            })
+            .disposed(by: bag)
     }
 
     func testAddShufflePlaylist() {
-        testScheduler.scheduleAt(50) {
-            var playlist = Playlist()
-            playlist.id = "plist"
-            _ = self.mpdPlayer?.control.addPlaylist(playlist, addMode: .replace, shuffle: true, startWithSong: 0)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 1)
-            self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
-            self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 1)
-            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
-        }
-        
-        testScheduler.start()
+        var playlist = Playlist()
+        playlist.id = "plist"
+        _ = self.mpdPlayer?.control.addPlaylist(playlist, shuffle: true, startWithSong: 0)
+            .subscribe(onNext: { (_, _, _, _) in
+                self.mpdWrapper.assertCall("run_clear", expectedCallCount: 1)
+                self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
+                self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 1)
+                self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "0"])
+            })
+            .disposed(by: bag)
     }
 
     func testAppendPlaylist() {
-        testScheduler.scheduleAt(50) {
-            var playlist = Playlist()
-            playlist.id = "plist"
-            _ = self.mpdPlayer?.control.addPlaylist(playlist, addMode: .addAtEnd, shuffle: false, startWithSong: 112)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
-            self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 0)
-            self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "112"])
-        }
-        
-        testScheduler.start()
+        var playlist = Playlist()
+        playlist.id = "plist"
+        _ = self.mpdPlayer?.control.addPlaylist(playlist, shuffle: false, startWithSong: 112)
+            .subscribe(onNext: { (_, _, _, _) in
+                self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
+                self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
+                self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 0)
+                self.mpdWrapper.assertCall("run_play_pos", expectedParameters: ["song_pos": "112"])
+            })
+            .disposed(by: bag)
     }
     
     func testEnableOutputSentToMPD() {
