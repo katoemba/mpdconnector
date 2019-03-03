@@ -268,7 +268,29 @@ public class MPDHelper {
         song.year = Int(String(song.date.prefix(4))) ?? 0
         song.performer = mpd.song_get_tag(mpdSong, MPD_TAG_PERFORMER, 0)
         song.comment = mpd.song_get_tag(mpdSong, MPD_TAG_COMMENT, 0)
-        song.disc = mpd.song_get_tag(mpdSong, MPD_TAG_DISC, 0)
+        
+        let trackComponents = mpd.song_get_tag(mpdSong, MPD_TAG_TRACK, 0).components(separatedBy: CharacterSet.decimalDigits.inverted)
+        if trackComponents.count > 0 {
+            song.track = Int(trackComponents.first!) ?? 0
+        }
+        else {
+            let filenameComponents = song.id.components(separatedBy: CharacterSet.decimalDigits.inverted)
+            if song.source == .Local, filenameComponents.count > 0 {
+                song.track = Int(trackComponents.first!) ?? 0
+            }
+            else {
+                song.track = 0
+            }
+        }
+
+        let discComponents = mpd.song_get_tag(mpdSong, MPD_TAG_DISC, 0).components(separatedBy: CharacterSet.decimalDigits.inverted)
+        if discComponents.count > 0 {
+            song.disc = Int(discComponents.first!) ?? 0
+        }
+        else {
+            song.disc = 0
+        }
+
         song.musicbrainzArtistId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_ARTISTID, 0)
         song.musicbrainzAlbumId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_ALBUMID, 0)
         song.musicbrainzAlbumArtistId = mpd.song_get_tag(mpdSong, MPD_TAG_MUSICBRAINZ_ALBUMARTISTID, 0)

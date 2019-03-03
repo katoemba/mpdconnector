@@ -96,6 +96,15 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
                 .share(replay: 1)
         case let .album(album):
             songsObservable = browse.songsOnAlbum(album)
+                .map({ (songs) -> [Song] in
+                    // If songs have track numbers, sort them by track number. Otherwise pass untouched.
+                    if songs.count > 0, songs[0].track > 0 {
+                        return songs.sorted(by: { (lsong, rsong) -> Bool in
+                            lsong.track < rsong.track
+                        })
+                    }
+                    return songs
+                })
                 .observeOn(MainScheduler.instance)
                 .share(replay: 1)
         default:
