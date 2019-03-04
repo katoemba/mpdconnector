@@ -315,6 +315,8 @@ public class MPDStatus: StatusProtocol {
                 _ = mpd.response_finish(connection)
             }
             playerStatus.outputs = outputs
+            
+            playerStatus.lastUpdateTime = Date()
         }
         
         return playerStatus
