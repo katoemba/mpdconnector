@@ -38,72 +38,16 @@ public class MPDControl: ControlProtocol {
     private let bag = DisposeBag()
     private var serialScheduler: SchedulerType
     
-    private let songIndex = BehaviorRelay<Int>(value: 0)
-    private let endIndex = BehaviorRelay<Int>(value: 0)
-    private let repeatMode = BehaviorRelay<RepeatMode>(value: .Off)
-    private let randomMode = BehaviorRelay<RandomMode>(value: .Off)
-    private let consumeMode = BehaviorRelay<ConsumeMode>(value: .Off)
-    private let currentSong = BehaviorRelay<Song?>(value: nil)
-    
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
                 identification: String = "NoID",
-                scheduler: SchedulerType? = nil,
-                playerStatusObservable: Observable<PlayerStatus>) {
+                scheduler: SchedulerType? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
         
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdcontrol")
         
-        playerStatusObservable
-            .map { (playerStatus) -> Int in
-                playerStatus.playqueue.songIndex
-            }
-            .distinctUntilChanged()
-            .bind(to: songIndex)
-            .disposed(by: bag)
-
-        playerStatusObservable
-            .map { (playerStatus) -> Int in
-                playerStatus.playqueue.length
-            }
-            .distinctUntilChanged()
-            .bind(to: endIndex)
-            .disposed(by: bag)
-
-        playerStatusObservable
-            .map { (playerStatus) -> RepeatMode in
-                playerStatus.playing.repeatMode
-            }
-            .distinctUntilChanged()
-            .bind(to: repeatMode)
-            .disposed(by: bag)
-        
-        playerStatusObservable
-            .map { (playerStatus) -> RandomMode in
-                playerStatus.playing.randomMode
-            }
-            .distinctUntilChanged()
-            .bind(to: randomMode)
-            .disposed(by: bag)
-        
-        playerStatusObservable
-            .map { (playerStatus) -> ConsumeMode in
-                playerStatus.playing.consumeMode
-            }
-            .distinctUntilChanged()
-            .bind(to: consumeMode)
-            .disposed(by: bag)
-
-        playerStatusObservable
-            .map { (playerStatus) -> Song in
-                playerStatus.currentSong
-            }
-            .distinctUntilChanged()
-            .bind(to: currentSong)
-            .disposed(by: bag)
-
         HelpMePlease.allocUp(name: "MPDControl")
     }
     
@@ -194,7 +138,10 @@ public class MPDControl: ControlProtocol {
     /// - Parameter from: The current random mode.
     public func toggleRandom() -> Observable<PlayerStatus> {
         return runCommandWithStatus()  { connection in
-            _ = self.mpd.run_random(connection, (self.randomMode.value == .On) ? false : true)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+
+            _ = self.mpd.run_random(connection, (playerStatus.playing.randomMode == .On) ? false : true)
         }
     }
     
@@ -231,18 +178,29 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter from: The current repeat mode.
     public func toggleRepeat() -> Observable<PlayerStatus> {
-        let from = self.repeatMode.value
-        if from == .Off {
-            return self.setRepeat(repeatMode: .All)
+        return runCommandWithStatus()  { connection in
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+
+            switch playerStatus.playing.repeatMode {
+            case .Off:
+                // Switch to All
+                _ = self.mpd.run_repeat(connection, true)
+                _ = self.mpd.run_single(connection, false)
+            case .All:
+                // Switch to Single
+                _ = self.mpd.run_single(connection, true)
+                _ = self.mpd.run_repeat(connection, true)
+            case .Single:
+                // Switch to Off
+                _ = self.mpd.run_single(connection, false)
+                _ = self.mpd.run_repeat(connection, false)
+            case .Album:
+                // Switch to Off
+                _ = self.mpd.run_repeat(connection, false)
+                _ = self.mpd.run_single(connection, false)
+            }
         }
-        else if from == .All {
-            return self.setRepeat(repeatMode: .Single)
-        }
-        else if from == .Single {
-            return self.setRepeat(repeatMode: .Off)
-        }
-        
-        return Observable.empty()
     }
     
     /// Set the random mode of the player.
@@ -259,7 +217,10 @@ public class MPDControl: ControlProtocol {
     /// - Parameter from: The current consume mode.
     public func toggleConsume() {
         runCommand()  { connection in
-            _ = self.mpd.run_consume(connection, (self.consumeMode.value == .On) ? false : true)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+
+            _ = self.mpd.run_consume(connection, (playerStatus.playing.consumeMode == .On) ? false : true)
         }
     }
     
@@ -280,11 +241,13 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter seconds: seconds in the current song, must be <= length of the song
     public func setSeek(seconds: UInt32) {
-        guard let song = currentSong.value else { return }
-        guard seconds < song.length else { return }
-        
         runCommand()  { connection in
-            _ = self.mpd.run_seek(connection, pos: UInt32(song.position), t: seconds)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+
+            if seconds < playerStatus.currentSong.length {
+                _ = self.mpd.run_seek(connection, pos: UInt32(playerStatus.currentSong.position), t: seconds)
+            }
         }
     }
     
@@ -292,10 +255,14 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter percentage: relative position in the current song, must be between 0.0 and 1.0
     public func setSeek(percentage: Float) {
-        guard let song = currentSong.value else { return }
-        guard percentage >= 0.0 && percentage <= 1.0 else { return }
-
-        setSeek(seconds: UInt32(percentage * Float(song.length)))
+        runCommand()  { connection in
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+            let seconds = UInt32(percentage * Float(playerStatus.currentSong.length))
+            if seconds < playerStatus.currentSong.length {
+                _ = self.mpd.run_seek(connection, pos: UInt32(playerStatus.currentSong.position), t: seconds)
+            }
+        }
     }
     
     /// add an array of songs to the playqueue
@@ -308,15 +275,18 @@ public class MPDControl: ControlProtocol {
         return runCommandWithStatus()  { connection in
                 var pos = UInt32(0)
             
+                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+                let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+            
                 switch addMode {
                 case .replace:
                     _ = self.mpd.run_clear(connection)
                 case .addNext:
-                    pos = UInt32(self.songIndex.value + 1)
+                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
                 case .addNextAndPlay:
-                    pos = UInt32(self.songIndex.value + 1)
+                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
                 case .addAtEnd:
-                    pos = UInt32(self.endIndex.value)
+                    pos = UInt32(playerStatus.playqueue.length)
                 }
             
                 let songsToAdd = shuffle ? songs.shuffled() : songs
@@ -350,7 +320,7 @@ public class MPDControl: ControlProtocol {
                     _ = self.mpd.run_play_pos(connection, startWithSong)
                 }
                 else if addMode == .addNextAndPlay {
-                    _ = self.mpd.run_play_pos(connection, UInt32(self.songIndex.value + 1))
+                    _ = self.mpd.run_play_pos(connection, UInt32(playerStatus.playqueue.songIndex + 1))
                 }
             }
             .map({ (playerStatus) -> ([Song], Song, AddMode, Bool, PlayerStatus) in
@@ -550,15 +520,18 @@ public class MPDControl: ControlProtocol {
         return runCommandWithStatus()  { connection in
                 var pos = UInt32(0)
 
+                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+                let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+
                 switch addMode {
                 case .replace:
                     _ = self.mpd.run_clear(connection)
                 case .addNext:
-                    pos = UInt32(self.songIndex.value + 1)
+                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
                 case .addNextAndPlay:
-                    pos = UInt32(self.songIndex.value + 1)
+                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
                 case .addAtEnd:
-                    pos = UInt32(self.endIndex.value)
+                    pos = UInt32(playerStatus.playqueue.length)
                 }
             
                 _ = self.mpd.run_add(connection, uri: folder.path)
@@ -576,7 +549,7 @@ public class MPDControl: ControlProtocol {
                         }
                         end = self.mpd.status_get_queue_length(status)
                     }
-                    _ = self.mpd.run_move_range(connection, start: UInt32(self.endIndex.value), end: end, to: pos)
+                    _ = self.mpd.run_move_range(connection, start: UInt32(playerStatus.playqueue.length), end: end, to: pos)
 
                     if addMode == .addNextAndPlay {
                         _ = self.mpd.run_play_pos(connection, pos)

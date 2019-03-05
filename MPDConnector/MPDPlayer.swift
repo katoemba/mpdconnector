@@ -202,7 +202,7 @@ public class MPDPlayer: PlayerProtocol {
     public var control: ControlProtocol {
         get {
             // Use serialScheduler to synchronize commands across multiple MPDControl instances.
-            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, playerStatusObservable: mpdStatus.playerStatusObservable)
+            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler)
         }
     }
     /// Create a unique object for every request for a browse object
