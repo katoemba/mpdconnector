@@ -87,16 +87,11 @@ class MPDControlTests: XCTestCase {
     }
     
     func testSetSeek() {
-        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
-        var playerStatus = PlayerStatus()
-        
-        testScheduler.scheduleAt(10) {
-            var song = Song()
-            song.length = 100
-            song.position = 5
-            playerStatus.currentSong = song
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
+        mpdWrapper.elapsedTime = 5
+        mpdWrapper.trackTime = 100
+        mpdWrapper.songDuration = 100
+        mpdWrapper.songIndex = 5
+
         testScheduler.scheduleAt(50) {
             self.mpdPlayer?.control.setSeek(seconds: 10)
         }
@@ -129,16 +124,11 @@ class MPDControlTests: XCTestCase {
     }
     
     func testSetRelativeSeek() {
-        let mpdStatus = self.mpdPlayer?.status as! MPDStatus
-        var playerStatus = PlayerStatus()
+        mpdWrapper.elapsedTime = 5
+        mpdWrapper.trackTime = 100
+        mpdWrapper.songDuration = 100
+        mpdWrapper.songIndex = 6
         
-        testScheduler.scheduleAt(10) {
-            var song = Song()
-            song.length = 100
-            song.position = 6
-            playerStatus.currentSong = song
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
         testScheduler.scheduleAt(50) {
             self.mpdPlayer?.control.setSeek(percentage: 0.3)
         }
