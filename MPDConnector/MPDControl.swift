@@ -324,7 +324,8 @@ public class MPDControl: ControlProtocol {
                 }
             }
             .map({ (playerStatus) -> ([Song], Song, AddMode, Bool, PlayerStatus) in
-                (songs, songs[Int(startWithSong)], addMode, shuffle, playerStatus)
+                let song = (startWithSong >= 0 && startWithSong < songs.count) ? songs[Int(startWithSong)] : Song()
+                return (songs, song, addMode, shuffle, playerStatus)
             })
     }
 
