@@ -29,6 +29,7 @@ import ConnectorProtocol
 import RxSwift
 import libmpdclient
 import SWXMLHash
+import RxNetService
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {

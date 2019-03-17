@@ -10,7 +10,6 @@
 		0723B6C659107F196E8F19A7 /* Pods_MPDConnectorTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B669CC2955694C3B62603CCE /* Pods_MPDConnectorTests.framework */; };
 		2888ADB7A617890773BC1D3D /* Pods_MPDConnector_MacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97100CCD8849A7762F0655EF /* Pods_MPDConnector_MacOS.framework */; };
 		7B0C4A1FE1E4025BA52FF306 /* Pods_MPDConnector_tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62A245B138BF0F64B427F38B /* Pods_MPDConnector_tvOS.framework */; };
-		C52878281F77F5FA009D6CC4 /* NetService+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */; };
 		C53629DA21318B22004D5C1C /* kvlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C53629D421318B21004D5C1C /* kvlist.h */; };
 		C53629DB21318B22004D5C1C /* kvlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C53629D921318B22004D5C1C /* kvlist.c */; };
 		C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
@@ -300,7 +299,6 @@
 		C548EF4F1FFE36A200FBE535 /* MPDStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C548EF4E1FFE36A200FBE535 /* MPDStatusTests.swift */; };
 		C54AFF80204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */; };
 		C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */; };
-		C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
@@ -363,7 +361,6 @@
 		B669CC2955694C3B62603CCE /* Pods_MPDConnectorTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnectorTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B998B96EBFCB040EB2B230E7 /* Pods-MPDConnector_MacOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.debug.xcconfig"; sourceTree = "<group>"; };
 		BA20A4973F3D35D38F4AECF2 /* Pods-MPDConnectorTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnectorTests.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests.release.xcconfig"; sourceTree = "<group>"; };
-		C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetService+Rx.swift"; sourceTree = "<group>"; };
 		C53629D421318B21004D5C1C /* kvlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kvlist.h; sourceTree = "<group>"; };
 		C53629D921318B22004D5C1C /* kvlist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = kvlist.c; sourceTree = "<group>"; };
 		C546AF3C1F35A824003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -480,7 +477,6 @@
 		C548EF4E1FFE36A200FBE535 /* MPDStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDStatusTests.swift; sourceTree = "<group>"; };
 		C54AFF7F204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlaylistBrowseViewModel.swift; sourceTree = "<group>"; };
 		C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDSongBrowseViewModel.swift; sourceTree = "<group>"; };
-		C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetServiceBrowser+Rx.swift"; sourceTree = "<group>"; };
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDGenreBrowseViewModel.swift; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
@@ -580,8 +576,6 @@
 				C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */,
 				C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */,
 				C546B2721F3B042A003C5B7E /* MPDWrapper.swift */,
-				C52878271F77F5FA009D6CC4 /* NetService+Rx.swift */,
-				C554CB361F780E2200B83403 /* NetServiceBrowser+Rx.swift */,
 				C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */,
 			);
 			path = MPDConnector;
@@ -1176,6 +1170,7 @@
 				"${BUILT_PRODUCTS_DIR}/RxSwiftExt/RxSwiftExt.framework",
 				"${BUILT_PRODUCTS_DIR}/RxBlocking/RxBlocking.framework",
 				"${BUILT_PRODUCTS_DIR}/RxTest/RxTest.framework",
+				"${BUILT_PRODUCTS_DIR}/RxNetService/RxNetService.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1186,6 +1181,7 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxSwiftExt.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxBlocking.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxTest.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxNetService.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1268,7 +1264,6 @@
 				C546B0511F35FAF0003C5B7E /* playlist.c in Sources */,
 				C546B04F1F35FAF0003C5B7E /* password.c in Sources */,
 				C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */,
-				C554CB371F780E2200B83403 /* NetServiceBrowser+Rx.swift in Sources */,
 				C546B0531F35FAF0003C5B7E /* quote.c in Sources */,
 				C546B0641F35FAF0003C5B7E /* status.c in Sources */,
 				C546B05B1F35FAF0003C5B7E /* run.c in Sources */,
@@ -1296,7 +1291,6 @@
 				C546B0211F35FAF0003C5B7E /* idle.c in Sources */,
 				C546B01D1F35FAF0003C5B7E /* example.c in Sources */,
 				C546B0601F35FAF0003C5B7E /* socket.c in Sources */,
-				C52878281F77F5FA009D6CC4 /* NetService+Rx.swift in Sources */,
 				C546B01C1F35FAF0003C5B7E /* error.c in Sources */,
 				C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */,
 				C546B05F1F35FAF0003C5B7E /* settings.c in Sources */,

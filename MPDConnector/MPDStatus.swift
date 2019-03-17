@@ -328,9 +328,9 @@ public class MPDStatus: StatusProtocol {
     ///   - start: the first song to fetch, zero-based.
     ///   - end: the last song to fetch, zero-based.
     /// Returns: an array of filled Songs objects.
-    public func playqueueSongs(start: Int, end: Int) -> [Song] {
+    public func playqueueSongs(start: Int, end: Int) -> Observable<[Song]> {
         guard start >= 0, start < end else {
-            return []
+            return Observable.just([])
         }
         
         let mpdConnection = MPDHelper.connect(mpd: mpd,
@@ -339,7 +339,7 @@ public class MPDStatus: StatusProtocol {
                                                  password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
                                                  timeout: 1000)
         guard let connection = mpdConnection?.connection else {
-            return []
+            return Observable.just([])
         }
         
         var songs = [Song]()
@@ -361,7 +361,7 @@ public class MPDStatus: StatusProtocol {
             _ = mpd.response_finish(connection)
         }
         
-        return songs
+        return Observable.just(songs)
     }
     
     private func disconnectFromMPD() {
