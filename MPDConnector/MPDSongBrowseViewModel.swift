@@ -107,6 +107,10 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
                 })
                 .observeOn(MainScheduler.instance)
                 .share(replay: 1)
+        case let .random(count):
+            songsObservable = browse.randomSongs(count: count)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
         default:
             fatalError("MPDSongBrowseViewModel: load without filters not allowed")
         }

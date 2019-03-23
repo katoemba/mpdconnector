@@ -349,6 +349,10 @@ public class MPDWrapper: MPDProtocol {
         return stringFromMPDString(mpd_tag_name(tagType))
     }
     
+    public func send_list_all(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
+        return mpd_send_list_all(connection, path)
+    }
+    
     public func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
         return mpd_send_list_meta(connection, path)
     }

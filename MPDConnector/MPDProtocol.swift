@@ -98,6 +98,7 @@ public protocol MPDProtocol {
     func recv_pair(_ connection: OpaquePointer!) -> (String, String)?
     func tag_name_parse(_ name: UnsafePointer<Int8>!) -> mpd_tag_type
     func tag_name(tagType: mpd_tag_type) -> String
+    func send_list_all(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool
     func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool
     func send_list_files(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool
     func recv_entity(_ connection: OpaquePointer!) -> OpaquePointer!

@@ -267,6 +267,35 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
     
+    public func randomSongs(count: Int) -> Observable<[Song]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[Song]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+                
+                var songIds = [String]()
+                _ = self.mpd.send_list_all(connection, path: "")
+                
+                while let pair = self.mpd.recv_pair(connection) {
+                    if pair.0 == "file" {
+                        songIds.append(pair.1)
+                    }
+                }
+                _ = self.mpd.response_finish(connection)
+
+                var randomSongs = [Song]()
+                for _ in 0..<count {
+                    if let songId = songIds.randomElement() {
+                        var song = Song()
+                        song.id = songId
+                        randomSongs.append(song)
+                    }
+                }
+                return Observable.just(randomSongs)
+            })
+            .observeOn(MainScheduler.instance)
+    }
+    
     private func createArtistFromSong(_ song: Song) -> Artist {
         return Artist(id: song.artist, source: song.source, name: song.artist)
     }
@@ -852,6 +881,13 @@ public class MPDBrowse: BrowseProtocol {
                 }))
             })
             .observeOn(MainScheduler.instance)
+    }
+    
+    /// Return a view model for a preloaded list of songs.
+    ///
+    /// - Returns: a SongBrowseViewModel instance
+    public func songBrowseViewModel(random: Int) -> SongBrowseViewModel {
+        return MPDSongBrowseViewModel(browse: self, filters: [.random(random)])
     }
     
     /// Return a view model for a preloaded list of songs.
