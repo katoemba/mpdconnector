@@ -315,7 +315,10 @@ public class MPDHelper {
         }
         
         let coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
-        let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String ?? ""
+        var coverHost = connectionProperties[MPDConnectionProperties.alternativeCoverHost.rawValue] as? String ?? ""
+        if coverHost == "" {
+            coverHost = connectionProperties[ConnectionProperties.Host.rawValue] as? String ?? ""
+        }
         let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
         let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"
         let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as? String ?? ""
@@ -323,16 +326,16 @@ public class MPDHelper {
         let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as? String ?? ""
 
         if postfix == "" && alternativePostfix == "" {
-            song.coverURI = CoverURI.fullPathURI("http://\(host)\(portExtension)/\(prefix)\(coverURI)")
+            song.coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverURI)")
         }
         else if postfix == "<track>" {
-            song.coverURI = CoverURI.fullPathURI("http://\(host)\(portExtension)/\(prefix)\(song.id)")
+            song.coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(song.id)")
         }
         else if alternativePostfix == "" {
-            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)\(portExtension)/\(prefix)\(coverURI)", newPath, [postfix])
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverURI)", newPath, [postfix])
         }
         else {
-            song.coverURI = CoverURI.filenameOptionsURI("http://\(host)\(portExtension)/\(prefix)\(coverURI)", newPath, [postfix, alternativePostfix])
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverURI)", newPath, [postfix, alternativePostfix])
         }
 
         return song

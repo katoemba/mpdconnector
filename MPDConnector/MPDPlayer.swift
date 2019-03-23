@@ -68,6 +68,7 @@ public enum MPDConnectionProperties: String {
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"
     case alternativeCoverPostfix = "MPD.Uri.AlternativePostfix"
+    case alternativeCoverHost = "MPD.Uri.AlternativeCoverHost"
     case version = "MPD.Version"
 }
 
@@ -138,6 +139,7 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
+            let alternativCoverHost = (self.loadSetting(id: MPDConnectionProperties.alternativeCoverHost.rawValue) as? StringSetting)?.value ?? ""
             let coverHttpPort = (self.loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue) as? StringSetting)?.value ?? ""
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
             let postfix = (self.loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue) as? StringSetting)?.value ?? ""
@@ -147,6 +149,7 @@ public class MPDPlayer: PlayerProtocol {
                     ConnectionProperties.Host.rawValue: host,
                     ConnectionProperties.Port.rawValue: port,
                     ConnectionProperties.Password.rawValue: password,
+                    MPDConnectionProperties.alternativeCoverHost.rawValue: alternativCoverHost,
                     MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
                     MPDConnectionProperties.coverPostfix.rawValue: postfix,
@@ -190,7 +193,8 @@ public class MPDPlayer: PlayerProtocol {
                     PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
-                                                                                                       loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!]),
+                                                                                                       loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!,
+                                                                                                       loadSetting(id: MPDConnectionProperties.alternativeCoverHost.rawValue)!]),
                     PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
                                                                                          ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () in
                         (self.browse as! MPDBrowse).updateDB()
@@ -263,26 +267,31 @@ public class MPDPlayer: PlayerProtocol {
                 userDefaults.set("albumart?path=", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 userDefaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+                userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + initialUniqueID)
             }
             else if type == MPDType.bryston {
                 userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 userDefaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+                userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + initialUniqueID)
             }
             else if type == MPDType.runeaudio {
                 userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+                userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + initialUniqueID)
             }
             else if type == MPDType.moodeaudio {
                 userDefaults.set("coverart.php/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 userDefaults.set("<track>", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+                userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + initialUniqueID)
             }
             else {
                 userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + initialUniqueID)
                 userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + initialUniqueID)
                 userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + initialUniqueID)
+                userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + initialUniqueID)
             }
             userDefaults.set(type.rawValue, forKey: MPDConnectionProperties.MPDType.rawValue + "." + initialUniqueID)
             _type = type
@@ -294,10 +303,12 @@ public class MPDPlayer: PlayerProtocol {
         let prefix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(initialUniqueID)") ?? ""
         let postfix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(initialUniqueID)") ?? ""
         let alternativePostfix = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverPostfix.rawValue).\(initialUniqueID)") ?? ""
+        let alternativeCoverHost = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverHost.rawValue).\(initialUniqueID)") ?? ""
         let connectionProperties = [ConnectionProperties.Name.rawValue: name,
                 ConnectionProperties.Host.rawValue: host,
                 ConnectionProperties.Port.rawValue: port,
                 ConnectionProperties.Password.rawValue: password,
+                MPDConnectionProperties.alternativeCoverHost.rawValue: alternativeCoverHost,
                 MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                 MPDConnectionProperties.coverPrefix.rawValue: prefix,
                 MPDConnectionProperties.coverPostfix.rawValue: postfix,
@@ -395,33 +406,42 @@ public class MPDPlayer: PlayerProtocol {
                     userDefaults.set("albumart?path=", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
                     _type = MPDType.volumio
                 }
                 else if selectionSetting.value == MPDType.bryston.rawValue {
                     userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
                     _type = MPDType.bryston
                 }
                 else if selectionSetting.value == MPDType.runeaudio.rawValue {
                     userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
                     _type = MPDType.runeaudio
                 }
                 else if selectionSetting.value == MPDType.moodeaudio.rawValue {
                     userDefaults.set("coverart.php/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("<track>", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
                     _type = MPDType.moodeaudio
                 }
                 else {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
                     _type = MPDType.classic
                 }
             }
+        }
+        else if setting.id == MPDConnectionProperties.alternativeCoverHost.rawValue {
+            let stringSetting = setting as! StringSetting
+            userDefaults.set(stringSetting.value, forKey: playerSpecificId)
         }
         else if setting.id == MPDConnectionProperties.coverHttpPort.rawValue {
             let stringSetting = setting as! StringSetting
@@ -460,6 +480,13 @@ public class MPDPlayer: PlayerProtocol {
                                                   MPDType.runeaudio.rawValue: MPDType.runeaudio.description,
                                                   MPDType.moodeaudio.rawValue: MPDType.moodeaudio.description],
                                           value: userDefaults.integer(forKey: playerSpecificId))
+        }
+        else if id == MPDConnectionProperties.alternativeCoverHost.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Alternative Cover Host",
+                                      placeholder: "IP Address",
+                                      value: userDefaults.string(forKey: playerSpecificId) ?? "",
+                                      restriction: .numeric)
         }
         else if id == MPDConnectionProperties.coverHttpPort.rawValue {
             return StringSetting.init(id: id,
