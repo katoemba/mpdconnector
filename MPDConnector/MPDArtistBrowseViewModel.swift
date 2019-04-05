@@ -61,7 +61,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
                 return _artists[0].type
             }
 
-            if let typeIndex = filters.index(where: { (filter) -> Bool in
+            if let typeIndex = filters.firstIndex(where: { (filter) -> Bool in
                 if case .type(_) = filter {
                     return true
                 }
@@ -98,7 +98,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         }
         else if filters.count > 0 {
             var genre = nil as String?
-            if let genreIndex = filters.index(where: { (filter) -> Bool in
+            if let genreIndex = filters.firstIndex(where: { (filter) -> Bool in
                 if case .genre(_) = filter {
                     return true
                 }
