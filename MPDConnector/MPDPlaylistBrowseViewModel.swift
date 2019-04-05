@@ -118,7 +118,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         renamedPlaylist.id = to
         renamedPlaylist.name = to
         
-        if let index = _playlists.value.index(of: playlist), _playlists.value.contains(renamedPlaylist) == false {
+        if let index = _playlists.value.firstIndex(of: playlist), _playlists.value.contains(renamedPlaylist) == false {
             _browse.renamePlaylist(playlist, newName: to)
             
             _playlists.value[index] = renamedPlaylist
@@ -129,7 +129,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
     }
     
     public func deletePlaylist(_ playlist: Playlist) {
-        if let index = _playlists.value.index(of: playlist) {
+        if let index = _playlists.value.firstIndex(of: playlist) {
             _browse.deletePlaylist(playlist)
             
             _playlists.value.remove(at: index)
