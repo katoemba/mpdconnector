@@ -485,8 +485,7 @@ public class MPDPlayer: PlayerProtocol {
             return StringSetting.init(id: id,
                                       description: "Alternative Cover Host",
                                       placeholder: "IP Address",
-                                      value: userDefaults.string(forKey: playerSpecificId) ?? "",
-                                      restriction: .numeric)
+                                      value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
         else if id == MPDConnectionProperties.coverHttpPort.rawValue {
             return StringSetting.init(id: id,
