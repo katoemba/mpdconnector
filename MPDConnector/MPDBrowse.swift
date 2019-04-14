@@ -643,7 +643,7 @@ public class MPDBrowse: BrowseProtocol {
                     let components = uri.split(separator: "/")
                     if components.count > 0 {
                         let lastComponent = components[components.count - 1]
-                        if lastComponent.contains(".jpg") || lastComponent.contains(".png") {
+                        if (lastComponent.contains(".jpg") || lastComponent.contains(".png")) && lastComponent.starts(with: ".") == false {
                             coverFiles.append(String(lastComponent))
                         }
                     }
