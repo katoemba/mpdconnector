@@ -1050,11 +1050,11 @@
 			};
 			buildConfigurationList = C546AF361F35A824003C5B7E /* Build configuration list for PBXProject "MPDConnector" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = C546AF321F35A824003C5B7E;
 			productRefGroup = C546AF3D1F35A824003C5B7E /* Products */;
