@@ -367,6 +367,18 @@ public class MPDControl: ControlProtocol {
             })
     }
     
+    /// Add a batch of songs to the play queue
+    ///
+    /// - Parameters:
+    ///   - songs: array of songs to add
+    ///   - addMode: how to add the song to the playqueue
+    public func addSongs(_ songs: [Song], addMode: AddMode, startWithSong: UInt32) -> Observable<([Song], AddMode, PlayerStatus)> {
+        return addSongs(songs, addMode: addMode, shuffle: false, startWithSong: startWithSong)
+            .map({ (songs, song, addMode, shuffle, playerStatus) -> ([Song], AddMode, PlayerStatus) in
+                (songs, addMode, playerStatus)
+            })
+    }
+    
     /// Add an album to the play queue
     ///
     /// - Parameters:

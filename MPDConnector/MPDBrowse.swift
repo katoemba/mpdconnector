@@ -234,6 +234,7 @@ public class MPDBrowse: BrowseProtocol {
     /// Asynchronously get all songs on an album
     ///
     /// - Parameter album: the album to get the songs for
+    /// - Parameter artist: An optional Artist object, allowing to filter the songs by a specific artist
     /// - Returns: an observable array of Song objects
     public func songsOnAlbum(_ album: Album) -> Observable<[Song]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
@@ -887,7 +888,7 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Returns: a SongBrowseViewModel instance
     public func songBrowseViewModel(random: Int) -> SongBrowseViewModel {
-        return MPDSongBrowseViewModel(browse: self, filters: [.random(random)])
+        return MPDSongBrowseViewModel(browse: self, filter: .random(random))
     }
     
     /// Return a view model for a preloaded list of songs.
@@ -903,7 +904,7 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter playlist: playlist to filter on
     /// - Returns: a SongBrowseViewModel instance
     public func songBrowseViewModel(_ playlist: Playlist) -> SongBrowseViewModel {
-        return MPDSongBrowseViewModel(browse: self, filters: [.playlist(playlist)])
+        return MPDSongBrowseViewModel(browse: self, filter: .playlist(playlist))
     }
     
     /// Asynchronously get all songs in a playlist
@@ -927,8 +928,13 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Parameter album: album to filter on
     /// - Returns: a SongBrowseViewModel instance
-    public func songBrowseViewModel(_ album: Album) -> SongBrowseViewModel {
-        return MPDSongBrowseViewModel(browse: self, filters: [.album(album)])
+    public func songBrowseViewModel(_ album: Album, artist: Artist?) -> SongBrowseViewModel {
+        if let artist = artist {
+            return MPDSongBrowseViewModel(browse: self, filter: .album(album), subFilter: .artist(artist))
+        }
+        else {
+            return MPDSongBrowseViewModel(browse: self, filter: .album(album))
+        }
     }
     
     /// Return an array of songs for an artist and optional album. This will search through both artist and albumartist.

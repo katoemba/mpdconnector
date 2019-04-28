@@ -30,11 +30,38 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDSongBrowseViewModel: SongBrowseViewModel {
-    private var _songsSubject = BehaviorSubject<[Song]>(value: [])
+    private var songsSubject = BehaviorSubject<[Song]>(value: [])
     public var songsObservable: Observable<[Song]> {
-        get {
-            return _songsSubject.asObservable()
-        }
+        return songsSubject
+    }
+    public var songsWithSubfilterObservable: Observable<[Song]> {
+        return songsObservable
+            .map({ [weak self] (songs) -> [Song] in
+                guard let weakSelf = self else { return songs }
+                
+                if let subFilter = weakSelf.subFilter, case let .artist(artist) = subFilter {
+                    var filteredSongs = [Song]()
+                    for song in songs {
+                        if artist.type == .artist {
+                            if song.albumartist.lowercased().contains(artist.name.lowercased()) || song.artist.lowercased().contains(artist.name.lowercased()) {
+                                filteredSongs.append(song)
+                            }
+                        }
+                        else if artist.type == .composer {
+                            if song.composer.lowercased().contains(artist.name.lowercased()) {
+                                filteredSongs.append(song)
+                            }
+                        }
+                        else if artist.type == .performer {
+                            if song.performer.lowercased().contains(artist.name.lowercased()) {
+                                filteredSongs.append(song)
+                            }
+                        }
+                    }
+                    return filteredSongs
+                }
+                return songs
+            })
     }
     private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
     public var loadProgressObservable: Observable<LoadProgress> {
@@ -43,59 +70,61 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
         }
     }
 
-    public var filters: [BrowseFilter] {
-        get {
-            return _filters
-        }
+    public var filter: BrowseFilter? {
+       return _filter
     }
-    
-    private var bag = DisposeBag()
+    public var subFilter: BrowseFilter? {
+       return _subFilter
+    }
+
+    private let bag = DisposeBag()
     private let _browse: MPDBrowse
     private let _songs: [Song]
-    private let _filters: [BrowseFilter]
+    private let _filter: BrowseFilter?
+    private let _subFilter: BrowseFilter?
     
     deinit {
         print("Cleanup MPDSongBrowseViewModel")
     }
     
-    public required init(browse: MPDBrowse, songs: [Song] = [], filters: [BrowseFilter] = []) {
+    public required init(browse: MPDBrowse, songs: [Song] = [], filter: BrowseFilter? = nil, subFilter: BrowseFilter? = nil) {
         _browse = browse
         _songs = songs
-        _filters = filters
+        _filter = filter
+        _subFilter = subFilter
     }
     
     public func load() {
         if _songs.count > 0 {
             loadProgress.accept(.allDataLoaded)
-            bag = DisposeBag()
-            _songsSubject.onNext(_songs)
+            songsSubject.onNext(_songs)
         }
-        else if filters.count > 0 {
-            reload(filter: filters[0])
+        else if filter != nil {
+            reload()
         }
         else {
             fatalError("MPDSongBrowseViewModel: load without filters not allowed")
         }
     }
     
-    private func reload(filter: BrowseFilter) {
-        // Get rid of old disposables
-        bag = DisposeBag()
-        
+    private func reload() {
         // Clear the contents
-        _songsSubject.onNext([])
+        songsSubject.onNext([])
         
         // Load new contents
         let browse = _browse
-        let songsSubject = self._songsSubject
-        var songsObservable : Observable<[Song]>
-        switch filter {
+        
+        let localSongsSubject = self.songsSubject
+        switch filter! {
         case let .playlist(playlist):
-            songsObservable = browse.songsInPlaylist(playlist)
+            browse.songsInPlaylist(playlist)
                 .observeOn(MainScheduler.instance)
-                .share(replay: 1)
+                .subscribe(onNext: { (songs) in
+                    localSongsSubject.onNext(songs)
+                })
+                .disposed(by: bag)
         case let .album(album):
-            songsObservable = browse.songsOnAlbum(album)
+            browse.songsOnAlbum(album)
                 .map({ (songs) -> [Song] in
                     // If songs have track numbers, sort them by track number. Otherwise pass untouched.
                     if songs.count > 0, songs[0].track > 0 {
@@ -105,21 +134,19 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
                     }
                     return songs
                 })
-                .observeOn(MainScheduler.instance)
-                .share(replay: 1)
+                .subscribe(onNext: { (songs) in
+                    localSongsSubject.onNext(songs)
+                })
+                .disposed(by: bag)
         case let .random(count):
-            songsObservable = browse.randomSongs(count: count)
-                .observeOn(MainScheduler.instance)
-                .share(replay: 1)
+            browse.randomSongs(count: count)
+                .subscribe(onNext: { (songs) in
+                    localSongsSubject.onNext(songs)
+                })
+                .disposed(by: bag)
         default:
-            fatalError("MPDSongBrowseViewModel: load without filters not allowed")
+            fatalError("MPDSongBrowseViewModel: unsupported filter \(filter!)")
         }
-        
-        songsObservable
-            .subscribe(onNext: { (songs) in
-                songsSubject.onNext(songs)
-            })
-            .disposed(by: bag)
         
         songsObservable
             .filter({ (itemsFound) -> Bool in
@@ -147,8 +174,9 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
     }
     
     public func removeSong(at: Int) {
+        let localSongsSubject = songsSubject
         Observable.just(at)
-            .withLatestFrom(_songsSubject) { (at, songs) in
+            .withLatestFrom(songsSubject) { (at, songs) in
                 (at, songs)
             }
             .map({ (arg) -> [Song] in
@@ -157,9 +185,8 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
                 newSongs.remove(at: at)
                 return newSongs
             })
-            .subscribe(onNext: { [weak self] (songs) in
-                guard let weakSelf = self else { return }
-                weakSelf._songsSubject.onNext(songs)
+            .subscribe(onNext: { (songs) in
+                localSongsSubject.onNext(songs)
             })
             .disposed(by: bag)
     }

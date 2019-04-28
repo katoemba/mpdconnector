@@ -104,7 +104,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
     
     func connection_free(_ connection: OpaquePointer!) {
-        registerCall("connection_free", ["connection": "\(connection)"])
+        registerCall("connection_free", ["connection": "\(connection!)"])
     }
     
     public func connection_get_error(_ connection: OpaquePointer!) -> mpd_error {
@@ -227,7 +227,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
     
     func status_free(_ status: OpaquePointer!) {
-        registerCall("status_free", ["status": "\(status)"])
+        registerCall("status_free", ["status": "\(status!)"])
     }
     
     func run_current_song(_ connection: OpaquePointer!) -> OpaquePointer! {
@@ -242,76 +242,76 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
     
     func song_free(_ song: OpaquePointer!) {
-        registerCall("song_free", ["song": "\(song)"])
+        registerCall("song_free", ["song": "\(song!)"])
     }
     
     func status_get_volume(_ status: OpaquePointer!) -> Int32 {
-        registerCall("status_get_volume", ["status": "\(status)"])
+        registerCall("status_get_volume", ["status": "\(status!)"])
         return volume
     }
     
     func status_get_repeat(_ status: OpaquePointer!) -> Bool {
-        registerCall("status_get_repeat", ["status": "\(status)"])
+        registerCall("status_get_repeat", ["status": "\(status!)"])
         return repeatValue
     }
     
     func status_get_single(_ status: OpaquePointer!) -> Bool {
-        registerCall("status_get_single", ["status": "\(status)"])
+        registerCall("status_get_single", ["status": "\(status!)"])
         return singleValue
     }
     
     func status_get_random(_ status: OpaquePointer!) -> Bool {
-        registerCall("status_get_random", ["status": "\(status)"])
+        registerCall("status_get_random", ["status": "\(status!)"])
         return random
     }
     
     func status_get_consume(_ status: OpaquePointer!) -> Bool {
-        registerCall("status_get_consume", ["status": "\(status)"])
+        registerCall("status_get_consume", ["status": "\(status!)"])
         return consumeMode
     }
     
     func status_get_state(_ status: OpaquePointer!) -> mpd_state {
-        registerCall("status_get_state", ["status": "\(status)"])
+        registerCall("status_get_state", ["status": "\(status!)"])
         return state
     }
     
     func status_get_song_pos(_ status: OpaquePointer!) -> Int32 {
-        registerCall("status_get_song_pos", ["status": "\(status)"])
+        registerCall("status_get_song_pos", ["status": "\(status!)"])
         return songIndex
     }
     
     func status_get_elapsed_time(_ status: OpaquePointer!) -> UInt32 {
-        registerCall("status_get_elapsed_time", ["status": "\(status)"])
+        registerCall("status_get_elapsed_time", ["status": "\(status!)"])
         return elapsedTime
     }
     
     func status_get_total_time(_ status: OpaquePointer!) -> UInt32 {
-        registerCall("status_get_total_time", ["status": "\(status)"])
+        registerCall("status_get_total_time", ["status": "\(status!)"])
         return trackTime
     }
     
     func status_get_queue_length(_ status: OpaquePointer!) -> UInt32 {
-        registerCall("status_get_queue_length", ["status": "\(status)"])
+        registerCall("status_get_queue_length", ["status": "\(status!)"])
         return queueLength
     }
     
     func status_get_queue_version(_ status: OpaquePointer!) -> UInt32 {
-        registerCall("status_get_queue_version", ["status": "\(status)"])
+        registerCall("status_get_queue_version", ["status": "\(status!)"])
         return queueVersion
     }
     
     func status_get_kbit_rate(_ status: OpaquePointer!) -> UInt32 {
-        registerCall("status_get_kbit_rate", ["status": "\(status)"])
+        registerCall("status_get_kbit_rate", ["status": "\(status!)"])
         return samplerate
     }
     
     func status_get_audio_format(_ status: OpaquePointer!) -> (UInt32, UInt8, UInt8)? {
-        registerCall("status_get_audio_format", ["status": "\(status)"])
+        registerCall("status_get_audio_format", ["status": "\(status!)"])
         return (samplerate, encoding, channels)
     }
 
     func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String {
-        registerCall("song_get_tag", ["song": "\(song)", "type": "\(type)", "idx": "\(idx)"])
+        registerCall("song_get_tag", ["song": "\(song!)", "type": "\(type)", "idx": "\(idx)"])
         switch type {
         case MPD_TAG_TITLE:
             return currentSong!["title"]!
@@ -325,18 +325,18 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     }
     
     func song_get_uri(_ song: OpaquePointer!) -> String {
-        registerCall("song_get_uri", ["song": "\(song)"])
+        registerCall("song_get_uri", ["song": "\(song!)"])
         return songUri
     }
 
     
     func song_get_duration(_ song: OpaquePointer!) -> UInt32 {
-        registerCall("song_get_tag", ["song": "\(song)"])
+        registerCall("song_get_tag", ["song": "\(song!)"])
         return songDuration
     }
     
     func song_get_last_modified(_ song: OpaquePointer!) -> Date {
-        registerCall("song_get_last_modified", ["song": "\(song)"])
+        registerCall("song_get_last_modified", ["song": "\(song!)"])
         return songLastModifiedDate
     }
 
@@ -463,6 +463,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func status_get_update_id(_ status: OpaquePointer!) -> UInt32 {
         registerCall("status_get_update_id", [:])
         return updateId
+    }
+    
+    public func send_list_all(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {
+        registerCall("send_list_all", ["path": "\(stringFromMPDString(path))"])
+        return true
     }
     
     func send_list_meta(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {

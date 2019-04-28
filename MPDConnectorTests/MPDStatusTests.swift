@@ -358,9 +358,16 @@ class MPDStatusTests: XCTestCase {
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         
         // Get a range of 3 songs
-        let songs = status.playqueueSongs(start: 2, end: 5)
+        let result = status.playqueueSongs(start: 2, end: 5)
+            .toBlocking(timeout: 0.4)
+            .materialize()
         
-        XCTAssert(songs.count == 3, "Expected 3 songs, got \(songs.count)")
+        switch result {
+        case .completed(let songs):
+            XCTAssert(songs[0].count == 3, "Expected 3 songs, got \(songs.count)")
+        default:
+            XCTAssert(0 == 3, "Expected 3 songs, got 0")
+        }
 
         let songCount = self.mpdWrapper.callCount("run_current_song") +
             self.mpdWrapper.callCount("recv_song") - 1
@@ -380,9 +387,16 @@ class MPDStatusTests: XCTestCase {
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         
         // Get an empty list of songs
-        let songs = status.playqueueSongs(start: 3, end: 3)
-        
-        XCTAssert(songs.count == 0, "Expected \(0) songs, got \(songs.count)")
+        let result = status.playqueueSongs(start: 3, end: 3)
+            .toBlocking(timeout: 0.4)
+            .materialize()
+
+        switch result {
+        case .completed(let songs):
+            XCTAssert(songs[0].count == 0, "Expected 0 songs, got \(songs.count)")
+        default:
+            XCTAssert(1 == 0, "Expected 0 songs, got 1")
+        }
     }
 
     func testInvalidRangePlayqueuSongs() {
@@ -395,9 +409,16 @@ class MPDStatusTests: XCTestCase {
         // Get an invalid range of songs
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         
-        let songs = status.playqueueSongs(start: 5, end: 3)
-        
-        XCTAssert(songs.count == 0, "Expected \(0) songs, got \(songs.count)")
+        let result = status.playqueueSongs(start: 5, end: 3)
+            .toBlocking(timeout: 0.4)
+            .materialize()
+
+        switch result {
+        case .completed(let songs):
+            XCTAssert(songs[0].count == 0, "Expected 0 songs, got \(songs.count)")
+        default:
+            XCTAssert(1 == 0, "Expected 0 songs, got 1")
+        }
     }
 }
 
