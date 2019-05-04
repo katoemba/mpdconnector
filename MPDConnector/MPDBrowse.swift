@@ -812,9 +812,6 @@ public class MPDBrowse: BrowseProtocol {
                             sortTitle = value
                         }
                     }
-                    if title != "" {
-                        artists.append(Artist(id: title, type: type, source: .Local, name: title, sortName: sortTitle))
-                    }
                     
                     _ = self.mpd.response_finish(connection)
                     
