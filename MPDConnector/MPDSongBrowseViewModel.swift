@@ -42,7 +42,7 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
                 if let subFilter = weakSelf.subFilter, case let .artist(artist) = subFilter {
                     var filteredSongs = [Song]()
                     for song in songs {
-                        if artist.type == .artist {
+                        if artist.type == .artist || artist.type == .albumArtist {
                             if song.albumartist.lowercased().contains(artist.name.lowercased()) || song.artist.lowercased().contains(artist.name.lowercased()) {
                                 filteredSongs.append(song)
                             }

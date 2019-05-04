@@ -128,7 +128,7 @@ public class MPDBrowse: BrowseProtocol {
                                 songs.append(song)
                             }
                             else if (tagType == MPD_TAG_ALBUM) {
-                                var album = Album(id: "\(song.artist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.artist, year: song.year, genre: song.genre, length: 0)
+                                var album = Album(id: "\(song.albumartist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.albumartist, year: song.year, genre: song.genre, length: 0)
                                 album.coverURI = song.coverURI
                                 if albums.contains(album) == false {
                                     albums.append(album)
@@ -226,6 +226,29 @@ public class MPDBrowse: BrowseProtocol {
             }
             
             _ = self.mpd.response_finish(connection)
+        }
+        
+        if songs.count == 0 || album == nil {
+            do {
+                try self.mpd.search_db_songs(connection, exact: true)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
+                try self.mpd.search_commit(connection)
+                
+                while let mpdSong = self.mpd.recv_song(connection) {
+                    if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
+                        let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
+                        if artist.name == albumartist && (album == nil || album == song.album) {
+                            songs.append(song)
+                        }
+                    }
+                    self.mpd.song_free(mpdSong)
+                }
+                _ = self.mpd.response_finish(connection)
+            }
+            catch {
+                print(self.mpd.connection_get_error_message(connection))
+                _ = self.mpd.connection_clear_error(connection)
+            }
         }
         
         return songs
@@ -366,7 +389,7 @@ public class MPDBrowse: BrowseProtocol {
                     
                     var albumIDs = [String: Int]()
                     while let mpdSong = self.mpd.recv_song(connection) {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
                             let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
                             let albumID = "\(albumartist):\(song.album)"
                             if albumIDs[albumID] == nil {
@@ -461,7 +484,7 @@ public class MPDBrowse: BrowseProtocol {
                         try self.mpd.search_commit(connection)
                         
                         while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
                                 let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
                                 if albumartist != "" {
                                     let albumID = "\(albumartist):\(song.album)"
@@ -567,7 +590,6 @@ public class MPDBrowse: BrowseProtocol {
 
                     _ = self.mpd.response_finish(connection)
 
-                    
                     // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
                     // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
                     if foundEmptyAlbum {
@@ -579,7 +601,7 @@ public class MPDBrowse: BrowseProtocol {
                         try self.mpd.search_commit(connection)
                         
                         while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
                                 let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
                                 if albumartist != "" {
                                     let albumID = "\(albumartist):\(song.album)"
@@ -781,10 +803,10 @@ public class MPDBrowse: BrowseProtocol {
                         let tag = self.mpd.tag_name_parse(tagName)
                         
                         if [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST, MPD_TAG_PERFORMER, MPD_TAG_COMPOSER].contains(tag) {
+                            title = value
                             if title != "" {
                                 artists.append(Artist(id: title, type: type, source: .Local, name: title, sortName: sortTitle))
                             }
-                            title = value
                         }
                         else if [MPD_TAG_ARTIST_SORT, MPD_TAG_ALBUM_ARTIST_SORT].contains(tag) {
                             sortTitle = value
