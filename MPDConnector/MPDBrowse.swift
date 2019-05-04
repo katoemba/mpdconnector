@@ -1090,7 +1090,7 @@ public class MPDBrowse: BrowseProtocol {
                             switch self.mpd.entity_get_type(mpdEntity) {
                             case MPD_ENTITY_TYPE_SONG:
                                 if let mpdSong = self.mpd.entity_get_song(mpdEntity) {
-                                    if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                    if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
                                         folderContents.append(FolderContent.song(song))
                                     }
                                 }
