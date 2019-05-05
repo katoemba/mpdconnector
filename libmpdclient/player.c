@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -213,6 +213,28 @@ mpd_run_seek_id_float(struct mpd_connection *connection,
 {
 	return mpd_run_check(connection) &&
 		mpd_send_seek_id_float(connection, song_id, t) &&
+		mpd_response_finish(connection);
+}
+
+bool
+mpd_send_seek_current(struct mpd_connection *connection,
+		      float t, bool relative)
+{
+	char ts[32];
+	if (relative)
+		snprintf(ts, sizeof(ts), "%+.3f", t);
+	else
+		snprintf(ts, sizeof(ts), "%.3f", t);
+
+	return mpd_send_command(connection, "seekcur", ts, NULL);
+}
+
+bool
+mpd_run_seek_current(struct mpd_connection *connection,
+		     float t, bool relative)
+{
+	return mpd_run_check(connection) &&
+		mpd_send_seek_current(connection, t, relative) &&
 		mpd_response_finish(connection);
 }
 

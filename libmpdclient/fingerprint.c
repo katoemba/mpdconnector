@@ -13,6 +13,10 @@
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
 
+   - Neither the name of the Music Player Daemon nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -26,27 +30,51 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef LIBMPDCLIENT_RESOLVER_H
-#define LIBMPDCLIENT_RESOLVER_H
+#include <mpd/fingerprint.h>
+#include <mpd/send.h>
+#include <mpd/recv.h>
+#include <mpd/pair.h>
+#include <mpd/response.h>
+#include "run.h"
 
-#include <stddef.h>
+#include <string.h>
+#include <stdio.h>
 
-struct resolver;
+bool
+mpd_send_getfingerprint(struct mpd_connection *connection, const char *uri)
+{
+	return mpd_send_command(connection, "getfingerprint", uri, NULL);
+}
 
-struct resolver_address {
-	int family;
-	int protocol;
-	size_t addrlen;
-	const struct sockaddr *addr;
-};
+enum mpd_fingerprint_type
+mpd_parse_fingerprint_type(const char *name)
+{
+	if (strcmp(name, "chromaprint") == 0)
+		return MPD_FINGERPRINT_TYPE_CHROMAPRINT;
+	else
+		return MPD_FINGERPRINT_TYPE_UNKNOWN;
+}
 
-struct resolver *
-resolver_new(const char *host, unsigned port);
+const char *
+mpd_run_getfingerprint_chromaprint(struct mpd_connection *connection,
+				   const char *uri,
+				   char *buffer, size_t buffer_size)
+{
+	if (!mpd_run_check(connection) ||
+	    !mpd_send_getfingerprint(connection, uri))
+		return NULL;
 
-void
-resolver_free(struct resolver *resolver);
+	const char *result = NULL;
 
-const struct resolver_address *
-resolver_next(struct resolver *resolver);
+	struct mpd_pair *pair = mpd_recv_pair_named(connection, "chromaprint");
+	if (pair != NULL) {
+		snprintf(buffer, buffer_size, "%s", pair->value);
+		result = buffer;
+		mpd_return_pair(connection, pair);
+	}
 
-#endif
+	if (!mpd_response_finish(connection))
+		result = NULL;
+
+	return result;
+}

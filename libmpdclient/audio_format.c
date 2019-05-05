@@ -30,43 +30,54 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*! \file
- * \brief MPD client library
- *
- * Do not include this header directly.  Use mpd/client.h instead.
- */
+#include "iaf.h"
+#include <mpd/audio_format.h>
 
-#ifndef MPD_RESPONSE_H
-#define MPD_RESPONSE_H
+#include <stdlib.h>
+#include <string.h>
 
-#include <stdbool.h>
+void
+mpd_parse_audio_format(struct mpd_audio_format *audio_format, const char *p)
+{
+	char *endptr;
 
-struct mpd_connection;
+	if (strncmp(p, "dsd", 3) == 0) {
+		/* allow format specifications such as "dsd64" which
+		   implies the sample rate */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+		unsigned long dsd = strtoul(p + 3, &endptr, 10);
+		if (endptr > p + 3 && *endptr == ':' &&
+		    dsd >= 32 && dsd <= 4096 && dsd % 2 == 0) {
+			audio_format->sample_rate = (uint32_t)dsd * 44100 / 8;
+			audio_format->bits = MPD_SAMPLE_FORMAT_DSD;
 
-/**
- * Finishes the response and checks if the command was successful.  If
- * there are data pairs left, they are discarded.
- *
- * @return true on success, false on error
- */
-bool
-mpd_response_finish(struct mpd_connection *connection);
+			p = endptr + 1;
+			audio_format->channels = strtoul(p, NULL, 10);
+			return;
+		}
+	}
 
-/**
- * Finishes the response of the current list command.  If there are
- * data pairs left, they are discarded.
- *
- * @return true on success, false on error
- */
-bool
-mpd_response_next(struct mpd_connection *connection);
+	audio_format->sample_rate = (uint32_t)strtoul(p, &endptr, 10);
+	if (*endptr == ':') {
+		p = endptr + 1;
 
-#ifdef __cplusplus
+		if (p[0] == 'f' && p[1] == ':') {
+			audio_format->bits = MPD_SAMPLE_FORMAT_FLOAT;
+			p += 2;
+		} else if (p[0] == 'd' && p[1] == 's' &&
+			   p[2] == 'd' && p[3] == ':') {
+			audio_format->bits = MPD_SAMPLE_FORMAT_DSD;
+			p += 4;
+		} else {
+			audio_format->bits = strtoul(p, &endptr, 10);
+			p = *endptr == ':' ? endptr + 1 : NULL;
+		}
+
+		audio_format->channels = p != NULL
+			? strtoul(p, NULL, 10)
+			: 0;
+	} else {
+		audio_format->bits = 0;
+		audio_format->channels = 0;
+	}
 }
-#endif
-
-#endif

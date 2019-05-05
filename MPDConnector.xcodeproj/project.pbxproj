@@ -12,6 +12,13 @@
 		7B0C4A1FE1E4025BA52FF306 /* Pods_MPDConnector_tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62A245B138BF0F64B427F38B /* Pods_MPDConnector_tvOS.framework */; };
 		C53629DA21318B22004D5C1C /* kvlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C53629D421318B21004D5C1C /* kvlist.h */; };
 		C53629DB21318B22004D5C1C /* kvlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C53629D921318B22004D5C1C /* kvlist.c */; };
+		C54687C4227F274100BDCA18 /* cmount.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687BB227F274000BDCA18 /* cmount.c */; };
+		C54687C5227F274100BDCA18 /* mount.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687C0227F274100BDCA18 /* mount.c */; };
+		C54687C6227F274100BDCA18 /* iaf.h in Headers */ = {isa = PBXBuildFile; fileRef = C54687C1227F274100BDCA18 /* iaf.h */; };
+		C54687C7227F274100BDCA18 /* audio_format.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687C2227F274100BDCA18 /* audio_format.c */; };
+		C54687C8227F274100BDCA18 /* fingerprint.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687C3227F274100BDCA18 /* fingerprint.c */; };
+		C54687CB227F275400BDCA18 /* fingerprint.h in Headers */ = {isa = PBXBuildFile; fileRef = C54687C9227F275400BDCA18 /* fingerprint.h */; };
+		C54687CC227F275400BDCA18 /* mount.h in Headers */ = {isa = PBXBuildFile; fileRef = C54687CA227F275400BDCA18 /* mount.h */; };
 		C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
 		C546B0101F35FAF0003C5B7E /* async.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB51F35FAF0003C5B7E /* async.c */; };
 		C546B0111F35FAF0003C5B7E /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFB61F35FAF0003C5B7E /* buffer.h */; };
@@ -363,6 +370,13 @@
 		BA20A4973F3D35D38F4AECF2 /* Pods-MPDConnectorTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnectorTests.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests.release.xcconfig"; sourceTree = "<group>"; };
 		C53629D421318B21004D5C1C /* kvlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kvlist.h; sourceTree = "<group>"; };
 		C53629D921318B22004D5C1C /* kvlist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = kvlist.c; sourceTree = "<group>"; };
+		C54687BB227F274000BDCA18 /* cmount.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cmount.c; sourceTree = "<group>"; };
+		C54687C0227F274100BDCA18 /* mount.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mount.c; sourceTree = "<group>"; };
+		C54687C1227F274100BDCA18 /* iaf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iaf.h; sourceTree = "<group>"; };
+		C54687C2227F274100BDCA18 /* audio_format.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = audio_format.c; sourceTree = "<group>"; };
+		C54687C3227F274100BDCA18 /* fingerprint.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fingerprint.c; sourceTree = "<group>"; };
+		C54687C9227F275400BDCA18 /* fingerprint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fingerprint.h; sourceTree = "<group>"; };
+		C54687CA227F275400BDCA18 /* mount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mount.h; sourceTree = "<group>"; };
 		C546AF3C1F35A824003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDPlayer.swift; sourceTree = "<group>"; };
 		C546AFB51F35FAF0003C5B7E /* async.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = async.c; sourceTree = "<group>"; };
@@ -586,6 +600,11 @@
 			children = (
 				C546AF3D1F35A824003C5B7E /* Products */,
 				C546AFD01F35FAF0003C5B7E /* mpd */,
+				C54687C2227F274100BDCA18 /* audio_format.c */,
+				C54687BB227F274000BDCA18 /* cmount.c */,
+				C54687C3227F274100BDCA18 /* fingerprint.c */,
+				C54687C1227F274100BDCA18 /* iaf.h */,
+				C54687C0227F274100BDCA18 /* mount.c */,
 				C546AFB51F35FAF0003C5B7E /* async.c */,
 				C546AFB61F35FAF0003C5B7E /* buffer.h */,
 				C546AFB71F35FAF0003C5B7E /* capabilities.c */,
@@ -651,6 +670,8 @@
 		C546AFD01F35FAF0003C5B7E /* mpd */ = {
 			isa = PBXGroup;
 			children = (
+				C54687C9227F275400BDCA18 /* fingerprint.h */,
+				C54687CA227F275400BDCA18 /* mount.h */,
 				C546AFD11F35FAF0003C5B7E /* async.h */,
 				C546AFD21F35FAF0003C5B7E /* audio_format.h */,
 				C546AFD31F35FAF0003C5B7E /* capabilities.h */,
@@ -782,6 +803,7 @@
 				C546B02F1F35FAF0003C5B7E /* compiler.h in Headers */,
 				C546B03D1F35FAF0003C5B7E /* player.h in Headers */,
 				C546B0671F35FAF0003C5B7E /* sync.h in Headers */,
+				C54687C6227F274100BDCA18 /* iaf.h in Headers */,
 				C546B0581F35FAF0003C5B7E /* resolver.h in Headers */,
 				C546B0351F35FAF0003C5B7E /* idle.h in Headers */,
 				C546B02C1F35FAF0003C5B7E /* audio_format.h in Headers */,
@@ -805,10 +827,12 @@
 				C546B0321F35FAF0003C5B7E /* directory.h in Headers */,
 				C546B0471F35FAF0003C5B7E /* song.h in Headers */,
 				C546B0481F35FAF0003C5B7E /* stats.h in Headers */,
+				C54687CB227F275400BDCA18 /* fingerprint.h in Headers */,
 				C546B0201F35FAF0003C5B7E /* iasync.h in Headers */,
 				C546B0301F35FAF0003C5B7E /* connection.h in Headers */,
 				C546B0341F35FAF0003C5B7E /* error.h in Headers */,
 				C546B03C1F35FAF0003C5B7E /* password.h in Headers */,
+				C54687CC227F275400BDCA18 /* mount.h in Headers */,
 				C546B0111F35FAF0003C5B7E /* buffer.h in Headers */,
 				C546B0241F35FAF0003C5B7E /* internal.h in Headers */,
 				C546B04A1F35FAF0003C5B7E /* sticker.h in Headers */,
@@ -1254,6 +1278,7 @@
 				C546B0291F35FAF0003C5B7E /* message.c in Sources */,
 				C546B0181F35FAF0003C5B7E /* cstatus.c in Sources */,
 				C546B0621F35FAF0003C5B7E /* song.c in Sources */,
+				C54687C8227F274100BDCA18 /* fingerprint.c in Sources */,
 				C546B0141F35FAF0003C5B7E /* connection.c in Sources */,
 				C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */,
 				C546B02A1F35FAF0003C5B7E /* mixer.c in Sources */,
@@ -1292,6 +1317,7 @@
 				C546B0601F35FAF0003C5B7E /* socket.c in Sources */,
 				C546B01C1F35FAF0003C5B7E /* error.c in Sources */,
 				C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */,
+				C54687C7227F274100BDCA18 /* audio_format.c in Sources */,
 				C546B05F1F35FAF0003C5B7E /* settings.c in Sources */,
 				C546B0221F35FAF0003C5B7E /* ierror.c in Sources */,
 				C546B05E1F35FAF0003C5B7E /* send.c in Sources */,
@@ -1303,8 +1329,10 @@
 				C546B01A1F35FAF0003C5B7E /* directory.c in Sources */,
 				C546B0561F35FAF0003C5B7E /* recv.c in Sources */,
 				C546B0591F35FAF0003C5B7E /* response.c in Sources */,
+				C54687C5227F274100BDCA18 /* mount.c in Sources */,
 				C546B0631F35FAF0003C5B7E /* stats.c in Sources */,
 				C546B04D1F35FAF0003C5B7E /* output.c in Sources */,
+				C54687C4227F274100BDCA18 /* cmount.c in Sources */,
 				C546B04E1F35FAF0003C5B7E /* parser.c in Sources */,
 				C53629DB21318B22004D5C1C /* kvlist.c in Sources */,
 				C546B0131F35FAF0003C5B7E /* cmessage.c in Sources */,

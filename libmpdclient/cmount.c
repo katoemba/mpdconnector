@@ -26,42 +26,79 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <mpd/playlist.h>
+#include <mpd/mount.h>
+#include <mpd/send.h>
 #include <mpd/recv.h>
+#include <mpd/response.h>
 #include "internal.h"
+#include "run.h"
 
-#include <errno.h>
+#include <stddef.h>
 
-struct mpd_playlist *
-mpd_recv_playlist(struct mpd_connection *connection)
+bool
+mpd_send_list_mounts(struct mpd_connection *connection)
 {
-	struct mpd_pair *pair;
-	struct mpd_playlist *playlist;
+	return mpd_send_command(connection, "listmounts", NULL);
+}
 
-	pair = mpd_recv_pair_named(connection, "playlist");
+struct mpd_mount *
+mpd_recv_mount(struct mpd_connection *connection)
+{
+	struct mpd_mount *mount;
+	struct mpd_pair *pair;
+
+	pair = mpd_recv_pair_named(connection, "mount");
 	if (pair == NULL)
 		return NULL;
 
-	playlist = mpd_playlist_begin(pair);
+	mount = mpd_mount_begin(pair);
 	mpd_return_pair(connection, pair);
-	if (playlist == NULL) {
-		mpd_error_entity(&connection->error);
+	if (mount == NULL) {
+		mpd_error_code(&connection->error, MPD_ERROR_OOM);
 		return NULL;
 	}
 
 	while ((pair = mpd_recv_pair(connection)) != NULL &&
-	       mpd_playlist_feed(playlist, pair))
+	       mpd_mount_feed(mount, pair))
 		mpd_return_pair(connection, pair);
 
 	if (mpd_error_is_defined(&connection->error)) {
 		assert(pair == NULL);
 
-		mpd_playlist_free(playlist);
+		mpd_mount_free(mount);
 		return NULL;
 	}
 
-	/* unread this pair for the next mpd_recv_playlist() call */
 	mpd_enqueue_pair(connection, pair);
+	return mount;
+}
 
-	return playlist;
+bool
+mpd_send_mount(struct mpd_connection *connection,
+	       const char *uri, const char *storage)
+{
+	return mpd_send_command(connection, "mount", uri, storage, NULL);
+}
+
+bool
+mpd_run_mount(struct mpd_connection *connection,
+	      const char *uri, const char *storage)
+{
+	return mpd_run_check(connection) &&
+		mpd_send_mount(connection, uri, storage) &&
+		mpd_response_finish(connection);
+}
+
+bool
+mpd_send_unmount(struct mpd_connection *connection, const char *uri)
+{
+	return mpd_send_command(connection, "unmount", uri, NULL);
+}
+
+bool
+mpd_run_unmount(struct mpd_connection *connection, const char *uri)
+{
+	return mpd_run_check(connection) &&
+		mpd_send_unmount(connection, uri) &&
+		mpd_response_finish(connection);
 }

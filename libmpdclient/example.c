@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -276,6 +276,15 @@ int main(int argc, char ** argv) {
 
 		if (!mpd_run_send_message(conn, argv[2], argv[3]))
 			return handle_error(conn);
+	} else if (argc == 3 && strcmp(argv[1], "fingerprint") == 0) {
+		char buffer[8192];
+
+		const char *fingerprint = mpd_run_getfingerprint_chromaprint(conn, argv[2],
+									     buffer, sizeof(buffer));
+		if (fingerprint == NULL)
+			return handle_error(conn);
+
+		printf("%s\n", fingerprint);
 	}
 
 	mpd_connection_free(conn);

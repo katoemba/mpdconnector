@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -184,6 +184,24 @@ mpd_send_seek_id_float(struct mpd_connection *connection,
 bool
 mpd_run_seek_id_float(struct mpd_connection *connection,
 		      unsigned song_id, float t);
+
+/**
+ * Seeks the current song.
+ *
+ * @param connection the connection to MPD
+ * @param t the position within the song, in seconds
+ * @param relative true makes #t a relative to the current position
+ * @return true on success, false on error
+ *
+ * @since MPD 0.17, libmpdclient 2.15
+ */
+bool
+mpd_send_seek_current(struct mpd_connection *connection,
+		      float t, bool relative);
+
+bool
+mpd_run_seek_current(struct mpd_connection *connection,
+		     float t, bool relative);
 
 bool
 mpd_send_repeat(struct mpd_connection *connection, bool mode);

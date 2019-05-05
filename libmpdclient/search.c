@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -273,6 +273,33 @@ mpd_search_add_modified_since_constraint(struct mpd_connection *connection,
 }
 
 bool
+mpd_search_add_expression(struct mpd_connection *connection,
+			  const char *expression)
+{
+	assert(connection != NULL);
+	assert(expression != NULL);
+
+	char *arg = mpd_sanitize_arg(expression);
+	if (arg == NULL) {
+		mpd_error_code(&connection->error, MPD_ERROR_OOM);
+		return false;
+	}
+
+	const size_t add_length = 2 + strlen(arg) + 1;
+
+	char *dest = mpd_search_prepare_append(connection, add_length);
+	if (dest == NULL) {
+		free(arg);
+		return false;
+	}
+
+	sprintf(dest, " \"%s\"", arg);
+
+	free(arg);
+	return true;
+}
+
+bool
 mpd_search_add_group_tag(struct mpd_connection *connection,
 			 enum mpd_tag_type type)
 {
@@ -288,21 +315,29 @@ mpd_search_add_group_tag(struct mpd_connection *connection,
 }
 
 bool
-mpd_search_add_sort_tag(struct mpd_connection *connection,
-			enum mpd_tag_type type, bool reserved)
+mpd_search_add_sort_name(struct mpd_connection *connection,
+			 const char *name, bool descending)
 {
 	assert(connection != NULL);
-	assert(!reserved);
-
-	(void)reserved;
 
 	const size_t size = 64;
 	char *dest = mpd_search_prepare_append(connection, size);
 	if (dest == NULL)
 		return false;
 
-	snprintf(dest, size, " sort %s", mpd_tag_name(type));
+	snprintf(dest, size, " sort %s%s",
+		 descending ? "-" : "",
+		 name);
 	return true;
+}
+
+bool
+mpd_search_add_sort_tag(struct mpd_connection *connection,
+			enum mpd_tag_type type, bool descending)
+{
+	return mpd_search_add_sort_name(connection,
+					mpd_tag_name(type),
+					descending);
 }
 
 bool
@@ -366,4 +401,39 @@ mpd_recv_pair_tag(struct mpd_connection *connection, enum mpd_tag_type type)
 		return NULL;
 
 	return mpd_recv_pair_named(connection, name);
+}
+
+bool
+mpd_search_add_db_songs_to_playlist(struct mpd_connection *connection,
+				    const char *playlist_name)
+{
+	assert(connection != NULL);
+	assert(playlist_name != NULL);
+
+	if (mpd_error_is_defined(&connection->error))
+		return false;
+
+	if (connection->request) {
+		mpd_error_code(&connection->error, MPD_ERROR_STATE);
+		mpd_error_message(&connection->error,
+				  "search already in progress");
+		return false;
+	}
+
+	char *arg = mpd_sanitize_arg(playlist_name);
+	if (arg == NULL) {
+		mpd_error_code(&connection->error, MPD_ERROR_OOM);
+		return false;
+	}
+
+	const size_t len = 13 + strlen(arg) + 2;
+	connection->request = malloc(len);
+	if (connection->request == NULL) {
+		mpd_error_code(&connection->error, MPD_ERROR_OOM);
+		return false;
+	}
+
+	snprintf(connection->request, len, "searchaddpl \"%s\" ", arg);
+
+	return true;
 }

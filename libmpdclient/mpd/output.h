@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -115,6 +115,17 @@ mpd_output_get_plugin(const struct mpd_output *output);
 mpd_pure
 bool
 mpd_output_get_enabled(const struct mpd_output *output);
+
+/**
+ * Find an attribute with the given name and return its value.
+ *
+ * @return the attribute value or NULL if there is no such attributes
+ *
+ * @since libmpdclient 2.16, MPD 0.21
+ */
+mpd_pure
+const char *
+mpd_output_get_attribute(const struct mpd_output *output, const char *name);
 
 /**
  * Obtains the first attribute for this output.  This rewinds the

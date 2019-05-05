@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ struct mpd_settings {
  * Parses the password from the host specification in the form
  * "password@hostname".
  *
- * @param host a pointer to the "host" variable, which may be
+ * @param host_p a pointer to the "host" variable, which may be
  * modified by this function
  * @return an allocated password string, or NULL if there was no
  * password

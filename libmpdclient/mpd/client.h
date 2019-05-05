@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -51,10 +51,12 @@
 #include "database.h"
 #include "directory.h"
 #include "entity.h"
+#include "fingerprint.h"
 #include "idle.h"
 #include "list.h"
 #include "message.h"
 #include "mixer.h"
+#include "mount.h"
 #include "output.h"
 #include "pair.h"
 #include "password.h"

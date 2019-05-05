@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -141,6 +141,14 @@ mpd_output_get_enabled(const struct mpd_output *output)
 	assert(output != NULL);
 
 	return output->enabled;
+}
+
+const char *
+mpd_output_get_attribute(const struct mpd_output *output, const char *name)
+{
+	assert(output != NULL);
+
+	return mpd_kvlist_get(&output->attributes, name);
 }
 
 const struct mpd_pair *

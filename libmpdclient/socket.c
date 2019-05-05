@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,7 @@ mpd_socket_global_init(struct mpd_error_info *error)
  * Wait for the socket to become writable.
  */
 static int
-mpd_socket_wait(unsigned fd, struct timeval *tv)
+mpd_socket_wait_writable(unsigned fd, struct timeval *tv)
 {
 	fd_set fds;
 	int ret;
@@ -89,7 +89,7 @@ mpd_socket_wait(unsigned fd, struct timeval *tv)
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
 
-		ret = select(fd + 1, NULL, &fds, &fds, tv);
+		ret = select(fd + 1, NULL, &fds, NULL, tv);
 		if (ret > 0)
 			return 0;
 
@@ -109,7 +109,7 @@ mpd_socket_wait_connected(mpd_socket_t fd, struct timeval *tv)
 	int s_err = 0;
 	socklen_t s_err_size = sizeof(s_err);
 
-	ret = mpd_socket_wait(fd, tv);
+	ret = mpd_socket_wait_writable(fd, tv);
 	if (ret < 0)
 		return 0;
 

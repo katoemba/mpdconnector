@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,13 @@
 enum {
 	INTLEN = (sizeof(int) * CHAR_BIT + 1) / 3 + 1,
 	LONGLONGLEN = (sizeof(long long) * CHAR_BIT + 1) / 3 + 1,
+	FLOATLEN = LONGLONGLEN + 8,
 };
 
 static void
 format_range(char *buffer, size_t size, unsigned start, unsigned end)
 {
-	if (end == (unsigned)-1)
+	if (end == UINT_MAX)
 		/* the special value -1 means "open end" */
 		snprintf(buffer, size, "%u:", start);
 	else
@@ -167,7 +168,7 @@ bool
 mpd_send_float_command(struct mpd_connection *connection, const char *command,
 		       float arg)
 {
-	char arg_string[INTLEN];
+	char arg_string[FLOATLEN];
 
 	snprintf(arg_string, sizeof(arg_string), "%f", arg);
 	return mpd_send_command(connection, command, arg_string, NULL);
@@ -177,7 +178,7 @@ bool
 mpd_send_u_f_command(struct mpd_connection *connection, const char *command,
 		     unsigned arg1, float arg2)
 {
-	char arg1_string[INTLEN], arg2_string[INTLEN];
+	char arg1_string[INTLEN], arg2_string[FLOATLEN];
 
 	snprintf(arg1_string, sizeof(arg1_string), "%u", arg1);
 	snprintf(arg2_string, sizeof(arg2_string), "%.3f", arg2);
@@ -226,6 +227,18 @@ mpd_send_range_command(struct mpd_connection *connection, const char *command,
 
 	format_range(arg_string, sizeof(arg_string), arg1, arg2);
 	return mpd_send_command(connection, command, arg_string, NULL);
+}
+
+bool
+mpd_send_s_range_command(struct mpd_connection *connection,
+			 const char *command, const char *arg1,
+			 unsigned start, unsigned end)
+{
+	char range_string[INTLEN * 2 + 1];
+
+	format_range(range_string, sizeof(range_string), start, end);
+	return mpd_send_command(connection, command,
+				arg1, range_string, NULL);
 }
 
 bool

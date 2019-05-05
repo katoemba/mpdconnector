@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2017 The Music Player Daemon Project
+   (c) 2003-2018 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in so and binary forms, with or without
@@ -40,7 +40,7 @@ mpd_error_deinit(struct mpd_error_info *error)
 {
 	assert(error != NULL);
 
-	if (error->code != MPD_ERROR_SUCCESS && error->message != NULL)
+	if (error->code != MPD_ERROR_SUCCESS)
 		free(error->message);
 }
 
