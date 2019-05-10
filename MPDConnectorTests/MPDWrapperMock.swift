@@ -329,7 +329,6 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return songUri
     }
 
-    
     func song_get_duration(_ song: OpaquePointer!) -> UInt32 {
         registerCall("song_get_tag", ["song": "\(song!)"])
         return songDuration
@@ -338,6 +337,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func song_get_last_modified(_ song: OpaquePointer!) -> Date {
         registerCall("song_get_last_modified", ["song": "\(song!)"])
         return songLastModifiedDate
+    }
+
+    func song_get_audio_format(_ song: OpaquePointer!) -> (UInt32, UInt8, UInt8)? {
+        registerCall("status_get_audio_format", ["song": "\(song!)"])
+        return (samplerate, encoding, channels)
     }
 
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {

@@ -301,6 +301,29 @@ public class MPDHelper {
         song.sortAlbumArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST_SORT, 0)
         song.sortAlbum = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_SORT, 0)
         song.lastModified = mpd.song_get_last_modified(mpdSong)
+        if let audioFormat = mpd.song_get_audio_format(mpdSong) {
+            if audioFormat.0 > 0 {
+                song.quality.samplerate = "\(audioFormat.0/1000)kHz"
+            }
+            else {
+                song.quality.samplerate = "-"
+            }
+            
+            if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
+                song.quality.encoding = "FLOAT"
+            }
+            else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
+                song.quality.encoding = "DSD"
+            }
+            else if audioFormat.1 > 0 {
+                song.quality.encoding = "\(audioFormat.1)bit"
+            }
+            else {
+                song.quality.encoding = "???"
+            }
+            
+            song.quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
+        }
         
         // Get a sensible coverURI
         guard song.source == .Local else { return song }

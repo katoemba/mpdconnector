@@ -212,6 +212,14 @@ public class MPDWrapper: MPDProtocol {
         return dateFromMPDDate(mpd_song_get_last_modified(song))
     }
     
+    public func song_get_audio_format(_ song: OpaquePointer!) -> (UInt32, UInt8, UInt8)? {
+        if let audio_format = mpd_song_get_audio_format(song) {
+            return ((audio_format.pointee.sample_rate, audio_format.pointee.bits, audio_format.pointee.channels))
+        }
+        
+        return nil
+    }
+
     public func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         return mpd_send_list_queue_range_meta(connection, start, end)
     }

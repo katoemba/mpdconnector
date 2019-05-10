@@ -76,6 +76,7 @@ public protocol MPDProtocol {
     func song_get_duration(_ song: OpaquePointer!) -> UInt32
     func song_get_uri(_ song: OpaquePointer!) -> String
     func song_get_last_modified(_ song: OpaquePointer!) -> Date
+    func song_get_audio_format(_ song: OpaquePointer!) -> (UInt32, UInt8, UInt8)?
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool
     func recv_song(_ connection: OpaquePointer!) -> OpaquePointer!
     func response_finish(_ connection: OpaquePointer!) -> Bool
