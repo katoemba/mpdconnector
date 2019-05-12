@@ -97,7 +97,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
             _artistsSubject.onNext(_artists)
         }
         else if filters.count > 0 {
-            var genre = nil as String?
+            var genre = nil as Genre?
             if let genreIndex = filters.firstIndex(where: { (filter) -> Bool in
                 if case .genre(_) = filter {
                     return true
@@ -116,7 +116,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         }
     }
     
-    private func reload(genre: String? = nil, type: ArtistType) {
+    private func reload(genre: Genre? = nil, type: ArtistType) {
         // Get rid of old disposables
         bag = DisposeBag()
         

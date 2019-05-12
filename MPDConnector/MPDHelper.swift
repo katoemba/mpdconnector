@@ -214,7 +214,7 @@ public class MPDHelper {
         }
         
         var song = Song()
-        
+
         song.id = mpd.song_get_uri(mpdSong)
         if song.id.starts(with: "spotify:") {
             song.source = .Spotify

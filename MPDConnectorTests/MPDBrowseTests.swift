@@ -116,11 +116,11 @@ class MPDBrowseTests: XCTestCase {
             XCTAssert(false, "songsByArtist failed")
         }
 
-        self.mpdWrapper.assertCall("search_db_songs", expectedCallCount: 2, expectedParameters: ["exact": "\(true)"])
-        self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 0, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM)", "value": "*"])
+        self.mpdWrapper.assertCall("search_db_songs", expectedCallCount: 3, expectedParameters: ["exact": "\(true)"])
+        self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM)", "value": "*"])
         self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ARTIST)", "value": "art1"])
         self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM_ARTIST)", "value": "art1"])
-        self.mpdWrapper.assertCall("search_commit", expectedCallCount: 2)
+        self.mpdWrapper.assertCall("search_commit", expectedCallCount: 3)
         self.mpdWrapper.assertCall("connection_free")
 
         let songCount = self.mpdWrapper.callCount("recv_song")
@@ -153,11 +153,11 @@ class MPDBrowseTests: XCTestCase {
             XCTAssert(false, "albumsByArtist failed")
         }
         
-        self.mpdWrapper.assertCall("search_db_songs", expectedCallCount: 2, expectedParameters: ["exact": "\(true)"])
-        self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 0, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM)", "value": "*"])
+        self.mpdWrapper.assertCall("search_db_songs", expectedCallCount: 3, expectedParameters: ["exact": "\(true)"])
+        self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM)", "value": "*"])
         self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ARTIST)", "value": "art1"])
         self.mpdWrapper.assertCall("search_add_tag_constraint", expectedCallCount: 1, expectedParameters: ["tagType": "\(MPD_TAG_ALBUM_ARTIST)", "value": "art1"])
-        self.mpdWrapper.assertCall("search_commit", expectedCallCount: 2)
+        self.mpdWrapper.assertCall("search_commit", expectedCallCount: 3)
         self.mpdWrapper.assertCall("connection_free")
 
         let songCount = self.mpdWrapper.callCount("recv_song")
@@ -285,6 +285,7 @@ class MPDBrowseTests: XCTestCase {
         mpdWrapper.playlists = [["id": "id1", "name": "name1"]]
         mpdWrapper.directories = [["path": "/abc/def"],
                                   ["path": "/abc/hij"]]
+        mpdWrapper.songDuration = 10
         
         let browseViewModel = mpdPlayer?.browse.folderContentsBrowseViewModel(Folder.init(id: "FolderID", source: .Local, path: "FolderPath", name: "FolderName"))
         browseViewModel!.load()

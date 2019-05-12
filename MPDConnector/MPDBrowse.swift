@@ -416,7 +416,7 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
 
-    func fetchAlbums(genre: String?, sort: SortType) -> Observable<[Album]> {
+    func fetchAlbums(genre: Genre?, sort: SortType) -> Observable<[Album]> {
         let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
         if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.20.22") == .orderedAscending {
             return fetchAlbums_below_20_22(genre: genre, sort: sort)
@@ -427,7 +427,7 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     // This is the old-fashioned way of getting data, using a double group by.
-    func fetchAlbums_below_20_22(genre: String?, sort: SortType) -> Observable<[Album]> {
+    func fetchAlbums_below_20_22(genre: Genre?, sort: SortType) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
             .flatMap({ (mpdConnection) -> Observable<[Album]> in
@@ -438,8 +438,8 @@ public class MPDBrowse: BrowseProtocol {
                     var albums = [Album]()
                     
                     try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
-                    if let genre = genre, genre != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                    if let genre = genre, genre.id != "" {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
                     }
                     try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
                     if sort == .year || sort == .yearReverse {
@@ -477,8 +477,8 @@ public class MPDBrowse: BrowseProtocol {
                     // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
                     if foundEmptyAlbum {
                         try self.mpd.search_db_songs(connection, exact: true)
-                        if let genre = genre, genre != "" {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                        if let genre = genre, genre.id != "" {
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
                         }
                         try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
                         try self.mpd.search_commit(connection)
@@ -539,7 +539,7 @@ public class MPDBrowse: BrowseProtocol {
     
     // The grouping was changed in 0.20.22 and above. It works more consistently it seems,
     // but because of mpd bug https://github.com/MusicPlayerDaemon/MPD/issues/408 multiple group-by's are not possible
-    func fetchAlbums_20_22_and_above(genre: String?, sort: SortType) -> Observable<[Album]> {
+    func fetchAlbums_20_22_and_above(genre: Genre?, sort: SortType) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
             .flatMap({ (mpdConnection) -> Observable<[Album]> in
@@ -550,8 +550,8 @@ public class MPDBrowse: BrowseProtocol {
                     var albums = [Album]()
                     
                     try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
-                    if let genre = genre, genre != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                    if let genre = genre, genre.id != "" {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
                     }
                     try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
                     try self.mpd.search_commit(connection)
@@ -594,8 +594,8 @@ public class MPDBrowse: BrowseProtocol {
                     // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
                     if foundEmptyAlbum {
                         try self.mpd.search_db_songs(connection, exact: true)
-                        if let genre = genre, genre != "" {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                        if let genre = genre, genre.id != "" {
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
                         }
                         try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
                         try self.mpd.search_commit(connection)
@@ -756,7 +756,7 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Parameter genre: genre to filter on
     /// - Returns: an AlbumBrowseViewModel instance
-    public func albumBrowseViewModel(_ genre: String) -> AlbumBrowseViewModel {
+    public func albumBrowseViewModel(_ genre: Genre) -> AlbumBrowseViewModel {
         return MPDAlbumBrowseViewModel(browse: self, filters: [.genre(genre)])
     }
     
@@ -768,7 +768,7 @@ public class MPDBrowse: BrowseProtocol {
         return MPDAlbumBrowseViewModel(browse:self, albums: albums)
     }
 
-    public func fetchArtists(genre: String?, type: ArtistType) -> Observable<[Artist]> {
+    public func fetchArtists(genre: Genre?, type: ArtistType) -> Observable<[Artist]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
             .flatMap({ (mpdConnection) -> Observable<[Artist]> in
@@ -789,8 +789,8 @@ public class MPDBrowse: BrowseProtocol {
                     case .composer:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_COMPOSER)
                     }
-                    if let genre = genre, genre != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre)
+                    if let genre = genre, genre.id != "" {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
                     }
                     try self.mpd.search_commit(connection)
                     
@@ -846,7 +846,7 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Parameter genre: genre to filter on
     /// - Returns: an ArtistBrowseViewModel instance
-    public func artistBrowseViewModel(_ genre: String, type: ArtistType) -> ArtistBrowseViewModel {
+    public func artistBrowseViewModel(_ genre: Genre, type: ArtistType) -> ArtistBrowseViewModel {
         return MPDArtistBrowseViewModel(browse: self, filters: [.genre(genre), .type(type)])
     }
     

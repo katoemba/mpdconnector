@@ -58,7 +58,7 @@ class MPDControlTests: XCTestCase {
     
     func testSetValidVolumeSentToMPD() {
         testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setVolume(volume: 0.6)
+            self.mpdPlayer?.control.setVolume(0.6)
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(60)"])
@@ -69,7 +69,7 @@ class MPDControlTests: XCTestCase {
 
     func testSetInvalidVolumeNotSentToMPD() {
         testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setVolume(volume: -10.0)
+            self.mpdPlayer?.control.setVolume(-10.0)
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
@@ -77,7 +77,7 @@ class MPDControlTests: XCTestCase {
         
         testScheduler.scheduleAt(150) {
             self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.setVolume(volume: 1.1)
+            self.mpdPlayer?.control.setVolume(1.1)
         }
         testScheduler.scheduleAt(200) {
             self.mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
@@ -225,7 +225,7 @@ class MPDControlTests: XCTestCase {
     }
     
     func testRepeatOffSentToMPD() {
-        self.mpdPlayer?.control.setRepeat(repeatMode: .Off)
+        self.mpdPlayer?.control.setRepeat(.Off)
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(false)"])
                 self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
@@ -234,7 +234,7 @@ class MPDControlTests: XCTestCase {
     }
     
     func testRepeatSingleSentToMPD() {
-        self.mpdPlayer?.control.setRepeat(repeatMode: .Single)
+        self.mpdPlayer?.control.setRepeat(.Single)
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
                 self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(true)"])
@@ -243,7 +243,7 @@ class MPDControlTests: XCTestCase {
     }
     
     func testRepeatAllSentToMPD() {
-        self.mpdPlayer?.control.setRepeat(repeatMode: .All)
+        self.mpdPlayer?.control.setRepeat(.All)
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
                 self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
@@ -252,7 +252,7 @@ class MPDControlTests: XCTestCase {
     }
     
     func testRepeatAlbumSentToMPD() {
-        self.mpdPlayer?.control.setRepeat(repeatMode: .Album)
+        self.mpdPlayer?.control.setRepeat(.Album)
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_repeat", expectedParameters: ["mode": "\(true)"])
                 self.mpdWrapper.assertCall("run_single", expectedParameters: ["mode": "\(false)"])
@@ -296,12 +296,12 @@ class MPDControlTests: XCTestCase {
     }
     
     func testRandomOnOffSentToMPD() {
-        self.mpdPlayer?.control.setRandom(randomMode: .On)
+        self.mpdPlayer?.control.setRandom(.On)
             .flatMap({ (_) -> Observable<PlayerStatus> in
                 self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(true)"])
 
                 self.mpdWrapper.clearAllCalls()
-                return self.mpdPlayer!.control.setRandom(randomMode: .Off)
+                return self.mpdPlayer!.control.setRandom(.Off)
             })
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_random", expectedParameters: ["mode": "\(false)"])
@@ -334,14 +334,14 @@ class MPDControlTests: XCTestCase {
     
     func testConsumeOnOffSentToMPD() {
         testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setConsume(consumeMode: .On)
+            self.mpdPlayer?.control.setConsume(.On)
         }
         testScheduler.scheduleAt(100) {
             self.mpdWrapper.assertCall("run_consume", expectedParameters: ["mode": "\(true)"])
         }
         testScheduler.scheduleAt(150) {
             self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.setConsume(consumeMode: .Off)
+            self.mpdPlayer?.control.setConsume(.Off)
         }
         testScheduler.scheduleAt(200) {
             self.mpdWrapper.assertCall("run_consume", expectedParameters: ["mode": "\(false)"])
@@ -383,7 +383,7 @@ class MPDControlTests: XCTestCase {
         var song = Song()
         song.title = "Title"
         song.id = "1"
-        self.mpdPlayer?.control.addSong(song, addMode: .replace)
+        self.mpdPlayer?.control.add(song, addDetails: AddDetails(.replace))
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_clear")
                 self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "0"])
@@ -400,7 +400,7 @@ class MPDControlTests: XCTestCase {
             song.id = "\(i)"
             songs.append(song)
         }
-        self.mpdPlayer?.control.addSongs(songs, addMode: .replace)
+        self.mpdPlayer?.control.add(songs, addDetails: AddDetails(.replace))
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_clear")
                 self.mpdWrapper.assertCall("command_list_begin", expectedCallCount: 2, expectedParameters: ["discrete_ok": "false"])
@@ -422,7 +422,7 @@ class MPDControlTests: XCTestCase {
         var song = Song()
         song.title = "Title"
         song.id = "1"
-        self.mpdPlayer?.control.addSong(song, addMode: .addNext)
+        self.mpdPlayer?.control.add(song, addDetails: AddDetails(.addNext))
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
                 self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
@@ -442,7 +442,7 @@ class MPDControlTests: XCTestCase {
         var song = Song()
         song.title = "Title"
         song.id = "1"
-        self.mpdPlayer?.control.addSong(song, addMode: .addAtEnd)
+        self.mpdPlayer?.control.add(song, addDetails: AddDetails(.addAtEnd))
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
                 self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "10"])
@@ -462,7 +462,7 @@ class MPDControlTests: XCTestCase {
         var song = Song()
         song.title = "Title"
         song.id = "1"
-        self.mpdPlayer?.control.addSong(song, addMode: .addNextAndPlay)
+        self.mpdPlayer?.control.add(song, addDetails: AddDetails(.addNextAndPlay))
             .subscribe(onNext: { (_) in
                 self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
                 self.mpdWrapper.assertCall("run_add_id_to", expectedParameters: ["uri": "1", "to": "5"])
@@ -544,8 +544,8 @@ class MPDControlTests: XCTestCase {
     func testAddPlaylist() {
         var playlist = Playlist()
         playlist.id = "plist"
-        _ = self.mpdPlayer?.control.addPlaylist(playlist, shuffle: false, startWithSong: 3)
-            .subscribe(onNext: { (_, _, _, _) in
+        _ = self.mpdPlayer?.control.add(playlist, addDetails: AddDetails(.replace, startWithSong: 3))
+            .subscribe(onNext: { (_, _) in
                 self.mpdWrapper.assertCall("run_clear", expectedCallCount: 1)
                 self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
                 self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 0)
@@ -557,8 +557,8 @@ class MPDControlTests: XCTestCase {
     func testAddShufflePlaylist() {
         var playlist = Playlist()
         playlist.id = "plist"
-        _ = self.mpdPlayer?.control.addPlaylist(playlist, shuffle: true, startWithSong: 0)
-            .subscribe(onNext: { (_, _, _, _) in
+        _ = self.mpdPlayer?.control.add(playlist, addDetails: AddDetails(.replace, shuffle: true))
+            .subscribe(onNext: { (_, _) in
                 self.mpdWrapper.assertCall("run_clear", expectedCallCount: 1)
                 self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
                 self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 1)
@@ -570,8 +570,8 @@ class MPDControlTests: XCTestCase {
     func testAppendPlaylist() {
         var playlist = Playlist()
         playlist.id = "plist"
-        _ = self.mpdPlayer?.control.addPlaylist(playlist, shuffle: false, startWithSong: 112)
-            .subscribe(onNext: { (_, _, _, _) in
+        _ = self.mpdPlayer?.control.add(playlist, addDetails: AddDetails(.replace, startWithSong: 112))
+            .subscribe(onNext: { (_, _) in
                 self.mpdWrapper.assertCall("run_clear", expectedCallCount: 0)
                 self.mpdWrapper.assertCall("run_load", expectedParameters: ["name": "plist"])
                 self.mpdWrapper.assertCall("run_shuffle", expectedCallCount: 0)
