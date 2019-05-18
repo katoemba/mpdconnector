@@ -163,7 +163,7 @@ public class MPDPlayer: PlayerProtocol {
         get {
             let mpdDBStatusObservable = (self.browse as! MPDBrowse).databaseStatus()
             let reloadingObservable = Observable<Int>
-                .interval(RxTimeInterval(2), scheduler: MainScheduler.instance)
+                .interval(RxTimeInterval.seconds(2), scheduler: MainScheduler.instance)
                 .flatMap( { _ in
                     mpdDBStatusObservable
                 })

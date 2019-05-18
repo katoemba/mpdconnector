@@ -30,7 +30,7 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
-    private var _playlists = Variable<[Playlist]>([])
+    private var _playlists = BehaviorRelay<[Playlist]>(value: [])
     public var playlistsObservable: Observable<[Playlist]> {
         get {
             return _playlists.asObservable()
@@ -60,7 +60,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         if _providedPlaylists.count > 0 {
             loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
-            _playlists.value = _providedPlaylists
+            _playlists.accept(_providedPlaylists)
         }
         else {
             reload()
@@ -72,7 +72,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         bag = DisposeBag()
         
         // Clear the contents
-        _playlists.value = []
+        _playlists.accept([])
         loadProgress.accept(.loading)
 
         // Load new contents
@@ -84,9 +84,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         
         playlistsObservable
             .observeOn(MainScheduler.instance)
-            .subscribe(onNext: { (foundPlaylists) in
-                playlists.value = foundPlaylists
-            })
+            .bind(to: playlists)
             .disposed(by: bag)
         
         playlistsObservable
@@ -121,7 +119,14 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         if let index = _playlists.value.firstIndex(of: playlist), _playlists.value.contains(renamedPlaylist) == false {
             _browse.renamePlaylist(playlist, newName: to)
             
-            _playlists.value[index] = renamedPlaylist
+            _playlists.take(1)
+                .map { (playlists) -> [Playlist] in
+                    var updatedPlaylists = playlists
+                    updatedPlaylists[index] = renamedPlaylist
+                    return updatedPlaylists
+                }
+                .bind(to: _playlists)
+                .disposed(by: bag)
             return renamedPlaylist
         }
         
@@ -132,7 +137,14 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         if let index = _playlists.value.firstIndex(of: playlist) {
             _browse.deletePlaylist(playlist)
             
-            _playlists.value.remove(at: index)
+            _playlists.take(1)
+                .map { (playlists) -> [Playlist] in
+                    var updatedPlaylists = playlists
+                    updatedPlaylists.remove(at: index)
+                    return updatedPlaylists
+                }
+                .bind(to: _playlists)
+                .disposed(by: bag)
         }
     }
 }

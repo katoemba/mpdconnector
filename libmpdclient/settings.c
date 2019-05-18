@@ -45,7 +45,7 @@ struct mpd_settings {
  * Parses the password from the host specification in the form
  * "password@hostname".
  *
- * @param host_p a pointer to the "host" variable, which may be
+ * @param host a pointer to the "host" variable, which may be
  * modified by this function
  * @return an allocated password string, or NULL if there was no
  * password

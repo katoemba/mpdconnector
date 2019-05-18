@@ -121,7 +121,7 @@ public class MPDStatus: StatusProtocol {
     
     private func startMonitoring() {
         let timerObservable = Observable<Int>
-            .timer(RxTimeInterval(1.0), period: RxTimeInterval(1.0), scheduler: elapsedTimeScheduler)
+            .timer(RxTimeInterval.seconds(1), period: RxTimeInterval.seconds(1), scheduler: elapsedTimeScheduler)
             .map({ [weak self] (_) -> PlayerStatus? in
                 if let weakSelf = self {
                     if weakSelf._playerStatus.value.playing.playPauseMode == .Playing {
