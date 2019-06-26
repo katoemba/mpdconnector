@@ -129,7 +129,10 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
                     // If songs have track numbers, sort them by track number. Otherwise pass untouched.
                     if songs.count > 0, songs[0].track > 0 {
                         return songs.sorted(by: { (lsong, rsong) -> Bool in
-                            lsong.track < rsong.track
+                            if lsong.disc != rsong.disc {
+                                return lsong.disc < rsong.disc
+                            }
+                            return lsong.track < rsong.track
                         })
                     }
                     return songs
