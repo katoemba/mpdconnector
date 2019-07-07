@@ -128,14 +128,13 @@ public class MPDBrowse: BrowseProtocol {
                                 songs.append(song)
                             }
                             else if (tagType == MPD_TAG_ALBUM) {
-                                var album = Album(id: "\(song.albumartist):\(song.album)", source: .Local, location: "", title: song.album, artist: song.albumartist, year: song.year, genre: song.genre, length: 0)
-                                album.coverURI = song.coverURI
+                                let album = createAlbumFromSong(song)
                                 if albums.contains(album) == false {
                                     albums.append(album)
                                 }
                             }
                             else if (tagType == MPD_TAG_ARTIST) {
-                                let artist = Artist(id: song.artist, source: .Local, name: song.artist)
+                                let artist = createArtistFromSong(song)
                                 if artists.contains(artist) == false {
                                     artists.append(artist)
                                 }
@@ -321,7 +320,24 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     private func createArtistFromSong(_ song: Song) -> Artist {
-        return Artist(id: song.artist, source: song.source, name: song.artist)
+        var artist = Artist(id: song.artist, source: song.source, name: song.artist)
+        if case let .filenameOptionsURI(baseUri, path, possibleFilenames) = song.coverURI {
+            let baseUriComponents = baseUri.components(separatedBy: "/")
+            var newBaseUri = ""
+            for idx in 0..<baseUriComponents.count - 2 {
+                newBaseUri.append(baseUriComponents[idx] + "/")
+            }
+
+            let pathComponents = path.components(separatedBy: "/")
+            var newPath = ""
+            for idx in 0..<pathComponents.count - 2 {
+                newPath.append(pathComponents[idx] + "/")
+            }
+
+            artist.coverURI = CoverURI.filenameOptionsURI(newBaseUri, newPath, possibleFilenames)
+        }
+        
+        return artist
     }
     
     private func createAlbumFromSong(_ song: Song) -> Album {
@@ -730,6 +746,47 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
 
+    public func completeArtists(_ artists: [Artist]) -> Observable<[Artist]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[Artist]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+                
+                var completeArtists = [Artist]()
+                for artist in artists {
+                    var song : Song?
+                    
+                    do {
+                        try self.mpd.search_db_songs(connection, exact: true)
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist.name)
+                        try self.mpd.search_commit(connection)
+                        
+                        if let mpdSong = self.mpd.recv_song(connection) {
+                            song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong)
+                            self.mpd.song_free(mpdSong)
+                        }
+                    }
+                    catch {
+                        print(self.mpd.connection_get_error_message(connection))
+                        _ = self.mpd.connection_clear_error(connection)
+                    }
+                    
+                    // Cleanup
+                    _ = self.mpd.response_finish(connection)
+                    
+                    if song != nil {
+                        completeArtists.append(self.createArtistFromSong(song!))
+                    }
+                    else {
+                        completeArtists.append(artist)
+                    }
+                }
+                
+                return Observable.just(completeArtists)
+            })
+            .observeOn(MainScheduler.instance)
+    }
+    
     /// Return a view model for a sectioned list of albums.
     ///
     /// - Returns: an AlbumSectionBrowseViewModel instance

@@ -50,8 +50,8 @@ public class MPDAlbumSectionBrowseViewModel: AlbumSectionBrowseViewModel {
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
     
-    private var albumSectionsSubject = BehaviorSubject<AlbumSections>(value: MPDAlbumSections([], browse: nil))
-    public var albumSectionsObservable: Observable<AlbumSections> {
+    private var albumSectionsSubject = ReplaySubject<ObjectSections<Album>>.create(bufferSize: 1)
+    public var albumSectionsObservable: Observable<ObjectSections<Album>> {
         return albumSectionsSubject.asObservable()
     }
     
@@ -113,11 +113,13 @@ public class MPDAlbumSectionBrowseViewModel: AlbumSectionBrowseViewModel {
                     (key, dict[key]!)
                 })
             })
-            .map({ (sectionDictionary) -> MPDAlbumSections in
-                MPDAlbumSections(sectionDictionary, browse: browse)
+            .map({ (sectionDictionary) -> ObjectSections<Album> in
+                ObjectSections<Album>(sectionDictionary, completeObjects: { (albums) -> Observable<[Album]> in
+                    browse.completeAlbums(albums)
+                })
             })
-            .subscribe(onNext: { [weak self] (albumSections) in
-                self?.albumSectionsSubject.onNext(albumSections)
+            .subscribe(onNext: { [weak self] (objectSections) in
+                self?.albumSectionsSubject.onNext(objectSections)
             })
             .disposed(by: bag)
         

@@ -30,19 +30,13 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
-    private var _artistsSubject = PublishSubject<[Artist]>()
-    public var artistsObservable: Observable<[Artist]> {
-        get {
-            return _artistsSubject.asObservable()
-        }
-    }
     private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
     public var loadProgressObservable: Observable<LoadProgress> {
         get {
             return loadProgress.asObservable()
         }
     }
-
+    
     private var _filters: [BrowseFilter]
     public var filters: [BrowseFilter] {
         get {
@@ -52,13 +46,18 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
-    private let _artists: [Artist]
+    
+    private var artistSectionsSubject = ReplaySubject<ObjectSections<Artist>>.create(bufferSize: 1)
+    public var artistSectionsObservable: Observable<ObjectSections<Artist>> {
+        return artistSectionsSubject.asObservable()
+    }
+    private var _artists: [Artist]? = nil
     
     public var artistType: ArtistType {
         get {
             var type = ArtistType.artist
-            if _artists.count > 0 {
-                return _artists[0].type
+            if let artists = _artists, artists.count > 0 {
+                return artists[0].type
             }
 
             if let typeIndex = filters.firstIndex(where: { (filter) -> Bool in
@@ -76,88 +75,104 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     }
     
     deinit {
-        print("Cleanup MPDArtistBrowseViewModel")
+        print("Cleanup MPDArtistSectionBrowseViewModel")
     }
     
-    public required init(browse: MPDBrowse, artists: [Artist] = [], filters: [BrowseFilter] = []) {
+    init(browse: MPDBrowse, filters: [BrowseFilter] = [], artists: [Artist]? = nil) {
         _browse = browse
-        _artists = artists
         _filters = filters
+        _artists = artists
     }
     
     public func load(filters: [BrowseFilter]) {
         _filters = filters
         load()
     }
-
+    
     public func load() {
-        if _artists.count > 0 {
-            loadProgress.accept(.allDataLoaded)
-            bag = DisposeBag()
-            _artistsSubject.onNext(_artists)
-        }
-        else if filters.count > 0 {
-            var genre = nil as Genre?
-            if let genreIndex = filters.firstIndex(where: { (filter) -> Bool in
-                if case .genre(_) = filter {
-                    return true
-                }
-                return false
-            }) {
-                if case let .genre(localGenre) = filters[genreIndex] {
-                    genre = localGenre
-                }
-            }
-            
-            reload(genre: genre, type: self.artistType)
-        }
-        else {
-            reload(type: .artist)
-        }
+        reload(type: artistType)
     }
     
-    private func reload(genre: Genre? = nil, type: ArtistType) {
+    private func reload(type: ArtistType) {
         // Get rid of old disposables
         bag = DisposeBag()
         
         // Clear the contents
-        _artistsSubject.onNext([])
         loadProgress.accept(.loading)
-
+        
         // Load new contents
         let browse = _browse
-        let artistsSubject = self._artistsSubject
-        let artistsObservable = browse.fetchArtists(genre: genre, type: type)
-            .observeOn(MainScheduler.instance)
-            .share(replay: 1)
-    
-        artistsObservable
-            .subscribe(onNext: { (artists) in
-                artistsSubject.onNext(artists)
+        var artistObservable: Observable<[Artist]>
+        var multiSection: Bool
+        
+        if let artists = _artists {
+            multiSection = false
+            artistObservable = Observable.just(artists)
+        }
+        else {
+            multiSection = true
+            artistObservable = browse.fetchArtists(genre: nil, type: type)
+                .observeOn(MainScheduler.instance)
+                .share(replay: 1)
+        }
+        
+        artistObservable
+            .filter({ (artists) -> Bool in
+                artists.count > 0
+            })
+            .map({ (artists) -> [(String, [Artist])] in
+                guard multiSection == true else {
+                    return [("", artists)]
+                }
+                
+                let dict = Dictionary(grouping: artists, by: { artist -> String in
+                    var firstLetter: String
+                    
+                    firstLetter = String(artist.sortName.prefix(1)).uppercased()
+                    if "ABCDEFGHIJKLMNOPQRSTUVWXYZ".contains(firstLetter) == false {
+                        firstLetter = "•"
+                    }
+                    return firstLetter
+                })
+                
+                // Create an ordered array of LibraryItemsSections from the dictionary
+                return dict.keys
+                    .sorted()
+                    .map({ (key) -> (String, [Artist]) in
+                        (key, dict[key]!)
+                    })
+            })
+            .map({ (sectionDictionary) -> ObjectSections<Artist> in
+                ObjectSections<Artist>(sectionDictionary, completeObjects: { (artists) -> Observable<[Artist]> in
+                    if type == .artist || type == .albumArtist {
+                        return browse.completeArtists(artists)
+                    }
+                    return Observable.just(artists)
+                })
+            })
+            .subscribe(onNext: { [weak self] (objectSections) in
+                self?.artistSectionsSubject.onNext(objectSections)
             })
             .disposed(by: bag)
         
-        artistsObservable
-            .filter({ (itemsFound) -> Bool in
-                itemsFound.count > 0
+        artistObservable
+            .filter { (artists) -> Bool in
+                artists.count == 0
+            }
+            .map { (_) -> LoadProgress in
+                .noDataFound
+            }
+            .bind(to: loadProgress)
+            .disposed(by: bag)
+        
+        artistObservable
+            .filter({ (artists) -> Bool in
+                artists.count > 0
             })
             .map { (_) -> LoadProgress in
                 .allDataLoaded
             }
             .bind(to: loadProgress)
             .disposed(by: bag)
-
-        artistsObservable
-            .filter({ (itemsFound) -> Bool in
-                itemsFound.count == 0
-            })
-            .map { (_) -> LoadProgress in
-                .noDataFound
-            }
-            .bind(to: loadProgress)
-            .disposed(by: bag)
-    }
-    
-    public func extend() {
     }
 }
