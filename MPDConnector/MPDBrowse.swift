@@ -434,7 +434,10 @@ public class MPDBrowse: BrowseProtocol {
 
     func fetchAlbums(genre: Genre?, sort: SortType) -> Observable<[Album]> {
         let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
-        if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.20.22") == .orderedAscending {
+        if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.21.10") == .orderedDescending {
+            return fetchAlbums_21_11_and_above(genre: genre, sort: sort)
+        }
+        else if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.20.22") == .orderedAscending {
             return fetchAlbums_below_20_22(genre: genre, sort: sort)
         }
         else {
@@ -670,6 +673,128 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
     
+    // Multiple grouping returns in 0.21.11 and now works consistently.
+    func fetchAlbums_21_11_and_above(genre: Genre?, sort: SortType) -> Observable<[Album]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[Album]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+                
+                do {
+                    var foundEmptyAlbum = false
+                    var albums = [Album]()
+                    
+                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
+                    if let genre = genre, genre.id != "" {
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
+                    }
+                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
+                    if sort == .year || sort == .yearReverse {
+                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_DATE)
+                    }
+                    try self.mpd.search_commit(connection)
+                    
+                    var albumIDs = [String: Int]()
+                    
+                    var albumArtist = ""
+                    var year = 0
+                    while let result = self.mpd.recv_pair(connection) {
+                        let tagName = result.0
+                        let value = result.1
+                        let tag = self.mpd.tag_name_parse(tagName)
+                        
+                        if value != "" {
+                            if tag == MPD_TAG_DATE {
+                                year = Int(String(value.prefix(4))) ?? 0
+                            }
+                            else if tag == MPD_TAG_ALBUM_ARTIST {
+                                albumArtist = value
+                            }
+                            else if tag == MPD_TAG_ALBUM {
+                                let title = value
+                                let albumID = "\(albumArtist):\(title)"
+                                // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
+                                if albumIDs[albumID] == nil {
+                                    albumIDs[albumID] = 1
+                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0)
+                                    albums.append(album)
+                                }
+                            }
+                            else {
+                                print("Unknown tagName \(tagName) tag \(tag)")
+                            }
+                        }
+                        else {
+                            foundEmptyAlbum = true
+                        }
+                    }
+                    
+                    _ = self.mpd.response_finish(connection)
+                    
+                    // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
+                    // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
+                    if foundEmptyAlbum {
+                        try self.mpd.search_db_songs(connection, exact: true)
+                        if let genre = genre, genre.id != "" {
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
+                        }
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
+                        try self.mpd.search_commit(connection)
+                        
+                        while let mpdSong = self.mpd.recv_song(connection) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
+                                let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
+                                if albumartist != "" {
+                                    let albumID = "\(albumartist):\(song.album)"
+                                    if albumIDs[albumID] == nil {
+                                        albumIDs[albumID] = 1
+                                        albums.append(self.createAlbumFromSong(song))
+                                    }
+                                }
+                            }
+                            self.mpd.song_free(mpdSong)
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    }
+                    
+                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
+                        if sort == .year || sort == .yearReverse {
+                            if lhs.year < rhs.year {
+                                return sort == .year
+                            }
+                            else if lhs.year > rhs.year {
+                                return sort == .yearReverse
+                            }
+                        }
+                        
+                        if sort == .artist {
+                            let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
+                            if artistCompare == .orderedAscending {
+                                return true
+                            }
+                            if artistCompare == .orderedDescending {
+                                return false
+                            }
+                        }
+                        
+                        let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)
+                        if albumCompare == .orderedAscending {
+                            return true
+                        }
+                        
+                        return false
+                    }))
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    
+                    return Observable.empty()
+                }
+            })
+            .observeOn(MainScheduler.instance)
+    }
+
     fileprivate func completeCoverURI(_ connection: OpaquePointer, _ coverURI: CoverURI) -> CoverURI {
         if case let .filenameOptionsURI(baseURI, path, filenames) = coverURI {
             var coverFiles = [String]()
