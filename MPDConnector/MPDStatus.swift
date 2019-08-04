@@ -291,6 +291,7 @@ public class MPDStatus: StatusProtocol {
                 
                 if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
                     song.position = playerStatus.playqueue.songIndex
+                    playerStatus.quality.filetype = song.quality.filetype
                     
                     if song.id.starts(with: "http://") {
                         song.location = song.id

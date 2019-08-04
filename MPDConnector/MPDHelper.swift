@@ -325,6 +325,15 @@ public class MPDHelper {
             song.quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
         }
         
+        let components = song.id.components(separatedBy: "/")
+        if components.count >= 1 {
+            let filename = components[components.count - 1]
+            let filecomponents = filename.components(separatedBy: ".")
+            if filecomponents.count >= 2 {
+                song.quality.filetype = filecomponents[filecomponents.count - 1]
+            }
+        }
+        
         // Get a sensible coverURI
         guard song.source == .Local else { return song }
         
