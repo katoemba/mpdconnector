@@ -311,7 +311,10 @@ public class MPDControl: ControlProtocol {
                             pos = pos + 1
                             index = index + 1
                         }
-                        _ = self.mpd.command_list_end(connection)
+                        
+                        if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
+                            _ = self.mpd.command_list_end(connection)
+                        }
                         _ = self.mpd.response_finish(connection)
                     }
                 }
