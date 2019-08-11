@@ -47,8 +47,8 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
     private var bag = DisposeBag()
     private let _browse: MPDBrowse
     
-    private var artistSectionsSubject = ReplaySubject<ObjectSections<Artist>>.create(bufferSize: 1)
-    public var artistSectionsObservable: Observable<ObjectSections<Artist>> {
+    private var artistSectionsSubject = ReplaySubject<ArtistSections>.create(bufferSize: 1)
+    public var artistSectionsObservable: Observable<ArtistSections> {
         return artistSectionsSubject.asObservable()
     }
     private var _artists: [Artist]? = nil
@@ -142,7 +142,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
                         (key, dict[key]!)
                     })
             })
-            .map({ (sectionDictionary) -> ObjectSections<Artist> in
+            .map({ (sectionDictionary) -> ArtistSections in
                 ObjectSections<Artist>(sectionDictionary, completeObjects: { (artists) -> Observable<[Artist]> in
                     if type == .artist || type == .albumArtist {
                         return browse.completeArtists(artists)
