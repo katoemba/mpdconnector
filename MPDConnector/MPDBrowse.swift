@@ -329,12 +329,14 @@ public class MPDBrowse: BrowseProtocol {
             }
 
             let pathComponents = path.components(separatedBy: "/")
-            var newPath = ""
-            for idx in 0..<pathComponents.count - 2 {
-                newPath.append(pathComponents[idx] + "/")
-            }
+            if pathComponents.count > 2 {
+                var newPath = ""
+                for idx in 0..<pathComponents.count - 2 {
+                    newPath.append(pathComponents[idx] + "/")
+                }
 
-            artist.coverURI = CoverURI.filenameOptionsURI(newBaseUri, newPath, possibleFilenames)
+                artist.coverURI = CoverURI.filenameOptionsURI(newBaseUri, newPath, possibleFilenames)
+            }
         }
         
         return artist
