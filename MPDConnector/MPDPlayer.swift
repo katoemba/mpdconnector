@@ -196,8 +196,9 @@ public class MPDPlayer: PlayerProtocol {
                                                                                                        loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.alternativeCoverHost.rawValue)!]),
                     PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
-                                                                                         ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () in
-                        (self.browse as! MPDBrowse).updateDB()
+                                                                                         ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () -> Observable<String> in
+                                                                                            (self.browse as! MPDBrowse).updateDB()
+                                                                                            return Observable.just("Update initiated")
                     })])]
         }
     }
