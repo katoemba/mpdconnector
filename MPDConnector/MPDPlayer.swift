@@ -111,6 +111,10 @@ public class MPDPlayer: PlayerProtocol {
         return _type.description + " " + _version
     }
     
+    public var supportedFunctions: [Functions] {
+        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums]
+    }
+    
     /// Current status
     private var mpdStatus: MPDStatus
     public var status: StatusProtocol {
