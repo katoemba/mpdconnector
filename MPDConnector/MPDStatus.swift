@@ -170,13 +170,12 @@ public class MPDStatus: StatusProtocol {
             return Disposables.create()
         }
         
-        Observable.of(timerObservable, changeStatusUpdateStream)
-            .merge()
+        Observable.merge(timerObservable, changeStatusUpdateStream)
             .subscribe(onNext: { [weak self] playerStatus in
                 guard let weakSelf = self, let playerStatus = playerStatus else {
                     return
                 }
-                
+
                 weakSelf._playerStatus.accept(playerStatus)
             })
             .disposed(by: bag)
