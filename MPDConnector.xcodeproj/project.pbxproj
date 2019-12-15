@@ -308,6 +308,12 @@
 		C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */; };
+		C5770B3723A02B900050EB1E /* readpicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C5770B3523A02B900050EB1E /* readpicture.h */; };
+		C5770B3823A02B900050EB1E /* readpicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C5770B3523A02B900050EB1E /* readpicture.h */; };
+		C5770B3923A02B900050EB1E /* readpicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C5770B3523A02B900050EB1E /* readpicture.h */; };
+		C5770B3A23A02B900050EB1E /* readpicture.c in Sources */ = {isa = PBXBuildFile; fileRef = C5770B3623A02B900050EB1E /* readpicture.c */; };
+		C5770B3B23A02B900050EB1E /* readpicture.c in Sources */ = {isa = PBXBuildFile; fileRef = C5770B3623A02B900050EB1E /* readpicture.c */; };
+		C5770B3C23A02B900050EB1E /* readpicture.c in Sources */ = {isa = PBXBuildFile; fileRef = C5770B3623A02B900050EB1E /* readpicture.c */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
 		C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */; };
 		C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */; };
@@ -315,6 +321,10 @@
 		C5C6830D21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C6830C21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift */; };
 		C5C9F7F82042B6B900D239A8 /* MPDArtistBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */; };
 		C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */; };
+		C5FE88F5239EF167002DD055 /* cneighbor.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F1239EF167002DD055 /* cneighbor.c */; };
+		C5FE88F6239EF167002DD055 /* cpartition.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F2239EF167002DD055 /* cpartition.c */; };
+		C5FE88F7239EF167002DD055 /* partition.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F3239EF167002DD055 /* partition.c */; };
+		C5FE88F8239EF167002DD055 /* neighbor.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F4239EF167002DD055 /* neighbor.c */; };
 		C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */; };
 		E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */; };
 /* End PBXBuildFile section */
@@ -438,7 +448,7 @@
 		C546AFEF1F35FAF0003C5B7E /* status.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = status.h; sourceTree = "<group>"; };
 		C546AFF01F35FAF0003C5B7E /* sticker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sticker.h; sourceTree = "<group>"; };
 		C546AFF11F35FAF0003C5B7E /* tag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tag.h; sourceTree = "<group>"; };
-		C546AFF21F35FAF0003C5B7E /* version.h.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = version.h.in; sourceTree = "<group>"; };
+		C546AFF21F35FAF0003C5B7E /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		C546AFF31F35FAF0003C5B7E /* output.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = output.c; sourceTree = "<group>"; };
 		C546AFF41F35FAF0003C5B7E /* parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = parser.c; sourceTree = "<group>"; };
 		C546AFF51F35FAF0003C5B7E /* password.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = password.c; sourceTree = "<group>"; };
@@ -492,6 +502,8 @@
 		C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDSongBrowseViewModel.swift; sourceTree = "<group>"; };
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDGenreBrowseViewModel.swift; sourceTree = "<group>"; };
+		C5770B3523A02B900050EB1E /* readpicture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = readpicture.h; sourceTree = "<group>"; };
+		C5770B3623A02B900050EB1E /* readpicture.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = readpicture.c; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControlTests.swift; sourceTree = "<group>"; };
 		C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDAlbumBrowseViewModel.swift; sourceTree = "<group>"; };
@@ -499,6 +511,13 @@
 		C5C6830C21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDAlbumSectionBrowseViewModel.swift; sourceTree = "<group>"; };
 		C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDArtistBrowseViewModel.swift; sourceTree = "<group>"; };
 		C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowse.swift; sourceTree = "<group>"; };
+		C5FE88EF239EF14A002DD055 /* partition.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = partition.h; sourceTree = "<group>"; };
+		C5FE88F0239EF14A002DD055 /* neighbor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = neighbor.h; sourceTree = "<group>"; };
+		C5FE88F1239EF167002DD055 /* cneighbor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cneighbor.c; sourceTree = "<group>"; };
+		C5FE88F2239EF167002DD055 /* cpartition.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpartition.c; sourceTree = "<group>"; };
+		C5FE88F3239EF167002DD055 /* partition.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = partition.c; sourceTree = "<group>"; };
+		C5FE88F4239EF167002DD055 /* neighbor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = neighbor.c; sourceTree = "<group>"; };
+		C5FE88F9239EF17C002DD055 /* binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = binary.h; sourceTree = "<group>"; };
 		C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDFolderBrowseViewModel.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
 		F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnector_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -597,6 +616,11 @@
 			children = (
 				C546AF3D1F35A824003C5B7E /* Products */,
 				C546AFD01F35FAF0003C5B7E /* mpd */,
+				C5FE88F9239EF17C002DD055 /* binary.h */,
+				C5FE88F1239EF167002DD055 /* cneighbor.c */,
+				C5FE88F2239EF167002DD055 /* cpartition.c */,
+				C5FE88F4239EF167002DD055 /* neighbor.c */,
+				C5FE88F3239EF167002DD055 /* partition.c */,
 				C54687C2227F274100BDCA18 /* audio_format.c */,
 				C54687BB227F274000BDCA18 /* cmount.c */,
 				C54687C3227F274100BDCA18 /* fingerprint.c */,
@@ -660,6 +684,8 @@
 				C546B00D1F35FAF0003C5B7E /* sync.h */,
 				C546B00E1F35FAF0003C5B7E /* tag.c */,
 				C546B00F1F35FAF0003C5B7E /* uri.h */,
+				C5770B3523A02B900050EB1E /* readpicture.h */,
+				C5770B3623A02B900050EB1E /* readpicture.c */,
 			);
 			path = libmpdclient;
 			sourceTree = "<group>";
@@ -667,6 +693,8 @@
 		C546AFD01F35FAF0003C5B7E /* mpd */ = {
 			isa = PBXGroup;
 			children = (
+				C5FE88F0239EF14A002DD055 /* neighbor.h */,
+				C5FE88EF239EF14A002DD055 /* partition.h */,
 				C54687C9227F275400BDCA18 /* fingerprint.h */,
 				C54687CA227F275400BDCA18 /* mount.h */,
 				C546AFD11F35FAF0003C5B7E /* async.h */,
@@ -702,7 +730,7 @@
 				C546AFEF1F35FAF0003C5B7E /* status.h */,
 				C546AFF01F35FAF0003C5B7E /* sticker.h */,
 				C546AFF11F35FAF0003C5B7E /* tag.h */,
-				C546AFF21F35FAF0003C5B7E /* version.h.in */,
+				C546AFF21F35FAF0003C5B7E /* version.h */,
 			);
 			path = mpd;
 			sourceTree = "<group>";
@@ -832,6 +860,7 @@
 				C54687CC227F275400BDCA18 /* mount.h in Headers */,
 				C546B0111F35FAF0003C5B7E /* buffer.h in Headers */,
 				C546B0241F35FAF0003C5B7E /* internal.h in Headers */,
+				C5770B3723A02B900050EB1E /* readpicture.h in Headers */,
 				C546B04A1F35FAF0003C5B7E /* sticker.h in Headers */,
 				C546B0441F35FAF0003C5B7E /* send.h in Headers */,
 				C546B02D1F35FAF0003C5B7E /* capabilities.h in Headers */,
@@ -878,6 +907,7 @@
 				C546B18A1F37AB13003C5B7E /* resolver.h in Headers */,
 				C546B1B31F37AB20003C5B7E /* response.h in Headers */,
 				C546B1651F37AB13003C5B7E /* buffer.h in Headers */,
+				C5770B3823A02B900050EB1E /* readpicture.h in Headers */,
 				C546B1AD1F37AB20003C5B7E /* password.h in Headers */,
 				C546B1A11F37AB20003C5B7E /* connection.h in Headers */,
 				C546B1B01F37AB20003C5B7E /* protocol.h in Headers */,
@@ -932,6 +962,7 @@
 				C546B2181F37B10F003C5B7E /* resolver.h in Headers */,
 				C546B2411F37B116003C5B7E /* response.h in Headers */,
 				C546B1F31F37B10F003C5B7E /* buffer.h in Headers */,
+				C5770B3923A02B900050EB1E /* readpicture.h in Headers */,
 				C546B23B1F37B116003C5B7E /* password.h in Headers */,
 				C546B22F1F37B116003C5B7E /* connection.h in Headers */,
 				C546B23E1F37B116003C5B7E /* protocol.h in Headers */,
@@ -1281,9 +1312,11 @@
 				C546B0141F35FAF0003C5B7E /* connection.c in Sources */,
 				C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */,
 				C546B02A1F35FAF0003C5B7E /* mixer.c in Sources */,
+				C5770B3A23A02B900050EB1E /* readpicture.c in Sources */,
 				C546B0501F35FAF0003C5B7E /* player.c in Sources */,
 				C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */,
 				C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */,
+				C5FE88F5239EF167002DD055 /* cneighbor.c in Sources */,
 				C546B0511F35FAF0003C5B7E /* playlist.c in Sources */,
 				C546B04F1F35FAF0003C5B7E /* password.c in Sources */,
 				C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */,
@@ -1309,16 +1342,19 @@
 				C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */,
 				C546B0161F35FAF0003C5B7E /* cplaylist.c in Sources */,
 				C546B0281F35FAF0003C5B7E /* list.c in Sources */,
+				C5FE88F6239EF167002DD055 /* cpartition.c in Sources */,
 				C5C6830D21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift in Sources */,
 				C546B0261F35FAF0003C5B7E /* iso8601.c in Sources */,
 				C546B0211F35FAF0003C5B7E /* idle.c in Sources */,
 				C546B01D1F35FAF0003C5B7E /* example.c in Sources */,
+				C5FE88F8239EF167002DD055 /* neighbor.c in Sources */,
 				C546B0601F35FAF0003C5B7E /* socket.c in Sources */,
 				C546B01C1F35FAF0003C5B7E /* error.c in Sources */,
 				C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */,
 				C54687C7227F274100BDCA18 /* audio_format.c in Sources */,
 				C546B05F1F35FAF0003C5B7E /* settings.c in Sources */,
 				C546B0221F35FAF0003C5B7E /* ierror.c in Sources */,
+				C5FE88F7239EF167002DD055 /* partition.c in Sources */,
 				C546B05E1F35FAF0003C5B7E /* send.c in Sources */,
 				C548EF431FFCE21900FBE535 /* MPDHelper.swift in Sources */,
 				C546B0571F35FAF0003C5B7E /* resolver.c in Sources */,
@@ -1344,6 +1380,7 @@
 				C546B18D1F37AB13003C5B7E /* run.c in Sources */,
 				C546B1BE1F37AB32003C5B7E /* MPDPlayer.swift in Sources */,
 				C546B1971F37AB13003C5B7E /* sticker.c in Sources */,
+				C5770B3B23A02B900050EB1E /* readpicture.c in Sources */,
 				C546B18C1F37AB13003C5B7E /* rplaylist.c in Sources */,
 				C546B1711F37AB13003C5B7E /* example.c in Sources */,
 				C546B17D1F37AB13003C5B7E /* message.c in Sources */,
@@ -1395,6 +1432,7 @@
 				C546B2221F37B10F003C5B7E /* song.c in Sources */,
 				C546B1FA1F37B10F003C5B7E /* cstatus.c in Sources */,
 				C546B21F1F37B10F003C5B7E /* settings.c in Sources */,
+				C5770B3C23A02B900050EB1E /* readpicture.c in Sources */,
 				C546B21E1F37B10F003C5B7E /* send.c in Sources */,
 				C546B21D1F37B10F003C5B7E /* search.c in Sources */,
 				C546B2111F37B10F003C5B7E /* playlist.c in Sources */,

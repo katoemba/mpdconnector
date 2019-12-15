@@ -26,24 +26,53 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <mpd/password.h>
-#include <mpd/send.h>
-#include <mpd/response.h>
-#include "run.h"
+#include <mpd/pair.h>
+#include <mpd/partition.h>
 
+#include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
-bool
-mpd_send_password(struct mpd_connection *connection, const char *password)
+struct mpd_partition {
+	char *name;
+};
+
+struct mpd_partition *
+mpd_partition_new(const struct mpd_pair *pair)
 {
-	return mpd_send_command(connection, "password", password, NULL);
+	assert(pair != NULL);
+
+	if (strcmp(pair->name, "partition") != 0)
+		return NULL;
+
+	struct mpd_partition *partition = malloc(sizeof(*partition));
+	if (partition == NULL)
+		return NULL;
+
+	partition->name = strdup(pair->value);
+	if (partition->name == NULL) {
+		free(partition);
+		return NULL;
+	}
+
+	return partition;
 }
 
-bool
-mpd_run_password(struct mpd_connection *connection, const char *password)
+void
+mpd_partition_free(struct mpd_partition *partition)
 {
-	return mpd_run_check(connection) &&
-		mpd_send_password(connection, password) &&
-		mpd_response_finish(connection);
+	assert(partition != NULL);
+
+	free(partition->name);
+	free(partition);
 }
 
+mpd_pure
+const char *
+mpd_partition_get_name(const struct mpd_partition *partition)
+{
+	assert(partition != NULL);
+
+	return partition->name;
+}

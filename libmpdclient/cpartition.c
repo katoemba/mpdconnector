@@ -26,24 +26,47 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <mpd/password.h>
+#include <mpd/partition.h>
 #include <mpd/send.h>
 #include <mpd/response.h>
+#include "internal.h"
 #include "run.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 bool
-mpd_send_password(struct mpd_connection *connection, const char *password)
+mpd_send_newpartition(struct mpd_connection *connection, const char *partition)
 {
-	return mpd_send_command(connection, "password", password, NULL);
+	return mpd_send_command(connection, "newpartition", partition, NULL);
 }
 
 bool
-mpd_run_password(struct mpd_connection *connection, const char *password)
+mpd_run_newpartition(struct mpd_connection *connection, const char *partition)
 {
 	return mpd_run_check(connection) &&
-		mpd_send_password(connection, password) &&
+		mpd_send_newpartition(connection, partition) &&
 		mpd_response_finish(connection);
 }
 
+bool
+mpd_send_switch_partition(struct mpd_connection *connection,
+			  const char *partition)
+{
+	return mpd_send_command(connection, "partition", partition, NULL);
+}
+
+bool
+mpd_run_switch_partition(struct mpd_connection *connection,
+			 const char *partition)
+{
+	return mpd_run_check(connection) &&
+		mpd_send_switch_partition(connection, partition) &&
+		mpd_response_finish(connection);
+}
+
+bool
+mpd_send_listpartitions(struct mpd_connection *connection)
+{
+	return mpd_send_command(connection, "listpartitions", NULL);
+}

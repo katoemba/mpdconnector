@@ -13,6 +13,10 @@
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
 
+   - Neither the name of the Music Player Daemon nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -26,24 +30,22 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <mpd/password.h>
-#include <mpd/send.h>
-#include <mpd/response.h>
-#include "run.h"
+/*! \file
+ * \brief MPD client library
+ *
+ * Do not include this header directly.  Use mpd/client.h instead.
+ */
+
+#ifndef MPD_BINARY_H
+#define MPD_BINARY_H
 
 #include <stddef.h>
 
-bool
-mpd_send_password(struct mpd_connection *connection, const char *password)
-{
-	return mpd_send_command(connection, "password", password, NULL);
-}
+struct mpd_binary {
+        /** the binary data */
+        void *data;
+        /** the size of the binary data */
+        size_t size;
+};
 
-bool
-mpd_run_password(struct mpd_connection *connection, const char *password)
-{
-	return mpd_run_check(connection) &&
-		mpd_send_password(connection, password) &&
-		mpd_response_finish(connection);
-}
-
+#endif

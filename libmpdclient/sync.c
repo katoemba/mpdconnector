@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2018 The Music Player Daemon Project
+   (c) 2003-2019 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,14 @@
 
 #include "sync.h"
 #include "socket.h"
+#include "binary.h"
+
 #include <mpd/async.h>
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 #ifndef _WIN32
 #include <sys/select.h>
 #endif
@@ -180,5 +183,27 @@ mpd_sync_recv_line(struct mpd_async *async, const struct timeval *tv0)
 
 		if (!mpd_sync_io(async, tvp))
 			return NULL;
+	}
+}
+
+size_t
+mpd_sync_recv_raw(struct mpd_async *async, const struct timeval *tv0,
+		  void *dest, size_t length)
+{
+	struct timeval tv, *tvp;
+
+	if (tv0 != NULL) {
+		tv = *tv0;
+		tvp = &tv;
+	} else
+		tvp = NULL;
+
+	while (true) {
+		size_t nbytes = mpd_async_recv_raw(async, dest, length);
+		if (nbytes > 0)
+			return nbytes;
+
+		if (!mpd_sync_io(async, tvp))
+			return 0;
 	}
 }

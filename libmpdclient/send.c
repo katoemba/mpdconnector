@@ -1,5 +1,5 @@
 /* libmpdclient
-   (c) 2003-2018 The Music Player Daemon Project
+   (c) 2003-2019 The Music Player Daemon Project
    This project's homepage is: http://www.musicpd.org
 
    Redistribution and use in source and binary forms, with or without
@@ -108,6 +108,12 @@ mpd_send_command(struct mpd_connection *connection, const char *command, ...)
 		++connection->command_list_remaining;
 
 	return true;
+}
+
+bool
+mpd_send_s_s_command(struct mpd_connection *connection, const char *command, const char *arg1, const char *arg2)
+{
+    return mpd_send_command(connection, command, arg1, arg2, NULL);
 }
 
 bool

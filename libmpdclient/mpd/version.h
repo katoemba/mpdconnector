@@ -26,24 +26,33 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <mpd/password.h>
-#include <mpd/send.h>
-#include <mpd/response.h>
-#include "run.h"
+/*! \file
+ * \brief MPD client library
+ *
+ * Do not include this header directly.  Use mpd/client.h instead.
+ */
 
-#include <stddef.h>
+#ifndef MPD_VERSION_H
+#define MPD_VERSION_H
 
-bool
-mpd_send_password(struct mpd_connection *connection, const char *password)
-{
-	return mpd_send_command(connection, "password", password, NULL);
-}
+#define LIBMPDCLIENT_MAJOR_VERSION @MAJOR_VERSION@
+#define LIBMPDCLIENT_MINOR_VERSION @MINOR_VERSION@
+#define LIBMPDCLIENT_PATCH_VERSION @PATCH_VERSION@
 
-bool
-mpd_run_password(struct mpd_connection *connection, const char *password)
-{
-	return mpd_run_check(connection) &&
-		mpd_send_password(connection, password) &&
-		mpd_response_finish(connection);
-}
+/**
+ * Preprocessor macro which allows you to check which version of
+ * libmpdclient you are compiling with.  It can be used in
+ * preprocessor directives.
+ *
+ * @return true if this libmpdclient version equals or is newer than
+ * the specified version number
+ * @since libmpdclient 2.1
+ */
+#define LIBMPDCLIENT_CHECK_VERSION(major, minor, patch) \
+	((major) < LIBMPDCLIENT_MAJOR_VERSION || \
+	 ((major) == LIBMPDCLIENT_MAJOR_VERSION && \
+	  ((minor) < LIBMPDCLIENT_MINOR_VERSION || \
+	   ((minor) == LIBMPDCLIENT_MINOR_VERSION && \
+	    (patch) <= LIBMPDCLIENT_PATCH_VERSION))))
 
+#endif
