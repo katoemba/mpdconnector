@@ -31,6 +31,7 @@ import ConnectorProtocol
 import RxSwiftExt
 
 public class MPDConnection {
+    private static let maxConcurrentConnections = 4
     private static let playerSemaphoreMutex = DispatchSemaphore(value: 1)
     private static var playerSemaphores = [String: DispatchSemaphore]()
     private static func semaphoreForPlayer(host: String, port: Int) -> DispatchSemaphore {
@@ -41,7 +42,7 @@ public class MPDConnection {
         playerSemaphoreMutex.wait()
         let key = "\(host):\(port)"
         if playerSemaphores[key] == nil {
-            playerSemaphores[key] = DispatchSemaphore(value: 7)
+            playerSemaphores[key] = DispatchSemaphore(value: MPDConnection.maxConcurrentConnections)
         }
         return playerSemaphores[key]!
     }

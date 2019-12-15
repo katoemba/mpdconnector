@@ -96,7 +96,9 @@ public protocol MPDProtocol {
     func send_list_tag_types(_ connection: OpaquePointer!) -> Bool
     func recv_tag_type_pair(_ connection: OpaquePointer!) -> (String, String)?
     func recv_pair_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) -> (String, String)?
+    func recv_pair_named(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> (String, String)?
     func recv_pair(_ connection: OpaquePointer!) -> (String, String)?
+    func recv_binary(_ connection: OpaquePointer!, length: UInt32) -> Data?
     func tag_name_parse(_ name: UnsafePointer<Int8>!) -> mpd_tag_type
     func tag_name(tagType: mpd_tag_type) -> String
     func send_list_all(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool
@@ -132,6 +134,7 @@ public protocol MPDProtocol {
     func run_playlist_delete(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, pos: UInt32) -> Bool
     func command_list_begin(_ connection: OpaquePointer!, discrete_ok: Bool) -> Bool
     func command_list_end(_ connection: OpaquePointer!) -> Bool
+    func send_s_u_command(_ connection: OpaquePointer!, command: UnsafePointer<Int8>!, arg1: UnsafePointer<Int8>!, arg2: UInt32) -> Bool
     func run_rm(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_update(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> UInt32
     func run_stats(_ connection: OpaquePointer!) -> OpaquePointer!

@@ -1500,4 +1500,56 @@ public class MPDBrowse: BrowseProtocol {
             })
             .observeOn(MainScheduler.instance)
     }
+    
+    public func imageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
+        guard coverURI.path != "" else { return Observable.just(nil) }
+        return readBinary(command: "albumart", uri: coverURI.path)
+    }
+    
+    private func readPicture(coverURI: CoverURI) -> Observable<Data?> {
+        guard coverURI.path != "" else { return Observable.just(nil) }
+        return readBinary(command: "readpicture", uri: coverURI.path)
+    }
+
+    private func albumArt(coverURI: CoverURI) -> Observable<Data?> {
+        guard coverURI.path != "" else { return Observable.just(nil) }
+        return readBinary(command: "albumart", uri: coverURI.path)
+    }
+
+    private func readBinary(command: String, uri: String) -> Observable<Data?> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMapFirst({ (mpdConnection) -> Observable<Data?> in
+                guard let connection = mpdConnection?.connection else { return Observable.just(nil) }
+
+                var offset = UInt32(0)
+                var total_size = UInt32(0)
+                var imageData = Data()
+
+                repeat {
+                    if !self.mpd.send_s_u_command(connection, command: command, arg1: uri, arg2: offset) {
+                        return Observable.just(nil)
+                    }
+                    
+                    guard let totalSize = self.mpd.recv_pair_named(connection, name: "size") else { return Observable.just(nil) }
+                    total_size = UInt32(totalSize.1) ?? 0
+
+                    guard let size = self.mpd.recv_pair_named(connection, name: "binary") else { return Observable.just(nil) }
+                    let chunk_size = UInt32(size.1) ?? 0
+
+                    if (chunk_size == 0) {
+                        break
+                    }
+                    guard let chunk = self.mpd.recv_binary(connection, length: chunk_size) else { return Observable.just(nil) }
+                    
+                    imageData.append(chunk)
+                    _ = self.mpd.response_finish(connection)
+
+                    offset += chunk_size
+                } while (offset < total_size)
+
+                return Observable.just(imageData)
+            })
+            .observeOn(MainScheduler.instance)
+    }
 }

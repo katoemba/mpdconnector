@@ -335,6 +335,20 @@ public class MPDWrapper: MPDProtocol {
         return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
     }
     
+    public func recv_pair_named(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> (String, String)? {
+        let mpd_pair = mpd_recv_pair_named(connection, name)
+        
+        guard let pointee = mpd_pair?.pointee else {
+            return nil
+        }
+        
+        defer {
+            mpd_return_pair(connection, mpd_pair)
+        }
+
+        return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
+    }
+    
     public func recv_pair(_ connection: OpaquePointer!) -> (String, String)? {
         let mpd_pair = mpd_recv_pair(connection)
         
@@ -347,6 +361,19 @@ public class MPDWrapper: MPDProtocol {
         }
         
         return (stringFromMPDString(pointee.name), stringFromMPDString(pointee.value))
+    }
+    
+    public func recv_binary(_ connection: OpaquePointer!, length: UInt32) -> Data? {
+        guard let data = malloc(Int(length)) else { return nil }
+        
+        defer {
+            free(data)
+        }
+        if mpd_recv_binary(connection, data, Int(length)) {
+            return Data(bytes: data, count: Int(length))
+        }
+        
+        return nil
     }
     
     public func tag_name_parse(_ name: UnsafePointer<Int8>!) -> mpd_tag_type {
@@ -493,6 +520,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_command_list_end(connection)
     }
     
+    public func send_s_u_command(_ connection: OpaquePointer!, command: UnsafePointer<Int8>!, arg1: UnsafePointer<Int8>!, arg2: UInt32) -> Bool {
+        return mpd_send_s_u_command(connection, command, arg1, arg2)
+    }
+    
     public func run_update(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> UInt32 {
         return mpd_run_update(connection, path)
     }
@@ -553,7 +584,6 @@ public class MPDWrapper: MPDProtocol {
     public func output_free(_ output: OpaquePointer!) {
         mpd_output_free(output)
     }
-
     
     /// Convert a raw mpd-string to a standard Swift string.
     ///
