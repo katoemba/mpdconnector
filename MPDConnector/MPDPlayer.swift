@@ -111,8 +111,9 @@ public class MPDPlayer: PlayerProtocol {
         return _type.description + " " + _version
     }
     
+    private var commands: [String]
     public var supportedFunctions: [Functions] {
-        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums]
+        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])
     }
     
     /// Current status
@@ -245,7 +246,8 @@ public class MPDPlayer: PlayerProtocol {
                 version: String = "",
                 discoverMode: DiscoverMode = .automatic,
                 connectionWarning: String? = nil,
-                userDefaults: UserDefaults) {
+                userDefaults: UserDefaults,
+                commands: [String] = []) {
         self.userDefaults = userDefaults
         self.mpd = mpd ?? MPDWrapper()
         self._name = name
@@ -254,6 +256,7 @@ public class MPDPlayer: PlayerProtocol {
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
         self._connectionWarning = connectionWarning
+        self.commands = commands
         _version = version
         _discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
@@ -320,7 +323,7 @@ public class MPDPlayer: PlayerProtocol {
                 MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
                 MPDConnectionProperties.MPDType.rawValue: _type,
                 MPDConnectionProperties.version.rawValue: version] as [String : Any]
-
+        
         self.mpdStatus = MPDStatus.init(mpd: mpd,
                                         connectionProperties: connectionProperties,
                                         scheduler: scheduler)
@@ -339,7 +342,8 @@ public class MPDPlayer: PlayerProtocol {
                             version: String = "",
                             discoverMode: DiscoverMode = .automatic,
                             connectionWarning: String? = nil,
-                            userDefaults: UserDefaults) {
+                            userDefaults: UserDefaults,
+                            commands: [String] = []) {
         guard let name = connectionProperties[ConnectionProperties.Name.rawValue] as? String,
             let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String,
             let port = connectionProperties[ConnectionProperties.Port.rawValue] as? Int else {
@@ -352,7 +356,8 @@ public class MPDPlayer: PlayerProtocol {
                           version: version,
                           discoverMode: discoverMode,
                           connectionWarning: connectionWarning,
-                          userDefaults: userDefaults)
+                          userDefaults: userDefaults,
+                          commands: commands)
                 return
         }
         
@@ -366,7 +371,8 @@ public class MPDPlayer: PlayerProtocol {
                   version: version,
                   discoverMode: discoverMode,
                   connectionWarning: connectionWarning,
-                  userDefaults: userDefaults)
+                  userDefaults: userDefaults,
+                  commands: commands)
     }
     
     deinit {
@@ -392,7 +398,7 @@ public class MPDPlayer: PlayerProtocol {
     ///
     /// - Returns: copy of the this player
     public func copy() -> PlayerProtocol {
-        return MPDPlayer.init(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler, type: type, version: version, userDefaults: userDefaults)
+        return MPDPlayer.init(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler, type: type, version: version, userDefaults: userDefaults, commands: commands)
     }
     
     /// Store setting.value into user-defaults and perform any other required actions

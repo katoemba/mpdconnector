@@ -77,9 +77,12 @@ class MPDStatusTests: XCTestCase {
             .toBlocking(timeout: 1.0)
             .materialize()
 
+        status.disconnectFromMPD()
         switch connectionResults {
         case .failed(let connectionStatusArray, _):
-            XCTAssert(connectionStatusArray == [.online, .offline, .online, .offline], "Expected reported statuses [.online, .offline, .online, .offline], got \(connectionStatusArray)")
+            XCTAssert(connectionStatusArray.drop(while: { (status) -> Bool in
+                status == .unknown
+            }) == [.online, .offline, .online, .offline], "Expected reported statuses [.online, .offline, .online, .offline], got \(connectionStatusArray)")
         default:
             print("Default")
         }
@@ -115,6 +118,7 @@ class MPDStatusTests: XCTestCase {
             .toBlocking(timeout: 1.0)
             .materialize()
         
+        status.disconnectFromMPD()
         switch playerStatusResults {
         case .failed(let playerStatusArray, _):
             let songIndexArray = playerStatusArray.map({ (status) -> Int in
@@ -143,6 +147,7 @@ class MPDStatusTests: XCTestCase {
             .toBlocking(timeout: 0.4)
             .materialize()
         
+        status.disconnectFromMPD()
         switch connectionResults {
         case .failed(let connectionStatusArray, _):
             let count = connectionStatusArray.filter({ (status) -> Bool in
@@ -193,6 +198,7 @@ class MPDStatusTests: XCTestCase {
             .toBlocking(timeout: 0.4)
             .materialize()
         
+        status.disconnectFromMPD()
         switch playerStatuses {
         case .failed(let playerStatusArray, _):
             let playerStatus = playerStatusArray.last!
@@ -281,6 +287,7 @@ class MPDStatusTests: XCTestCase {
             .toBlocking(timeout: 0.4)
             .materialize()
         
+        status.disconnectFromMPD()
         switch playerStatuses {
         case .failed(let playerStatusArray, _):
             let playerStatus = playerStatusArray.last!
@@ -332,6 +339,7 @@ class MPDStatusTests: XCTestCase {
             .toBlocking(timeout: 0.4)
             .materialize()
         
+        status.disconnectFromMPD()
         switch playerStatuses {
         case .failed(let playerStatusArray, _):
             let playerStatus = playerStatusArray.last!

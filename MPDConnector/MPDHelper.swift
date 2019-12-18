@@ -59,6 +59,7 @@ public class MPDConnection {
     private var port: Int
     
     init(mpd: MPDProtocol, host: String, port: Int, timeout: Int) {
+        print("semaphore: \(MPDConnection.semaphoreForPlayer(host: host, port: port).debugDescription)")
         MPDConnection.semaphoreForPlayer(host: host, port: port).wait()
 
         self.mpd = mpd
@@ -72,6 +73,10 @@ public class MPDConnection {
     }
     
     deinit {
+        disconnect()
+    }
+    
+    func disconnect() {
         if let connection = connection {
             mpd.connection_free(connection)
             _connection = nil

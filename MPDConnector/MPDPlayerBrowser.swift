@@ -259,12 +259,20 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                         }
                     }
                     
+                    var commands = [String]()
+                    _ = mpd.send_allowed_commands(connection)
+                    while let command = mpd.recv_pair_named(connection, name: "command") {
+                        commands.append(command.1)
+                    }
+                    _ = mpd.response_finish(connection)
+
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,
                                           version: version,
                                           discoverMode: player.discoverMode,
                                           connectionWarning: connectionWarning,
-                                          userDefaults: userDefaults)
+                                          userDefaults: userDefaults,
+                                          commands: commands)
                 }
 
                 return player

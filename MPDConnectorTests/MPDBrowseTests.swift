@@ -350,11 +350,32 @@ class MPDBrowseTests: XCTestCase {
             XCTAssert(tagTypes[0] == "AlbumArtist", "Expected first tagType=AlbumArtist, got \(tagTypes[0])")
             XCTAssert(tagTypes[1] == "Title", "Expected second tagType=Title, got \(tagTypes[1])")
         default:
-            XCTAssert(false, "songsInPlaylist failed")
+            XCTAssert(false, "getting tagTypes failed")
         }
         
         self.mpdWrapper.assertCall("send_list_tag_types", expectedCallCount: 1)
         self.mpdWrapper.assertCall("recv_tag_type_pair", expectedCallCount: 3)
+    }
+
+    func testAvailableCommands() {
+        mpdWrapper.pairs = [("command", "albumart"), ("command", "play")]
+        
+        let commandsResult = (mpdPlayer?.browse as! MPDBrowse).availableCommands()
+            .toBlocking(timeout: 0.8)
+            .materialize()
+        
+        switch commandsResult {
+        case .completed(let commandsOnNext):
+            let commands = commandsOnNext[0]
+            XCTAssert(commands.count == 2, "Expected 2 commands, got \(commands.count)")
+            XCTAssert(commands[0] == "albumart", "Expected first command=albumart, got \(commands[0])")
+            XCTAssert(commands[1] == "play", "Expected second command=play, got \(commands[1])")
+        default:
+            XCTAssert(false, "getting commands failed")
+        }
+        
+        self.mpdWrapper.assertCall("send_allowed_commands", expectedCallCount: 1)
+        self.mpdWrapper.assertCall("recv_pair_named", expectedCallCount: 3)
     }
 }
 

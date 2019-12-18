@@ -307,6 +307,10 @@ public class MPDWrapper: MPDProtocol {
         return mpd_send_list_tag_types(connection)
     }
     
+    public func send_allowed_commands(_ connection: OpaquePointer!) -> Bool {
+        return mpd_send_allowed_commands(connection)
+    }
+    
     public func recv_tag_type_pair(_ connection: OpaquePointer!) -> (String, String)? {
         let mpd_pair = mpd_recv_tag_type_pair(connection)
         

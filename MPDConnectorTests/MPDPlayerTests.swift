@@ -163,17 +163,19 @@ class MPDPlayerTests: XCTestCase {
         // And changing the songIndex, stopping and changing the songIndex again
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.mpdWrapper.songIndex = 6
+            self.mpdWrapper.statusChanged()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             mpdPlayer.deactivate()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             self.mpdWrapper.songIndex = 7
+            self.mpdWrapper.statusChanged()
         }
         
         // Then only the songIndex values before the 'stop' are reported.
         let playerStatusResults = mpdPlayer.status.playerStatusObservable
-            .toBlocking(timeout: 0.8)
+            .toBlocking(timeout: 1.0)
             .materialize()
         
         switch playerStatusResults {

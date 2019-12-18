@@ -78,6 +78,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var currentDirectory: [String:String]?
     var outputs = [(UInt32, String, Bool)]()
     var tagTypes = [String]()
+    var pairs = [(String,String)]()
 
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -428,6 +429,35 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return true
     }
     
+    func send_allowed_commands(_ connection: OpaquePointer!) -> Bool {
+        registerCall("send_allowed_commands", [:])
+        return true
+    }
+    
+    func recv_pair_named(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> (String, String)? {
+        registerCall("recv_pair_named", ["name": stringFromMPDString(name)])
+        while pairs.count > 0 {
+            let currentPair = pairs[0]
+            pairs.removeFirst()
+            
+            if currentPair.0 == stringFromMPDString(name) {
+                return currentPair
+            }
+        }
+
+        return nil
+    }
+    
+    func recv_binary(_ connection: OpaquePointer!, length: UInt32) -> Data? {
+        registerCall("recv_binary", ["length": "\(length)"])
+        return Data(capacity: Int(length))
+    }
+    
+    func send_s_u_command(_ connection: OpaquePointer!, command: UnsafePointer<Int8>!, arg1: UnsafePointer<Int8>!, arg2: UInt32) -> Bool {
+        registerCall("send_s_u_command", ["command": stringFromMPDString(command), "arg1": stringFromMPDString(arg1), "arg2": "\(arg2)"])
+        return true
+    }
+
     public func recv_tag_type_pair(_ connection: OpaquePointer!) -> (String, String)? {
         registerCall("recv_tag_type_pair", [:])
         if tagTypes.count > 0 {
@@ -756,6 +786,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func send_noidle(_ connection: OpaquePointer!) -> Bool {
         registerCall("send_noidle", [:])
         noidle?.onNext(1)
+        noidle?.onCompleted()
 
         return true
     }

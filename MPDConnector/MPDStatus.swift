@@ -170,16 +170,6 @@ public class MPDStatus: StatusProtocol {
             return Disposables.create()
         }
         
-        Observable.merge(timerObservable, changeStatusUpdateStream)
-            .subscribe(onNext: { [weak self] playerStatus in
-                guard let weakSelf = self, let playerStatus = playerStatus else {
-                    return
-                }
-
-                weakSelf._playerStatus.accept(playerStatus)
-            })
-            .disposed(by: bag)
-        
         disconnectHandler.asObservable()
             .subscribe(onNext: { [weak self] (_) in
                 guard let weakSelf = self, let connection = weakSelf.statusConnection?.connection else {
@@ -187,6 +177,16 @@ public class MPDStatus: StatusProtocol {
                 }
                 
                 _ = weakSelf.mpd.send_noidle(connection)
+            })
+            .disposed(by: bag)
+
+        Observable.merge(timerObservable, changeStatusUpdateStream)
+            .subscribe(onNext: { [weak self] playerStatus in
+                guard let weakSelf = self, let playerStatus = playerStatus else {
+                    return
+                }
+
+                weakSelf._playerStatus.accept(playerStatus)
             })
             .disposed(by: bag)
     }
@@ -364,7 +364,8 @@ public class MPDStatus: StatusProtocol {
         return Observable.just(songs)
     }
     
-    private func disconnectFromMPD() {
+    public func disconnectFromMPD() {
+        statusConnection?.disconnect()
         statusConnection = nil
     }
 

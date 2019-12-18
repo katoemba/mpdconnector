@@ -1345,6 +1345,28 @@ public class MPDBrowse: BrowseProtocol {
             })
     }
     
+    /// Return the commands that are supported by a player
+    ///
+    /// - Returns: an array of commands (strings)
+    public func availableCommands() -> Observable<[String]> {
+        let mpd = self.mpd
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[String]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
+                var commands = [String]()
+                _ = mpd.send_allowed_commands(connection)
+                while let pair = mpd.recv_pair_named(connection, name: "command") {
+                    commands.append(pair.1)
+                }
+                
+                _ = mpd.response_finish(connection)
+                
+                return Observable.just(commands)
+            })
+    }
+    
     /// Preprocess a CoverURI. This allows additional processing of base URI data.
     ///
     /// - Parameter coverURI: the CoverURI to pre-process
