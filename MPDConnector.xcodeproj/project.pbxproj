@@ -30,6 +30,7 @@
 		C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */; };
+		C578C47C23B6217500AEA897 /* libmpdclient in Frameworks */ = {isa = PBXBuildFile; productRef = C578C47B23B6217500AEA897 /* libmpdclient */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
 		C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */; };
 		C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */; };
@@ -161,6 +162,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0723B6C659107F196E8F19A7 /* Pods_MPDConnectorTests.framework in Frameworks */,
+				C578C47C23B6217500AEA897 /* libmpdclient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,9 +391,13 @@
 			buildRules = (
 			);
 			dependencies = (
+				C578C47623B6216400AEA897 /* PBXTargetDependency */,
 				C546B27F1F3B0A8E003C5B7E /* PBXTargetDependency */,
 			);
 			name = MPDConnectorTests;
+			packageProductDependencies = (
+				C578C47B23B6217500AEA897 /* libmpdclient */,
+			);
 			productName = MPDConnectorTests;
 			productReference = C5C6CB4D23B5F0DD00767B41 /* MPDConnectorTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -690,6 +696,10 @@
 			target = C546AF3B1F35A824003C5B7E /* MPDConnector_iOS */;
 			targetProxy = C546B27E1F3B0A8E003C5B7E /* PBXContainerItemProxy */;
 		};
+		C578C47623B6216400AEA897 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = C578C47523B6216400AEA897 /* libmpdclient */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -899,15 +909,9 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				FRAMEWORK_VERSION = A;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnector_MacOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -941,15 +945,9 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				FRAMEWORK_VERSION = A;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnector_MacOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -982,14 +980,8 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnector_tvOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1023,14 +1015,8 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnector_tvOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1060,14 +1046,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "${inherited}";
 				DEVELOPMENT_TEAM = N7DKJ3YJS4;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnectorTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1087,14 +1067,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "${inherited}";
 				DEVELOPMENT_TEAM = N7DKJ3YJS4;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnectorTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1170,6 +1144,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C578C47523B6216400AEA897 /* libmpdclient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
+			productName = libmpdclient;
+		};
+		C578C47B23B6217500AEA897 /* libmpdclient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
+			productName = libmpdclient;
+		};
 		C5C6CB5823B5FF3800767B41 /* libmpdclient */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
