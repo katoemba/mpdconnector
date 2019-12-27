@@ -3,300 +3,22 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		0723B6C659107F196E8F19A7 /* Pods_MPDConnectorTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B669CC2955694C3B62603CCE /* Pods_MPDConnectorTests.framework */; };
 		2888ADB7A617890773BC1D3D /* Pods_MPDConnector_MacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97100CCD8849A7762F0655EF /* Pods_MPDConnector_MacOS.framework */; };
 		7B0C4A1FE1E4025BA52FF306 /* Pods_MPDConnector_tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62A245B138BF0F64B427F38B /* Pods_MPDConnector_tvOS.framework */; };
-		C53629DA21318B22004D5C1C /* kvlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C53629D421318B21004D5C1C /* kvlist.h */; };
-		C53629DB21318B22004D5C1C /* kvlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C53629D921318B22004D5C1C /* kvlist.c */; };
-		C54687C4227F274100BDCA18 /* cmount.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687BB227F274000BDCA18 /* cmount.c */; };
-		C54687C5227F274100BDCA18 /* mount.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687C0227F274100BDCA18 /* mount.c */; };
-		C54687C6227F274100BDCA18 /* iaf.h in Headers */ = {isa = PBXBuildFile; fileRef = C54687C1227F274100BDCA18 /* iaf.h */; };
-		C54687C7227F274100BDCA18 /* audio_format.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687C2227F274100BDCA18 /* audio_format.c */; };
-		C54687C8227F274100BDCA18 /* fingerprint.c in Sources */ = {isa = PBXBuildFile; fileRef = C54687C3227F274100BDCA18 /* fingerprint.c */; };
-		C54687CB227F275400BDCA18 /* fingerprint.h in Headers */ = {isa = PBXBuildFile; fileRef = C54687C9227F275400BDCA18 /* fingerprint.h */; };
-		C54687CC227F275400BDCA18 /* mount.h in Headers */ = {isa = PBXBuildFile; fileRef = C54687CA227F275400BDCA18 /* mount.h */; };
 		C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
-		C546B0101F35FAF0003C5B7E /* async.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB51F35FAF0003C5B7E /* async.c */; };
-		C546B0111F35FAF0003C5B7E /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFB61F35FAF0003C5B7E /* buffer.h */; };
-		C546B0121F35FAF0003C5B7E /* capabilities.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB71F35FAF0003C5B7E /* capabilities.c */; };
-		C546B0131F35FAF0003C5B7E /* cmessage.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB81F35FAF0003C5B7E /* cmessage.c */; };
-		C546B0141F35FAF0003C5B7E /* connection.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB91F35FAF0003C5B7E /* connection.c */; };
-		C546B0151F35FAF0003C5B7E /* coutput.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBA1F35FAF0003C5B7E /* coutput.c */; };
-		C546B0161F35FAF0003C5B7E /* cplaylist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBB1F35FAF0003C5B7E /* cplaylist.c */; };
-		C546B0171F35FAF0003C5B7E /* cstats.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBC1F35FAF0003C5B7E /* cstats.c */; };
-		C546B0181F35FAF0003C5B7E /* cstatus.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBD1F35FAF0003C5B7E /* cstatus.c */; };
-		C546B0191F35FAF0003C5B7E /* database.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBE1F35FAF0003C5B7E /* database.c */; };
-		C546B01A1F35FAF0003C5B7E /* directory.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBF1F35FAF0003C5B7E /* directory.c */; };
-		C546B01B1F35FAF0003C5B7E /* entity.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC01F35FAF0003C5B7E /* entity.c */; };
-		C546B01C1F35FAF0003C5B7E /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC11F35FAF0003C5B7E /* error.c */; };
-		C546B01D1F35FAF0003C5B7E /* example.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC21F35FAF0003C5B7E /* example.c */; };
-		C546B01E1F35FAF0003C5B7E /* fd_util.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC31F35FAF0003C5B7E /* fd_util.c */; };
-		C546B01F1F35FAF0003C5B7E /* fd_util.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC41F35FAF0003C5B7E /* fd_util.h */; };
-		C546B0201F35FAF0003C5B7E /* iasync.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC51F35FAF0003C5B7E /* iasync.h */; };
-		C546B0211F35FAF0003C5B7E /* idle.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC61F35FAF0003C5B7E /* idle.c */; };
-		C546B0221F35FAF0003C5B7E /* ierror.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC71F35FAF0003C5B7E /* ierror.c */; };
-		C546B0231F35FAF0003C5B7E /* ierror.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC81F35FAF0003C5B7E /* ierror.h */; };
-		C546B0241F35FAF0003C5B7E /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC91F35FAF0003C5B7E /* internal.h */; };
-		C546B0251F35FAF0003C5B7E /* isend.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFCA1F35FAF0003C5B7E /* isend.h */; };
-		C546B0261F35FAF0003C5B7E /* iso8601.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCB1F35FAF0003C5B7E /* iso8601.c */; };
-		C546B0271F35FAF0003C5B7E /* iso8601.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFCC1F35FAF0003C5B7E /* iso8601.h */; };
-		C546B0281F35FAF0003C5B7E /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCD1F35FAF0003C5B7E /* list.c */; };
-		C546B0291F35FAF0003C5B7E /* message.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCE1F35FAF0003C5B7E /* message.c */; };
-		C546B02A1F35FAF0003C5B7E /* mixer.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCF1F35FAF0003C5B7E /* mixer.c */; };
-		C546B02B1F35FAF0003C5B7E /* async.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD11F35FAF0003C5B7E /* async.h */; };
-		C546B02C1F35FAF0003C5B7E /* audio_format.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD21F35FAF0003C5B7E /* audio_format.h */; };
-		C546B02D1F35FAF0003C5B7E /* capabilities.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD31F35FAF0003C5B7E /* capabilities.h */; };
-		C546B02E1F35FAF0003C5B7E /* client.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD41F35FAF0003C5B7E /* client.h */; };
-		C546B02F1F35FAF0003C5B7E /* compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD51F35FAF0003C5B7E /* compiler.h */; };
-		C546B0301F35FAF0003C5B7E /* connection.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD61F35FAF0003C5B7E /* connection.h */; };
-		C546B0311F35FAF0003C5B7E /* database.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD71F35FAF0003C5B7E /* database.h */; };
-		C546B0321F35FAF0003C5B7E /* directory.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD81F35FAF0003C5B7E /* directory.h */; };
-		C546B0331F35FAF0003C5B7E /* entity.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD91F35FAF0003C5B7E /* entity.h */; };
-		C546B0341F35FAF0003C5B7E /* error.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDA1F35FAF0003C5B7E /* error.h */; };
-		C546B0351F35FAF0003C5B7E /* idle.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDB1F35FAF0003C5B7E /* idle.h */; };
-		C546B0361F35FAF0003C5B7E /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDC1F35FAF0003C5B7E /* list.h */; };
-		C546B0371F35FAF0003C5B7E /* message.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDD1F35FAF0003C5B7E /* message.h */; };
-		C546B0381F35FAF0003C5B7E /* mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDE1F35FAF0003C5B7E /* mixer.h */; };
-		C546B0391F35FAF0003C5B7E /* output.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDF1F35FAF0003C5B7E /* output.h */; };
-		C546B03A1F35FAF0003C5B7E /* pair.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE01F35FAF0003C5B7E /* pair.h */; };
-		C546B03B1F35FAF0003C5B7E /* parser.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE11F35FAF0003C5B7E /* parser.h */; };
-		C546B03C1F35FAF0003C5B7E /* password.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE21F35FAF0003C5B7E /* password.h */; };
-		C546B03D1F35FAF0003C5B7E /* player.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE31F35FAF0003C5B7E /* player.h */; };
-		C546B03E1F35FAF0003C5B7E /* playlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE41F35FAF0003C5B7E /* playlist.h */; };
-		C546B03F1F35FAF0003C5B7E /* protocol.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE51F35FAF0003C5B7E /* protocol.h */; };
-		C546B0401F35FAF0003C5B7E /* queue.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE61F35FAF0003C5B7E /* queue.h */; };
-		C546B0411F35FAF0003C5B7E /* recv.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE71F35FAF0003C5B7E /* recv.h */; };
-		C546B0421F35FAF0003C5B7E /* response.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE81F35FAF0003C5B7E /* response.h */; };
-		C546B0431F35FAF0003C5B7E /* search.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE91F35FAF0003C5B7E /* search.h */; };
-		C546B0441F35FAF0003C5B7E /* send.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEA1F35FAF0003C5B7E /* send.h */; };
-		C546B0451F35FAF0003C5B7E /* settings.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEB1F35FAF0003C5B7E /* settings.h */; };
-		C546B0461F35FAF0003C5B7E /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEC1F35FAF0003C5B7E /* socket.h */; };
-		C546B0471F35FAF0003C5B7E /* song.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFED1F35FAF0003C5B7E /* song.h */; };
-		C546B0481F35FAF0003C5B7E /* stats.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEE1F35FAF0003C5B7E /* stats.h */; };
-		C546B0491F35FAF0003C5B7E /* status.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEF1F35FAF0003C5B7E /* status.h */; };
-		C546B04A1F35FAF0003C5B7E /* sticker.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFF01F35FAF0003C5B7E /* sticker.h */; };
-		C546B04B1F35FAF0003C5B7E /* tag.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFF11F35FAF0003C5B7E /* tag.h */; };
-		C546B04D1F35FAF0003C5B7E /* output.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF31F35FAF0003C5B7E /* output.c */; };
-		C546B04E1F35FAF0003C5B7E /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF41F35FAF0003C5B7E /* parser.c */; };
-		C546B04F1F35FAF0003C5B7E /* password.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF51F35FAF0003C5B7E /* password.c */; };
-		C546B0501F35FAF0003C5B7E /* player.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF61F35FAF0003C5B7E /* player.c */; };
-		C546B0511F35FAF0003C5B7E /* playlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF71F35FAF0003C5B7E /* playlist.c */; };
-		C546B0521F35FAF0003C5B7E /* queue.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF81F35FAF0003C5B7E /* queue.c */; };
-		C546B0531F35FAF0003C5B7E /* quote.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF91F35FAF0003C5B7E /* quote.c */; };
-		C546B0541F35FAF0003C5B7E /* quote.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFFA1F35FAF0003C5B7E /* quote.h */; };
-		C546B0551F35FAF0003C5B7E /* rdirectory.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFB1F35FAF0003C5B7E /* rdirectory.c */; };
-		C546B0561F35FAF0003C5B7E /* recv.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFC1F35FAF0003C5B7E /* recv.c */; };
-		C546B0571F35FAF0003C5B7E /* resolver.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFD1F35FAF0003C5B7E /* resolver.c */; };
-		C546B0581F35FAF0003C5B7E /* resolver.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFFE1F35FAF0003C5B7E /* resolver.h */; };
-		C546B0591F35FAF0003C5B7E /* response.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFF1F35FAF0003C5B7E /* response.c */; };
-		C546B05A1F35FAF0003C5B7E /* rplaylist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0001F35FAF0003C5B7E /* rplaylist.c */; };
-		C546B05B1F35FAF0003C5B7E /* run.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0011F35FAF0003C5B7E /* run.c */; };
-		C546B05C1F35FAF0003C5B7E /* run.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B0021F35FAF0003C5B7E /* run.h */; };
-		C546B05D1F35FAF0003C5B7E /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0031F35FAF0003C5B7E /* search.c */; };
-		C546B05E1F35FAF0003C5B7E /* send.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0041F35FAF0003C5B7E /* send.c */; };
-		C546B05F1F35FAF0003C5B7E /* settings.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0051F35FAF0003C5B7E /* settings.c */; };
-		C546B0601F35FAF0003C5B7E /* socket.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0061F35FAF0003C5B7E /* socket.c */; };
-		C546B0611F35FAF0003C5B7E /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B0071F35FAF0003C5B7E /* socket.h */; };
-		C546B0621F35FAF0003C5B7E /* song.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0081F35FAF0003C5B7E /* song.c */; };
-		C546B0631F35FAF0003C5B7E /* stats.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0091F35FAF0003C5B7E /* stats.c */; };
-		C546B0641F35FAF0003C5B7E /* status.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00A1F35FAF0003C5B7E /* status.c */; };
-		C546B0651F35FAF0003C5B7E /* sticker.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00B1F35FAF0003C5B7E /* sticker.c */; };
-		C546B0661F35FAF0003C5B7E /* sync.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00C1F35FAF0003C5B7E /* sync.c */; };
-		C546B0671F35FAF0003C5B7E /* sync.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B00D1F35FAF0003C5B7E /* sync.h */; };
-		C546B0681F35FAF0003C5B7E /* tag.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00E1F35FAF0003C5B7E /* tag.c */; };
-		C546B0691F35FAF0003C5B7E /* uri.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B00F1F35FAF0003C5B7E /* uri.h */; };
 		C546B0791F3742F8003C5B7E /* ConnectorProtocol.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C546B0781F37406B003C5B7E /* ConnectorProtocol.framework */; };
 		C546B15D1F37AAA9003C5B7E /* MPDConnector_MacOS.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B15B1F37AAA9003C5B7E /* MPDConnector_MacOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C546B1641F37AB13003C5B7E /* async.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB51F35FAF0003C5B7E /* async.c */; };
-		C546B1651F37AB13003C5B7E /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFB61F35FAF0003C5B7E /* buffer.h */; };
-		C546B1661F37AB13003C5B7E /* capabilities.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB71F35FAF0003C5B7E /* capabilities.c */; };
-		C546B1671F37AB13003C5B7E /* cmessage.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB81F35FAF0003C5B7E /* cmessage.c */; };
-		C546B1681F37AB13003C5B7E /* connection.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB91F35FAF0003C5B7E /* connection.c */; };
-		C546B1691F37AB13003C5B7E /* coutput.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBA1F35FAF0003C5B7E /* coutput.c */; };
-		C546B16A1F37AB13003C5B7E /* cplaylist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBB1F35FAF0003C5B7E /* cplaylist.c */; };
-		C546B16B1F37AB13003C5B7E /* cstats.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBC1F35FAF0003C5B7E /* cstats.c */; };
-		C546B16C1F37AB13003C5B7E /* cstatus.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBD1F35FAF0003C5B7E /* cstatus.c */; };
-		C546B16D1F37AB13003C5B7E /* database.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBE1F35FAF0003C5B7E /* database.c */; };
-		C546B16E1F37AB13003C5B7E /* directory.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBF1F35FAF0003C5B7E /* directory.c */; };
-		C546B16F1F37AB13003C5B7E /* entity.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC01F35FAF0003C5B7E /* entity.c */; };
-		C546B1701F37AB13003C5B7E /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC11F35FAF0003C5B7E /* error.c */; };
-		C546B1711F37AB13003C5B7E /* example.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC21F35FAF0003C5B7E /* example.c */; };
-		C546B1721F37AB13003C5B7E /* fd_util.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC31F35FAF0003C5B7E /* fd_util.c */; };
-		C546B1731F37AB13003C5B7E /* fd_util.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC41F35FAF0003C5B7E /* fd_util.h */; };
-		C546B1741F37AB13003C5B7E /* iasync.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC51F35FAF0003C5B7E /* iasync.h */; };
-		C546B1751F37AB13003C5B7E /* idle.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC61F35FAF0003C5B7E /* idle.c */; };
-		C546B1761F37AB13003C5B7E /* ierror.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC71F35FAF0003C5B7E /* ierror.c */; };
-		C546B1771F37AB13003C5B7E /* ierror.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC81F35FAF0003C5B7E /* ierror.h */; };
-		C546B1781F37AB13003C5B7E /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC91F35FAF0003C5B7E /* internal.h */; };
-		C546B1791F37AB13003C5B7E /* isend.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFCA1F35FAF0003C5B7E /* isend.h */; };
-		C546B17A1F37AB13003C5B7E /* iso8601.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCB1F35FAF0003C5B7E /* iso8601.c */; };
-		C546B17B1F37AB13003C5B7E /* iso8601.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFCC1F35FAF0003C5B7E /* iso8601.h */; };
-		C546B17C1F37AB13003C5B7E /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCD1F35FAF0003C5B7E /* list.c */; };
-		C546B17D1F37AB13003C5B7E /* message.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCE1F35FAF0003C5B7E /* message.c */; };
-		C546B17E1F37AB13003C5B7E /* mixer.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCF1F35FAF0003C5B7E /* mixer.c */; };
-		C546B17F1F37AB13003C5B7E /* output.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF31F35FAF0003C5B7E /* output.c */; };
-		C546B1801F37AB13003C5B7E /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF41F35FAF0003C5B7E /* parser.c */; };
-		C546B1811F37AB13003C5B7E /* password.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF51F35FAF0003C5B7E /* password.c */; };
-		C546B1821F37AB13003C5B7E /* player.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF61F35FAF0003C5B7E /* player.c */; };
-		C546B1831F37AB13003C5B7E /* playlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF71F35FAF0003C5B7E /* playlist.c */; };
-		C546B1841F37AB13003C5B7E /* queue.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF81F35FAF0003C5B7E /* queue.c */; };
-		C546B1851F37AB13003C5B7E /* quote.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF91F35FAF0003C5B7E /* quote.c */; };
-		C546B1861F37AB13003C5B7E /* quote.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFFA1F35FAF0003C5B7E /* quote.h */; };
-		C546B1871F37AB13003C5B7E /* rdirectory.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFB1F35FAF0003C5B7E /* rdirectory.c */; };
-		C546B1881F37AB13003C5B7E /* recv.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFC1F35FAF0003C5B7E /* recv.c */; };
-		C546B1891F37AB13003C5B7E /* resolver.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFD1F35FAF0003C5B7E /* resolver.c */; };
-		C546B18A1F37AB13003C5B7E /* resolver.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFFE1F35FAF0003C5B7E /* resolver.h */; };
-		C546B18B1F37AB13003C5B7E /* response.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFF1F35FAF0003C5B7E /* response.c */; };
-		C546B18C1F37AB13003C5B7E /* rplaylist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0001F35FAF0003C5B7E /* rplaylist.c */; };
-		C546B18D1F37AB13003C5B7E /* run.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0011F35FAF0003C5B7E /* run.c */; };
-		C546B18E1F37AB13003C5B7E /* run.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B0021F35FAF0003C5B7E /* run.h */; };
-		C546B18F1F37AB13003C5B7E /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0031F35FAF0003C5B7E /* search.c */; };
-		C546B1901F37AB13003C5B7E /* send.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0041F35FAF0003C5B7E /* send.c */; };
-		C546B1911F37AB13003C5B7E /* settings.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0051F35FAF0003C5B7E /* settings.c */; };
-		C546B1921F37AB13003C5B7E /* socket.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0061F35FAF0003C5B7E /* socket.c */; };
-		C546B1931F37AB13003C5B7E /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B0071F35FAF0003C5B7E /* socket.h */; };
-		C546B1941F37AB13003C5B7E /* song.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0081F35FAF0003C5B7E /* song.c */; };
-		C546B1951F37AB13003C5B7E /* stats.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0091F35FAF0003C5B7E /* stats.c */; };
-		C546B1961F37AB13003C5B7E /* status.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00A1F35FAF0003C5B7E /* status.c */; };
-		C546B1971F37AB13003C5B7E /* sticker.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00B1F35FAF0003C5B7E /* sticker.c */; };
-		C546B1981F37AB13003C5B7E /* sync.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00C1F35FAF0003C5B7E /* sync.c */; };
-		C546B1991F37AB13003C5B7E /* sync.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B00D1F35FAF0003C5B7E /* sync.h */; };
-		C546B19A1F37AB13003C5B7E /* tag.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00E1F35FAF0003C5B7E /* tag.c */; };
-		C546B19B1F37AB13003C5B7E /* uri.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B00F1F35FAF0003C5B7E /* uri.h */; };
-		C546B19C1F37AB20003C5B7E /* async.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD11F35FAF0003C5B7E /* async.h */; };
-		C546B19D1F37AB20003C5B7E /* audio_format.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD21F35FAF0003C5B7E /* audio_format.h */; };
-		C546B19E1F37AB20003C5B7E /* capabilities.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD31F35FAF0003C5B7E /* capabilities.h */; };
-		C546B19F1F37AB20003C5B7E /* client.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD41F35FAF0003C5B7E /* client.h */; };
-		C546B1A01F37AB20003C5B7E /* compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD51F35FAF0003C5B7E /* compiler.h */; };
-		C546B1A11F37AB20003C5B7E /* connection.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD61F35FAF0003C5B7E /* connection.h */; };
-		C546B1A21F37AB20003C5B7E /* database.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD71F35FAF0003C5B7E /* database.h */; };
-		C546B1A31F37AB20003C5B7E /* directory.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD81F35FAF0003C5B7E /* directory.h */; };
-		C546B1A41F37AB20003C5B7E /* entity.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD91F35FAF0003C5B7E /* entity.h */; };
-		C546B1A51F37AB20003C5B7E /* error.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDA1F35FAF0003C5B7E /* error.h */; };
-		C546B1A61F37AB20003C5B7E /* idle.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDB1F35FAF0003C5B7E /* idle.h */; };
-		C546B1A71F37AB20003C5B7E /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDC1F35FAF0003C5B7E /* list.h */; };
-		C546B1A81F37AB20003C5B7E /* message.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDD1F35FAF0003C5B7E /* message.h */; };
-		C546B1A91F37AB20003C5B7E /* mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDE1F35FAF0003C5B7E /* mixer.h */; };
-		C546B1AA1F37AB20003C5B7E /* output.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDF1F35FAF0003C5B7E /* output.h */; };
-		C546B1AB1F37AB20003C5B7E /* pair.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE01F35FAF0003C5B7E /* pair.h */; };
-		C546B1AC1F37AB20003C5B7E /* parser.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE11F35FAF0003C5B7E /* parser.h */; };
-		C546B1AD1F37AB20003C5B7E /* password.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE21F35FAF0003C5B7E /* password.h */; };
-		C546B1AE1F37AB20003C5B7E /* player.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE31F35FAF0003C5B7E /* player.h */; };
-		C546B1AF1F37AB20003C5B7E /* playlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE41F35FAF0003C5B7E /* playlist.h */; };
-		C546B1B01F37AB20003C5B7E /* protocol.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE51F35FAF0003C5B7E /* protocol.h */; };
-		C546B1B11F37AB20003C5B7E /* queue.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE61F35FAF0003C5B7E /* queue.h */; };
-		C546B1B21F37AB20003C5B7E /* recv.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE71F35FAF0003C5B7E /* recv.h */; };
-		C546B1B31F37AB20003C5B7E /* response.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE81F35FAF0003C5B7E /* response.h */; };
-		C546B1B41F37AB20003C5B7E /* search.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE91F35FAF0003C5B7E /* search.h */; };
-		C546B1B51F37AB20003C5B7E /* send.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEA1F35FAF0003C5B7E /* send.h */; };
-		C546B1B61F37AB20003C5B7E /* settings.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEB1F35FAF0003C5B7E /* settings.h */; };
-		C546B1B71F37AB20003C5B7E /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEC1F35FAF0003C5B7E /* socket.h */; };
-		C546B1B81F37AB20003C5B7E /* song.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFED1F35FAF0003C5B7E /* song.h */; };
-		C546B1B91F37AB20003C5B7E /* stats.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEE1F35FAF0003C5B7E /* stats.h */; };
-		C546B1BA1F37AB20003C5B7E /* status.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEF1F35FAF0003C5B7E /* status.h */; };
-		C546B1BB1F37AB20003C5B7E /* sticker.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFF01F35FAF0003C5B7E /* sticker.h */; };
-		C546B1BC1F37AB20003C5B7E /* tag.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFF11F35FAF0003C5B7E /* tag.h */; };
 		C546B1BE1F37AB32003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
 		C546B1ED1F37AFF9003C5B7E /* MPDConnector_tvOS.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B1EB1F37AFF9003C5B7E /* MPDConnector_tvOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C546B1F11F37B103003C5B7E /* MPDPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */; };
-		C546B1F21F37B10F003C5B7E /* async.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB51F35FAF0003C5B7E /* async.c */; };
-		C546B1F31F37B10F003C5B7E /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFB61F35FAF0003C5B7E /* buffer.h */; };
-		C546B1F41F37B10F003C5B7E /* capabilities.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB71F35FAF0003C5B7E /* capabilities.c */; };
-		C546B1F51F37B10F003C5B7E /* cmessage.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB81F35FAF0003C5B7E /* cmessage.c */; };
-		C546B1F61F37B10F003C5B7E /* connection.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFB91F35FAF0003C5B7E /* connection.c */; };
-		C546B1F71F37B10F003C5B7E /* coutput.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBA1F35FAF0003C5B7E /* coutput.c */; };
-		C546B1F81F37B10F003C5B7E /* cplaylist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBB1F35FAF0003C5B7E /* cplaylist.c */; };
-		C546B1F91F37B10F003C5B7E /* cstats.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBC1F35FAF0003C5B7E /* cstats.c */; };
-		C546B1FA1F37B10F003C5B7E /* cstatus.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBD1F35FAF0003C5B7E /* cstatus.c */; };
-		C546B1FB1F37B10F003C5B7E /* database.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBE1F35FAF0003C5B7E /* database.c */; };
-		C546B1FC1F37B10F003C5B7E /* directory.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFBF1F35FAF0003C5B7E /* directory.c */; };
-		C546B1FD1F37B10F003C5B7E /* entity.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC01F35FAF0003C5B7E /* entity.c */; };
-		C546B1FE1F37B10F003C5B7E /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC11F35FAF0003C5B7E /* error.c */; };
-		C546B1FF1F37B10F003C5B7E /* example.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC21F35FAF0003C5B7E /* example.c */; };
-		C546B2001F37B10F003C5B7E /* fd_util.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC31F35FAF0003C5B7E /* fd_util.c */; };
-		C546B2011F37B10F003C5B7E /* fd_util.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC41F35FAF0003C5B7E /* fd_util.h */; };
-		C546B2021F37B10F003C5B7E /* iasync.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC51F35FAF0003C5B7E /* iasync.h */; };
-		C546B2031F37B10F003C5B7E /* idle.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC61F35FAF0003C5B7E /* idle.c */; };
-		C546B2041F37B10F003C5B7E /* ierror.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFC71F35FAF0003C5B7E /* ierror.c */; };
-		C546B2051F37B10F003C5B7E /* ierror.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC81F35FAF0003C5B7E /* ierror.h */; };
-		C546B2061F37B10F003C5B7E /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFC91F35FAF0003C5B7E /* internal.h */; };
-		C546B2071F37B10F003C5B7E /* isend.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFCA1F35FAF0003C5B7E /* isend.h */; };
-		C546B2081F37B10F003C5B7E /* iso8601.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCB1F35FAF0003C5B7E /* iso8601.c */; };
-		C546B2091F37B10F003C5B7E /* iso8601.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFCC1F35FAF0003C5B7E /* iso8601.h */; };
-		C546B20A1F37B10F003C5B7E /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCD1F35FAF0003C5B7E /* list.c */; };
-		C546B20B1F37B10F003C5B7E /* message.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCE1F35FAF0003C5B7E /* message.c */; };
-		C546B20C1F37B10F003C5B7E /* mixer.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFCF1F35FAF0003C5B7E /* mixer.c */; };
-		C546B20D1F37B10F003C5B7E /* output.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF31F35FAF0003C5B7E /* output.c */; };
-		C546B20E1F37B10F003C5B7E /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF41F35FAF0003C5B7E /* parser.c */; };
-		C546B20F1F37B10F003C5B7E /* password.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF51F35FAF0003C5B7E /* password.c */; };
-		C546B2101F37B10F003C5B7E /* player.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF61F35FAF0003C5B7E /* player.c */; };
-		C546B2111F37B10F003C5B7E /* playlist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF71F35FAF0003C5B7E /* playlist.c */; };
-		C546B2121F37B10F003C5B7E /* queue.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF81F35FAF0003C5B7E /* queue.c */; };
-		C546B2131F37B10F003C5B7E /* quote.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFF91F35FAF0003C5B7E /* quote.c */; };
-		C546B2141F37B10F003C5B7E /* quote.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFFA1F35FAF0003C5B7E /* quote.h */; };
-		C546B2151F37B10F003C5B7E /* rdirectory.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFB1F35FAF0003C5B7E /* rdirectory.c */; };
-		C546B2161F37B10F003C5B7E /* recv.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFC1F35FAF0003C5B7E /* recv.c */; };
-		C546B2171F37B10F003C5B7E /* resolver.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFD1F35FAF0003C5B7E /* resolver.c */; };
-		C546B2181F37B10F003C5B7E /* resolver.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFFE1F35FAF0003C5B7E /* resolver.h */; };
-		C546B2191F37B10F003C5B7E /* response.c in Sources */ = {isa = PBXBuildFile; fileRef = C546AFFF1F35FAF0003C5B7E /* response.c */; };
-		C546B21A1F37B10F003C5B7E /* rplaylist.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0001F35FAF0003C5B7E /* rplaylist.c */; };
-		C546B21B1F37B10F003C5B7E /* run.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0011F35FAF0003C5B7E /* run.c */; };
-		C546B21C1F37B10F003C5B7E /* run.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B0021F35FAF0003C5B7E /* run.h */; };
-		C546B21D1F37B10F003C5B7E /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0031F35FAF0003C5B7E /* search.c */; };
-		C546B21E1F37B10F003C5B7E /* send.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0041F35FAF0003C5B7E /* send.c */; };
-		C546B21F1F37B10F003C5B7E /* settings.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0051F35FAF0003C5B7E /* settings.c */; };
-		C546B2201F37B10F003C5B7E /* socket.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0061F35FAF0003C5B7E /* socket.c */; };
-		C546B2211F37B10F003C5B7E /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B0071F35FAF0003C5B7E /* socket.h */; };
-		C546B2221F37B10F003C5B7E /* song.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0081F35FAF0003C5B7E /* song.c */; };
-		C546B2231F37B10F003C5B7E /* stats.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B0091F35FAF0003C5B7E /* stats.c */; };
-		C546B2241F37B10F003C5B7E /* status.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00A1F35FAF0003C5B7E /* status.c */; };
-		C546B2251F37B10F003C5B7E /* sticker.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00B1F35FAF0003C5B7E /* sticker.c */; };
-		C546B2261F37B10F003C5B7E /* sync.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00C1F35FAF0003C5B7E /* sync.c */; };
-		C546B2271F37B10F003C5B7E /* sync.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B00D1F35FAF0003C5B7E /* sync.h */; };
-		C546B2281F37B10F003C5B7E /* tag.c in Sources */ = {isa = PBXBuildFile; fileRef = C546B00E1F35FAF0003C5B7E /* tag.c */; };
-		C546B2291F37B10F003C5B7E /* uri.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B00F1F35FAF0003C5B7E /* uri.h */; };
-		C546B22A1F37B116003C5B7E /* async.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD11F35FAF0003C5B7E /* async.h */; };
-		C546B22B1F37B116003C5B7E /* audio_format.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD21F35FAF0003C5B7E /* audio_format.h */; };
-		C546B22C1F37B116003C5B7E /* capabilities.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD31F35FAF0003C5B7E /* capabilities.h */; };
-		C546B22D1F37B116003C5B7E /* client.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD41F35FAF0003C5B7E /* client.h */; };
-		C546B22E1F37B116003C5B7E /* compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD51F35FAF0003C5B7E /* compiler.h */; };
-		C546B22F1F37B116003C5B7E /* connection.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD61F35FAF0003C5B7E /* connection.h */; };
-		C546B2301F37B116003C5B7E /* database.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD71F35FAF0003C5B7E /* database.h */; };
-		C546B2311F37B116003C5B7E /* directory.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD81F35FAF0003C5B7E /* directory.h */; };
-		C546B2321F37B116003C5B7E /* entity.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFD91F35FAF0003C5B7E /* entity.h */; };
-		C546B2331F37B116003C5B7E /* error.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDA1F35FAF0003C5B7E /* error.h */; };
-		C546B2341F37B116003C5B7E /* idle.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDB1F35FAF0003C5B7E /* idle.h */; };
-		C546B2351F37B116003C5B7E /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDC1F35FAF0003C5B7E /* list.h */; };
-		C546B2361F37B116003C5B7E /* message.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDD1F35FAF0003C5B7E /* message.h */; };
-		C546B2371F37B116003C5B7E /* mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDE1F35FAF0003C5B7E /* mixer.h */; };
-		C546B2381F37B116003C5B7E /* output.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFDF1F35FAF0003C5B7E /* output.h */; };
-		C546B2391F37B116003C5B7E /* pair.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE01F35FAF0003C5B7E /* pair.h */; };
-		C546B23A1F37B116003C5B7E /* parser.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE11F35FAF0003C5B7E /* parser.h */; };
-		C546B23B1F37B116003C5B7E /* password.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE21F35FAF0003C5B7E /* password.h */; };
-		C546B23C1F37B116003C5B7E /* player.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE31F35FAF0003C5B7E /* player.h */; };
-		C546B23D1F37B116003C5B7E /* playlist.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE41F35FAF0003C5B7E /* playlist.h */; };
-		C546B23E1F37B116003C5B7E /* protocol.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE51F35FAF0003C5B7E /* protocol.h */; };
-		C546B23F1F37B116003C5B7E /* queue.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE61F35FAF0003C5B7E /* queue.h */; };
-		C546B2401F37B116003C5B7E /* recv.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE71F35FAF0003C5B7E /* recv.h */; };
-		C546B2411F37B116003C5B7E /* response.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE81F35FAF0003C5B7E /* response.h */; };
-		C546B2421F37B116003C5B7E /* search.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFE91F35FAF0003C5B7E /* search.h */; };
-		C546B2431F37B116003C5B7E /* send.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEA1F35FAF0003C5B7E /* send.h */; };
-		C546B2441F37B116003C5B7E /* settings.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEB1F35FAF0003C5B7E /* settings.h */; };
-		C546B2451F37B116003C5B7E /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEC1F35FAF0003C5B7E /* socket.h */; };
-		C546B2461F37B116003C5B7E /* song.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFED1F35FAF0003C5B7E /* song.h */; };
-		C546B2471F37B116003C5B7E /* stats.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEE1F35FAF0003C5B7E /* stats.h */; };
-		C546B2481F37B116003C5B7E /* status.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFEF1F35FAF0003C5B7E /* status.h */; };
-		C546B2491F37B116003C5B7E /* sticker.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFF01F35FAF0003C5B7E /* sticker.h */; };
-		C546B24A1F37B116003C5B7E /* tag.h in Headers */ = {isa = PBXBuildFile; fileRef = C546AFF11F35FAF0003C5B7E /* tag.h */; };
 		C546B2501F3843C0003C5B7E /* MPDConnector_iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = C546B24E1F3843C0003C5B7E /* MPDConnector_iOS.h */; };
 		C546B26E1F3B0305003C5B7E /* MPDProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */; };
 		C546B2731F3B042A003C5B7E /* MPDWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2721F3B042A003C5B7E /* MPDWrapper.swift */; };
-		C546B27D1F3B0A8E003C5B7E /* MPDConnector.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C546AF3C1F35A824003C5B7E /* MPDConnector.framework */; };
-		C546B2841F3B158C003C5B7E /* MPDConnector.framework in Resources */ = {isa = PBXBuildFile; fileRef = C546AF3C1F35A824003C5B7E /* MPDConnector.framework */; };
 		C546B2861F3B6CCB003C5B7E /* MPDWrapperMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */; };
 		C546B2BD1F3C34BE003C5B7E /* MockBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = C546B2BC1F3C34BE003C5B7E /* MockBase.swift */; };
 		C548EF411FFCDCC500FBE535 /* MPDStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C548EF401FFCDCC500FBE535 /* MPDStatus.swift */; };
@@ -308,23 +30,14 @@
 		C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */; };
 		C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */; };
 		C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */; };
-		C5770B3723A02B900050EB1E /* readpicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C5770B3523A02B900050EB1E /* readpicture.h */; };
-		C5770B3823A02B900050EB1E /* readpicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C5770B3523A02B900050EB1E /* readpicture.h */; };
-		C5770B3923A02B900050EB1E /* readpicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C5770B3523A02B900050EB1E /* readpicture.h */; };
-		C5770B3A23A02B900050EB1E /* readpicture.c in Sources */ = {isa = PBXBuildFile; fileRef = C5770B3623A02B900050EB1E /* readpicture.c */; };
-		C5770B3B23A02B900050EB1E /* readpicture.c in Sources */ = {isa = PBXBuildFile; fileRef = C5770B3623A02B900050EB1E /* readpicture.c */; };
-		C5770B3C23A02B900050EB1E /* readpicture.c in Sources */ = {isa = PBXBuildFile; fileRef = C5770B3623A02B900050EB1E /* readpicture.c */; };
 		C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B3651F519A5D00D7B784 /* MPDControl.swift */; };
 		C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */; };
 		C5944E8020167C8500C5F9AA /* MPDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */; };
 		C5B7CD96203772E600C087ED /* MPDBrowseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */; };
 		C5C6830D21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C6830C21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift */; };
+		C5C6CB5923B5FF3800767B41 /* libmpdclient in Frameworks */ = {isa = PBXBuildFile; productRef = C5C6CB5823B5FF3800767B41 /* libmpdclient */; };
 		C5C9F7F82042B6B900D239A8 /* MPDArtistBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */; };
 		C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */; };
-		C5FE88F5239EF167002DD055 /* cneighbor.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F1239EF167002DD055 /* cneighbor.c */; };
-		C5FE88F6239EF167002DD055 /* cpartition.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F2239EF167002DD055 /* cpartition.c */; };
-		C5FE88F7239EF167002DD055 /* partition.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F3239EF167002DD055 /* partition.c */; };
-		C5FE88F8239EF167002DD055 /* neighbor.c in Sources */ = {isa = PBXBuildFile; fileRef = C5FE88F4239EF167002DD055 /* neighbor.c */; };
 		C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */; };
 		E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */; };
 /* End PBXBuildFile section */
@@ -377,119 +90,16 @@
 		B669CC2955694C3B62603CCE /* Pods_MPDConnectorTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnectorTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B998B96EBFCB040EB2B230E7 /* Pods-MPDConnector_MacOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.debug.xcconfig"; sourceTree = "<group>"; };
 		BA20A4973F3D35D38F4AECF2 /* Pods-MPDConnectorTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnectorTests.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests.release.xcconfig"; sourceTree = "<group>"; };
-		C53629D421318B21004D5C1C /* kvlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kvlist.h; sourceTree = "<group>"; };
-		C53629D921318B22004D5C1C /* kvlist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = kvlist.c; sourceTree = "<group>"; };
-		C54687BB227F274000BDCA18 /* cmount.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cmount.c; sourceTree = "<group>"; };
-		C54687C0227F274100BDCA18 /* mount.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mount.c; sourceTree = "<group>"; };
-		C54687C1227F274100BDCA18 /* iaf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iaf.h; sourceTree = "<group>"; };
-		C54687C2227F274100BDCA18 /* audio_format.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = audio_format.c; sourceTree = "<group>"; };
-		C54687C3227F274100BDCA18 /* fingerprint.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fingerprint.c; sourceTree = "<group>"; };
-		C54687C9227F275400BDCA18 /* fingerprint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fingerprint.h; sourceTree = "<group>"; };
-		C54687CA227F275400BDCA18 /* mount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mount.h; sourceTree = "<group>"; };
-		C546AF3C1F35A824003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546AF9E1F35EE5D003C5B7E /* MPDPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDPlayer.swift; sourceTree = "<group>"; };
-		C546AFB51F35FAF0003C5B7E /* async.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = async.c; sourceTree = "<group>"; };
-		C546AFB61F35FAF0003C5B7E /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = buffer.h; sourceTree = "<group>"; };
-		C546AFB71F35FAF0003C5B7E /* capabilities.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = capabilities.c; sourceTree = "<group>"; };
-		C546AFB81F35FAF0003C5B7E /* cmessage.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cmessage.c; sourceTree = "<group>"; };
-		C546AFB91F35FAF0003C5B7E /* connection.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = connection.c; sourceTree = "<group>"; };
-		C546AFBA1F35FAF0003C5B7E /* coutput.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = coutput.c; sourceTree = "<group>"; };
-		C546AFBB1F35FAF0003C5B7E /* cplaylist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cplaylist.c; sourceTree = "<group>"; };
-		C546AFBC1F35FAF0003C5B7E /* cstats.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cstats.c; sourceTree = "<group>"; };
-		C546AFBD1F35FAF0003C5B7E /* cstatus.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cstatus.c; sourceTree = "<group>"; };
-		C546AFBE1F35FAF0003C5B7E /* database.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = database.c; sourceTree = "<group>"; };
-		C546AFBF1F35FAF0003C5B7E /* directory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = directory.c; sourceTree = "<group>"; };
-		C546AFC01F35FAF0003C5B7E /* entity.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = entity.c; sourceTree = "<group>"; };
-		C546AFC11F35FAF0003C5B7E /* error.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = error.c; sourceTree = "<group>"; };
-		C546AFC21F35FAF0003C5B7E /* example.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = example.c; sourceTree = "<group>"; };
-		C546AFC31F35FAF0003C5B7E /* fd_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fd_util.c; sourceTree = "<group>"; };
-		C546AFC41F35FAF0003C5B7E /* fd_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fd_util.h; sourceTree = "<group>"; };
-		C546AFC51F35FAF0003C5B7E /* iasync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iasync.h; sourceTree = "<group>"; };
-		C546AFC61F35FAF0003C5B7E /* idle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = idle.c; sourceTree = "<group>"; };
-		C546AFC71F35FAF0003C5B7E /* ierror.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ierror.c; sourceTree = "<group>"; };
-		C546AFC81F35FAF0003C5B7E /* ierror.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ierror.h; sourceTree = "<group>"; };
-		C546AFC91F35FAF0003C5B7E /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = internal.h; sourceTree = "<group>"; };
-		C546AFCA1F35FAF0003C5B7E /* isend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = isend.h; sourceTree = "<group>"; };
-		C546AFCB1F35FAF0003C5B7E /* iso8601.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iso8601.c; sourceTree = "<group>"; };
-		C546AFCC1F35FAF0003C5B7E /* iso8601.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iso8601.h; sourceTree = "<group>"; };
-		C546AFCD1F35FAF0003C5B7E /* list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = list.c; sourceTree = "<group>"; };
-		C546AFCE1F35FAF0003C5B7E /* message.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = message.c; sourceTree = "<group>"; };
-		C546AFCF1F35FAF0003C5B7E /* mixer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mixer.c; sourceTree = "<group>"; };
-		C546AFD11F35FAF0003C5B7E /* async.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = async.h; sourceTree = "<group>"; };
-		C546AFD21F35FAF0003C5B7E /* audio_format.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audio_format.h; sourceTree = "<group>"; };
-		C546AFD31F35FAF0003C5B7E /* capabilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = capabilities.h; sourceTree = "<group>"; };
-		C546AFD41F35FAF0003C5B7E /* client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = client.h; sourceTree = "<group>"; };
-		C546AFD51F35FAF0003C5B7E /* compiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compiler.h; sourceTree = "<group>"; };
-		C546AFD61F35FAF0003C5B7E /* connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = connection.h; sourceTree = "<group>"; };
-		C546AFD71F35FAF0003C5B7E /* database.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = database.h; sourceTree = "<group>"; };
-		C546AFD81F35FAF0003C5B7E /* directory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = directory.h; sourceTree = "<group>"; };
-		C546AFD91F35FAF0003C5B7E /* entity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = entity.h; sourceTree = "<group>"; };
-		C546AFDA1F35FAF0003C5B7E /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
-		C546AFDB1F35FAF0003C5B7E /* idle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idle.h; sourceTree = "<group>"; };
-		C546AFDC1F35FAF0003C5B7E /* list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = list.h; sourceTree = "<group>"; };
-		C546AFDD1F35FAF0003C5B7E /* message.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = message.h; sourceTree = "<group>"; };
-		C546AFDE1F35FAF0003C5B7E /* mixer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mixer.h; sourceTree = "<group>"; };
-		C546AFDF1F35FAF0003C5B7E /* output.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = output.h; sourceTree = "<group>"; };
-		C546AFE01F35FAF0003C5B7E /* pair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pair.h; sourceTree = "<group>"; };
-		C546AFE11F35FAF0003C5B7E /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
-		C546AFE21F35FAF0003C5B7E /* password.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = password.h; sourceTree = "<group>"; };
-		C546AFE31F35FAF0003C5B7E /* player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = player.h; sourceTree = "<group>"; };
-		C546AFE41F35FAF0003C5B7E /* playlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = playlist.h; sourceTree = "<group>"; };
-		C546AFE51F35FAF0003C5B7E /* protocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = protocol.h; sourceTree = "<group>"; };
-		C546AFE61F35FAF0003C5B7E /* queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = queue.h; sourceTree = "<group>"; };
-		C546AFE71F35FAF0003C5B7E /* recv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recv.h; sourceTree = "<group>"; };
-		C546AFE81F35FAF0003C5B7E /* response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = response.h; sourceTree = "<group>"; };
-		C546AFE91F35FAF0003C5B7E /* search.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = search.h; sourceTree = "<group>"; };
-		C546AFEA1F35FAF0003C5B7E /* send.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = send.h; sourceTree = "<group>"; };
-		C546AFEB1F35FAF0003C5B7E /* settings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = settings.h; sourceTree = "<group>"; };
-		C546AFEC1F35FAF0003C5B7E /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = socket.h; sourceTree = "<group>"; };
-		C546AFED1F35FAF0003C5B7E /* song.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = song.h; sourceTree = "<group>"; };
-		C546AFEE1F35FAF0003C5B7E /* stats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stats.h; sourceTree = "<group>"; };
-		C546AFEF1F35FAF0003C5B7E /* status.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = status.h; sourceTree = "<group>"; };
-		C546AFF01F35FAF0003C5B7E /* sticker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sticker.h; sourceTree = "<group>"; };
-		C546AFF11F35FAF0003C5B7E /* tag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tag.h; sourceTree = "<group>"; };
-		C546AFF21F35FAF0003C5B7E /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
-		C546AFF31F35FAF0003C5B7E /* output.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = output.c; sourceTree = "<group>"; };
-		C546AFF41F35FAF0003C5B7E /* parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = parser.c; sourceTree = "<group>"; };
-		C546AFF51F35FAF0003C5B7E /* password.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = password.c; sourceTree = "<group>"; };
-		C546AFF61F35FAF0003C5B7E /* player.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = player.c; sourceTree = "<group>"; };
-		C546AFF71F35FAF0003C5B7E /* playlist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = playlist.c; sourceTree = "<group>"; };
-		C546AFF81F35FAF0003C5B7E /* queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = queue.c; sourceTree = "<group>"; };
-		C546AFF91F35FAF0003C5B7E /* quote.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = quote.c; sourceTree = "<group>"; };
-		C546AFFA1F35FAF0003C5B7E /* quote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = quote.h; sourceTree = "<group>"; };
-		C546AFFB1F35FAF0003C5B7E /* rdirectory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rdirectory.c; sourceTree = "<group>"; };
-		C546AFFC1F35FAF0003C5B7E /* recv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = recv.c; sourceTree = "<group>"; };
-		C546AFFD1F35FAF0003C5B7E /* resolver.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = resolver.c; sourceTree = "<group>"; };
-		C546AFFE1F35FAF0003C5B7E /* resolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resolver.h; sourceTree = "<group>"; };
-		C546AFFF1F35FAF0003C5B7E /* response.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = response.c; sourceTree = "<group>"; };
-		C546B0001F35FAF0003C5B7E /* rplaylist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rplaylist.c; sourceTree = "<group>"; };
-		C546B0011F35FAF0003C5B7E /* run.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = run.c; sourceTree = "<group>"; };
-		C546B0021F35FAF0003C5B7E /* run.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = run.h; sourceTree = "<group>"; };
-		C546B0031F35FAF0003C5B7E /* search.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = search.c; sourceTree = "<group>"; };
-		C546B0041F35FAF0003C5B7E /* send.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = send.c; sourceTree = "<group>"; };
-		C546B0051F35FAF0003C5B7E /* settings.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = settings.c; sourceTree = "<group>"; };
-		C546B0061F35FAF0003C5B7E /* socket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = socket.c; sourceTree = "<group>"; };
-		C546B0071F35FAF0003C5B7E /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = socket.h; sourceTree = "<group>"; };
-		C546B0081F35FAF0003C5B7E /* song.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = song.c; sourceTree = "<group>"; };
-		C546B0091F35FAF0003C5B7E /* stats.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stats.c; sourceTree = "<group>"; };
-		C546B00A1F35FAF0003C5B7E /* status.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = status.c; sourceTree = "<group>"; };
-		C546B00B1F35FAF0003C5B7E /* sticker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sticker.c; sourceTree = "<group>"; };
-		C546B00C1F35FAF0003C5B7E /* sync.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sync.c; sourceTree = "<group>"; };
-		C546B00D1F35FAF0003C5B7E /* sync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync.h; sourceTree = "<group>"; };
-		C546B00E1F35FAF0003C5B7E /* tag.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tag.c; sourceTree = "<group>"; };
-		C546B00F1F35FAF0003C5B7E /* uri.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uri.h; sourceTree = "<group>"; };
 		C546B0731F37406B003C5B7E /* ConnectorProtocol.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ConnectorProtocol.xcodeproj; path = ../ConnectorProtocol/ConnectorProtocol.xcodeproj; sourceTree = "<group>"; };
-		C546B1591F37AAA9003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546B15B1F37AAA9003C5B7E /* MPDConnector_MacOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPDConnector_MacOS.h; sourceTree = "<group>"; };
 		C546B15C1F37AAA9003C5B7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C546B1E91F37AFF9003C5B7E /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546B1EB1F37AFF9003C5B7E /* MPDConnector_tvOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPDConnector_tvOS.h; sourceTree = "<group>"; };
 		C546B1EC1F37AFF9003C5B7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C546B24D1F3843C0003C5B7E /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C546B24E1F3843C0003C5B7E /* MPDConnector_iOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPDConnector_iOS.h; sourceTree = "<group>"; };
 		C546B26D1F3B0305003C5B7E /* MPDProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDProtocol.swift; sourceTree = "<group>"; };
 		C546B2721F3B042A003C5B7E /* MPDWrapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDWrapper.swift; sourceTree = "<group>"; };
-		C546B2781F3B0A8E003C5B7E /* MPDConnectorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MPDConnectorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C546B27A1F3B0A8E003C5B7E /* MPDPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerTests.swift; sourceTree = "<group>"; };
 		C546B27C1F3B0A8E003C5B7E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C546B2851F3B6CCB003C5B7E /* MPDWrapperMock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDWrapperMock.swift; sourceTree = "<group>"; };
@@ -502,22 +112,17 @@
 		C54AFF91204C585600CCAE3B /* MPDSongBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDSongBrowseViewModel.swift; sourceTree = "<group>"; };
 		C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDPlayerBrowser.swift; sourceTree = "<group>"; };
 		C55D1CB22061934700ACAC86 /* MPDGenreBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDGenreBrowseViewModel.swift; sourceTree = "<group>"; };
-		C5770B3523A02B900050EB1E /* readpicture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = readpicture.h; sourceTree = "<group>"; };
-		C5770B3623A02B900050EB1E /* readpicture.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = readpicture.c; sourceTree = "<group>"; };
 		C585B3651F519A5D00D7B784 /* MPDControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControl.swift; sourceTree = "<group>"; };
 		C585B36B1F51BB4E00D7B784 /* MPDControlTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPDControlTests.swift; sourceTree = "<group>"; };
 		C5883B44203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDAlbumBrowseViewModel.swift; sourceTree = "<group>"; };
 		C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowseTests.swift; sourceTree = "<group>"; };
 		C5C6830C21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDAlbumSectionBrowseViewModel.swift; sourceTree = "<group>"; };
+		C5C6CB4A23B5F0DD00767B41 /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5C6CB4B23B5F0DD00767B41 /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5C6CB4C23B5F0DD00767B41 /* MPDConnector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MPDConnector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5C6CB4D23B5F0DD00767B41 /* MPDConnectorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MPDConnectorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDArtistBrowseViewModel.swift; sourceTree = "<group>"; };
 		C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDBrowse.swift; sourceTree = "<group>"; };
-		C5FE88EF239EF14A002DD055 /* partition.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = partition.h; sourceTree = "<group>"; };
-		C5FE88F0239EF14A002DD055 /* neighbor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = neighbor.h; sourceTree = "<group>"; };
-		C5FE88F1239EF167002DD055 /* cneighbor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cneighbor.c; sourceTree = "<group>"; };
-		C5FE88F2239EF167002DD055 /* cpartition.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpartition.c; sourceTree = "<group>"; };
-		C5FE88F3239EF167002DD055 /* partition.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = partition.c; sourceTree = "<group>"; };
-		C5FE88F4239EF167002DD055 /* neighbor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = neighbor.c; sourceTree = "<group>"; };
-		C5FE88F9239EF17C002DD055 /* binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = binary.h; sourceTree = "<group>"; };
 		C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPDFolderBrowseViewModel.swift; sourceTree = "<group>"; };
 		C7EBF2A40657AFA03D86BD74 /* Pods-MPDConnector_MacOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MPDConnector_MacOS.release.xcconfig"; path = "../Pods/Target Support Files/Pods-MPDConnector_MacOS/Pods-MPDConnector_MacOS.release.xcconfig"; sourceTree = "<group>"; };
 		F1F00FD9EDAEE8079D73143C /* Pods_MPDConnector_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MPDConnector_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -531,6 +136,7 @@
 			files = (
 				C546B0791F3742F8003C5B7E /* ConnectorProtocol.framework in Frameworks */,
 				E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */,
+				C5C6CB5923B5FF3800767B41 /* libmpdclient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -554,7 +160,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B27D1F3B0A8E003C5B7E /* MPDConnector.framework in Frameworks */,
 				0723B6C659107F196E8F19A7 /* Pods_MPDConnectorTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -570,23 +175,14 @@
 				C546B24C1F3843C0003C5B7E /* MPDConnector_iOS */,
 				C546B15A1F37AAA9003C5B7E /* MPDConnector_MacOS */,
 				C546B1EA1F37AFF9003C5B7E /* MPDConnector_tvOS */,
-				C546AFB41F35FAF0003C5B7E /* libmpdclient */,
 				C546B2791F3B0A8E003C5B7E /* MPDConnectorTests */,
 				C546B07A1F3742F8003C5B7E /* Frameworks */,
 				C5A0383A6A503E33A32154C9 /* Pods */,
+				C5C6CB4A23B5F0DD00767B41 /* MPDConnector.framework */,
+				C5C6CB4B23B5F0DD00767B41 /* MPDConnector.framework */,
+				C5C6CB4C23B5F0DD00767B41 /* MPDConnector.framework */,
+				C5C6CB4D23B5F0DD00767B41 /* MPDConnectorTests.xctest */,
 			);
-			sourceTree = "<group>";
-		};
-		C546AF3D1F35A824003C5B7E /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				C546AF3C1F35A824003C5B7E /* MPDConnector.framework */,
-				C546B1591F37AAA9003C5B7E /* MPDConnector.framework */,
-				C546B1E91F37AFF9003C5B7E /* MPDConnector.framework */,
-				C546B2781F3B0A8E003C5B7E /* MPDConnectorTests.xctest */,
-			);
-			name = Products;
-			path = ..;
 			sourceTree = "<group>";
 		};
 		C546AF3E1F35A824003C5B7E /* MPDConnector */ = {
@@ -609,130 +205,6 @@
 				C554CB381F7AD2B800B83403 /* MPDPlayerBrowser.swift */,
 			);
 			path = MPDConnector;
-			sourceTree = "<group>";
-		};
-		C546AFB41F35FAF0003C5B7E /* libmpdclient */ = {
-			isa = PBXGroup;
-			children = (
-				C546AF3D1F35A824003C5B7E /* Products */,
-				C546AFD01F35FAF0003C5B7E /* mpd */,
-				C5FE88F9239EF17C002DD055 /* binary.h */,
-				C5FE88F1239EF167002DD055 /* cneighbor.c */,
-				C5FE88F2239EF167002DD055 /* cpartition.c */,
-				C5FE88F4239EF167002DD055 /* neighbor.c */,
-				C5FE88F3239EF167002DD055 /* partition.c */,
-				C54687C2227F274100BDCA18 /* audio_format.c */,
-				C54687BB227F274000BDCA18 /* cmount.c */,
-				C54687C3227F274100BDCA18 /* fingerprint.c */,
-				C54687C1227F274100BDCA18 /* iaf.h */,
-				C54687C0227F274100BDCA18 /* mount.c */,
-				C546AFB51F35FAF0003C5B7E /* async.c */,
-				C546AFB61F35FAF0003C5B7E /* buffer.h */,
-				C546AFB71F35FAF0003C5B7E /* capabilities.c */,
-				C546AFB81F35FAF0003C5B7E /* cmessage.c */,
-				C546AFB91F35FAF0003C5B7E /* connection.c */,
-				C546AFBA1F35FAF0003C5B7E /* coutput.c */,
-				C546AFBB1F35FAF0003C5B7E /* cplaylist.c */,
-				C546AFBC1F35FAF0003C5B7E /* cstats.c */,
-				C546AFBD1F35FAF0003C5B7E /* cstatus.c */,
-				C546AFBE1F35FAF0003C5B7E /* database.c */,
-				C546AFBF1F35FAF0003C5B7E /* directory.c */,
-				C546AFC01F35FAF0003C5B7E /* entity.c */,
-				C546AFC11F35FAF0003C5B7E /* error.c */,
-				C546AFC21F35FAF0003C5B7E /* example.c */,
-				C546AFC31F35FAF0003C5B7E /* fd_util.c */,
-				C546AFC41F35FAF0003C5B7E /* fd_util.h */,
-				C546AFC51F35FAF0003C5B7E /* iasync.h */,
-				C546AFC61F35FAF0003C5B7E /* idle.c */,
-				C546AFC71F35FAF0003C5B7E /* ierror.c */,
-				C546AFC81F35FAF0003C5B7E /* ierror.h */,
-				C546AFC91F35FAF0003C5B7E /* internal.h */,
-				C546AFCA1F35FAF0003C5B7E /* isend.h */,
-				C546AFCB1F35FAF0003C5B7E /* iso8601.c */,
-				C546AFCC1F35FAF0003C5B7E /* iso8601.h */,
-				C53629D921318B22004D5C1C /* kvlist.c */,
-				C53629D421318B21004D5C1C /* kvlist.h */,
-				C546AFCD1F35FAF0003C5B7E /* list.c */,
-				C546AFCE1F35FAF0003C5B7E /* message.c */,
-				C546AFCF1F35FAF0003C5B7E /* mixer.c */,
-				C546AFF31F35FAF0003C5B7E /* output.c */,
-				C546AFF41F35FAF0003C5B7E /* parser.c */,
-				C546AFF51F35FAF0003C5B7E /* password.c */,
-				C546AFF61F35FAF0003C5B7E /* player.c */,
-				C546AFF71F35FAF0003C5B7E /* playlist.c */,
-				C546AFF81F35FAF0003C5B7E /* queue.c */,
-				C546AFF91F35FAF0003C5B7E /* quote.c */,
-				C546AFFA1F35FAF0003C5B7E /* quote.h */,
-				C546AFFB1F35FAF0003C5B7E /* rdirectory.c */,
-				C546AFFC1F35FAF0003C5B7E /* recv.c */,
-				C546AFFD1F35FAF0003C5B7E /* resolver.c */,
-				C546AFFE1F35FAF0003C5B7E /* resolver.h */,
-				C546AFFF1F35FAF0003C5B7E /* response.c */,
-				C546B0001F35FAF0003C5B7E /* rplaylist.c */,
-				C546B0011F35FAF0003C5B7E /* run.c */,
-				C546B0021F35FAF0003C5B7E /* run.h */,
-				C546B0031F35FAF0003C5B7E /* search.c */,
-				C546B0041F35FAF0003C5B7E /* send.c */,
-				C546B0051F35FAF0003C5B7E /* settings.c */,
-				C546B0061F35FAF0003C5B7E /* socket.c */,
-				C546B0071F35FAF0003C5B7E /* socket.h */,
-				C546B0081F35FAF0003C5B7E /* song.c */,
-				C546B0091F35FAF0003C5B7E /* stats.c */,
-				C546B00A1F35FAF0003C5B7E /* status.c */,
-				C546B00B1F35FAF0003C5B7E /* sticker.c */,
-				C546B00C1F35FAF0003C5B7E /* sync.c */,
-				C546B00D1F35FAF0003C5B7E /* sync.h */,
-				C546B00E1F35FAF0003C5B7E /* tag.c */,
-				C546B00F1F35FAF0003C5B7E /* uri.h */,
-				C5770B3523A02B900050EB1E /* readpicture.h */,
-				C5770B3623A02B900050EB1E /* readpicture.c */,
-			);
-			path = libmpdclient;
-			sourceTree = "<group>";
-		};
-		C546AFD01F35FAF0003C5B7E /* mpd */ = {
-			isa = PBXGroup;
-			children = (
-				C5FE88F0239EF14A002DD055 /* neighbor.h */,
-				C5FE88EF239EF14A002DD055 /* partition.h */,
-				C54687C9227F275400BDCA18 /* fingerprint.h */,
-				C54687CA227F275400BDCA18 /* mount.h */,
-				C546AFD11F35FAF0003C5B7E /* async.h */,
-				C546AFD21F35FAF0003C5B7E /* audio_format.h */,
-				C546AFD31F35FAF0003C5B7E /* capabilities.h */,
-				C546AFD41F35FAF0003C5B7E /* client.h */,
-				C546AFD51F35FAF0003C5B7E /* compiler.h */,
-				C546AFD61F35FAF0003C5B7E /* connection.h */,
-				C546AFD71F35FAF0003C5B7E /* database.h */,
-				C546AFD81F35FAF0003C5B7E /* directory.h */,
-				C546AFD91F35FAF0003C5B7E /* entity.h */,
-				C546AFDA1F35FAF0003C5B7E /* error.h */,
-				C546AFDB1F35FAF0003C5B7E /* idle.h */,
-				C546AFDC1F35FAF0003C5B7E /* list.h */,
-				C546AFDD1F35FAF0003C5B7E /* message.h */,
-				C546AFDE1F35FAF0003C5B7E /* mixer.h */,
-				C546AFDF1F35FAF0003C5B7E /* output.h */,
-				C546AFE01F35FAF0003C5B7E /* pair.h */,
-				C546AFE11F35FAF0003C5B7E /* parser.h */,
-				C546AFE21F35FAF0003C5B7E /* password.h */,
-				C546AFE31F35FAF0003C5B7E /* player.h */,
-				C546AFE41F35FAF0003C5B7E /* playlist.h */,
-				C546AFE51F35FAF0003C5B7E /* protocol.h */,
-				C546AFE61F35FAF0003C5B7E /* queue.h */,
-				C546AFE71F35FAF0003C5B7E /* recv.h */,
-				C546AFE81F35FAF0003C5B7E /* response.h */,
-				C546AFE91F35FAF0003C5B7E /* search.h */,
-				C546AFEA1F35FAF0003C5B7E /* send.h */,
-				C546AFEB1F35FAF0003C5B7E /* settings.h */,
-				C546AFEC1F35FAF0003C5B7E /* socket.h */,
-				C546AFED1F35FAF0003C5B7E /* song.h */,
-				C546AFEE1F35FAF0003C5B7E /* stats.h */,
-				C546AFEF1F35FAF0003C5B7E /* status.h */,
-				C546AFF01F35FAF0003C5B7E /* sticker.h */,
-				C546AFF11F35FAF0003C5B7E /* tag.h */,
-				C546AFF21F35FAF0003C5B7E /* version.h */,
-			);
-			path = mpd;
 			sourceTree = "<group>";
 		};
 		C546B0741F37406B003C5B7E /* Products */ = {
@@ -821,58 +293,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B05C1F35FAF0003C5B7E /* run.h in Headers */,
-				C546B03F1F35FAF0003C5B7E /* protocol.h in Headers */,
-				C546B0691F35FAF0003C5B7E /* uri.h in Headers */,
-				C546B0361F35FAF0003C5B7E /* list.h in Headers */,
-				C546B02F1F35FAF0003C5B7E /* compiler.h in Headers */,
-				C546B03D1F35FAF0003C5B7E /* player.h in Headers */,
-				C546B0671F35FAF0003C5B7E /* sync.h in Headers */,
-				C54687C6227F274100BDCA18 /* iaf.h in Headers */,
-				C546B0581F35FAF0003C5B7E /* resolver.h in Headers */,
-				C546B0351F35FAF0003C5B7E /* idle.h in Headers */,
-				C546B02C1F35FAF0003C5B7E /* audio_format.h in Headers */,
-				C546B0411F35FAF0003C5B7E /* recv.h in Headers */,
-				C53629DA21318B22004D5C1C /* kvlist.h in Headers */,
-				C546B0611F35FAF0003C5B7E /* socket.h in Headers */,
-				C546B04B1F35FAF0003C5B7E /* tag.h in Headers */,
-				C546B02B1F35FAF0003C5B7E /* async.h in Headers */,
-				C546B0451F35FAF0003C5B7E /* settings.h in Headers */,
-				C546B03E1F35FAF0003C5B7E /* playlist.h in Headers */,
 				C546B2501F3843C0003C5B7E /* MPDConnector_iOS.h in Headers */,
-				C546B0311F35FAF0003C5B7E /* database.h in Headers */,
-				C546B0381F35FAF0003C5B7E /* mixer.h in Headers */,
-				C546B01F1F35FAF0003C5B7E /* fd_util.h in Headers */,
-				C546B03A1F35FAF0003C5B7E /* pair.h in Headers */,
-				C546B0491F35FAF0003C5B7E /* status.h in Headers */,
-				C546B0401F35FAF0003C5B7E /* queue.h in Headers */,
-				C546B0391F35FAF0003C5B7E /* output.h in Headers */,
-				C546B0421F35FAF0003C5B7E /* response.h in Headers */,
-				C546B0271F35FAF0003C5B7E /* iso8601.h in Headers */,
-				C546B0321F35FAF0003C5B7E /* directory.h in Headers */,
-				C546B0471F35FAF0003C5B7E /* song.h in Headers */,
-				C546B0481F35FAF0003C5B7E /* stats.h in Headers */,
-				C54687CB227F275400BDCA18 /* fingerprint.h in Headers */,
-				C546B0201F35FAF0003C5B7E /* iasync.h in Headers */,
-				C546B0301F35FAF0003C5B7E /* connection.h in Headers */,
-				C546B0341F35FAF0003C5B7E /* error.h in Headers */,
-				C546B03C1F35FAF0003C5B7E /* password.h in Headers */,
-				C54687CC227F275400BDCA18 /* mount.h in Headers */,
-				C546B0111F35FAF0003C5B7E /* buffer.h in Headers */,
-				C546B0241F35FAF0003C5B7E /* internal.h in Headers */,
-				C5770B3723A02B900050EB1E /* readpicture.h in Headers */,
-				C546B04A1F35FAF0003C5B7E /* sticker.h in Headers */,
-				C546B0441F35FAF0003C5B7E /* send.h in Headers */,
-				C546B02D1F35FAF0003C5B7E /* capabilities.h in Headers */,
-				C546B0461F35FAF0003C5B7E /* socket.h in Headers */,
-				C546B0431F35FAF0003C5B7E /* search.h in Headers */,
-				C546B0231F35FAF0003C5B7E /* ierror.h in Headers */,
-				C546B02E1F35FAF0003C5B7E /* client.h in Headers */,
-				C546B0371F35FAF0003C5B7E /* message.h in Headers */,
-				C546B0331F35FAF0003C5B7E /* entity.h in Headers */,
-				C546B0541F35FAF0003C5B7E /* quote.h in Headers */,
-				C546B03B1F35FAF0003C5B7E /* parser.h in Headers */,
-				C546B0251F35FAF0003C5B7E /* isend.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -880,54 +301,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B1B81F37AB20003C5B7E /* song.h in Headers */,
-				C546B1A81F37AB20003C5B7E /* message.h in Headers */,
-				C546B1BA1F37AB20003C5B7E /* status.h in Headers */,
-				C546B1B61F37AB20003C5B7E /* settings.h in Headers */,
-				C546B1B41F37AB20003C5B7E /* search.h in Headers */,
-				C546B1A71F37AB20003C5B7E /* list.h in Headers */,
-				C546B1991F37AB13003C5B7E /* sync.h in Headers */,
-				C546B18E1F37AB13003C5B7E /* run.h in Headers */,
-				C546B1861F37AB13003C5B7E /* quote.h in Headers */,
-				C546B1A41F37AB20003C5B7E /* entity.h in Headers */,
-				C546B1A91F37AB20003C5B7E /* mixer.h in Headers */,
-				C546B1AC1F37AB20003C5B7E /* parser.h in Headers */,
-				C546B1AA1F37AB20003C5B7E /* output.h in Headers */,
-				C546B1731F37AB13003C5B7E /* fd_util.h in Headers */,
-				C546B1931F37AB13003C5B7E /* socket.h in Headers */,
-				C546B17B1F37AB13003C5B7E /* iso8601.h in Headers */,
-				C546B1A31F37AB20003C5B7E /* directory.h in Headers */,
-				C546B1B71F37AB20003C5B7E /* socket.h in Headers */,
-				C546B1A21F37AB20003C5B7E /* database.h in Headers */,
-				C546B1741F37AB13003C5B7E /* iasync.h in Headers */,
-				C546B1BC1F37AB20003C5B7E /* tag.h in Headers */,
-				C546B1A61F37AB20003C5B7E /* idle.h in Headers */,
-				C546B1A01F37AB20003C5B7E /* compiler.h in Headers */,
-				C546B1AE1F37AB20003C5B7E /* player.h in Headers */,
-				C546B18A1F37AB13003C5B7E /* resolver.h in Headers */,
-				C546B1B31F37AB20003C5B7E /* response.h in Headers */,
-				C546B1651F37AB13003C5B7E /* buffer.h in Headers */,
-				C5770B3823A02B900050EB1E /* readpicture.h in Headers */,
-				C546B1AD1F37AB20003C5B7E /* password.h in Headers */,
-				C546B1A11F37AB20003C5B7E /* connection.h in Headers */,
-				C546B1B01F37AB20003C5B7E /* protocol.h in Headers */,
-				C546B19F1F37AB20003C5B7E /* client.h in Headers */,
-				C546B1B21F37AB20003C5B7E /* recv.h in Headers */,
-				C546B1AB1F37AB20003C5B7E /* pair.h in Headers */,
-				C546B1A51F37AB20003C5B7E /* error.h in Headers */,
-				C546B19C1F37AB20003C5B7E /* async.h in Headers */,
-				C546B1B51F37AB20003C5B7E /* send.h in Headers */,
-				C546B1781F37AB13003C5B7E /* internal.h in Headers */,
-				C546B1BB1F37AB20003C5B7E /* sticker.h in Headers */,
-				C546B1771F37AB13003C5B7E /* ierror.h in Headers */,
-				C546B19B1F37AB13003C5B7E /* uri.h in Headers */,
-				C546B1B11F37AB20003C5B7E /* queue.h in Headers */,
 				C546B15D1F37AAA9003C5B7E /* MPDConnector_MacOS.h in Headers */,
-				C546B1AF1F37AB20003C5B7E /* playlist.h in Headers */,
-				C546B1B91F37AB20003C5B7E /* stats.h in Headers */,
-				C546B19D1F37AB20003C5B7E /* audio_format.h in Headers */,
-				C546B1791F37AB13003C5B7E /* isend.h in Headers */,
-				C546B19E1F37AB20003C5B7E /* capabilities.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -935,54 +309,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B2461F37B116003C5B7E /* song.h in Headers */,
-				C546B2361F37B116003C5B7E /* message.h in Headers */,
-				C546B2481F37B116003C5B7E /* status.h in Headers */,
-				C546B2441F37B116003C5B7E /* settings.h in Headers */,
-				C546B2421F37B116003C5B7E /* search.h in Headers */,
-				C546B2351F37B116003C5B7E /* list.h in Headers */,
-				C546B2271F37B10F003C5B7E /* sync.h in Headers */,
-				C546B21C1F37B10F003C5B7E /* run.h in Headers */,
-				C546B2141F37B10F003C5B7E /* quote.h in Headers */,
-				C546B2321F37B116003C5B7E /* entity.h in Headers */,
-				C546B2371F37B116003C5B7E /* mixer.h in Headers */,
-				C546B23A1F37B116003C5B7E /* parser.h in Headers */,
-				C546B2381F37B116003C5B7E /* output.h in Headers */,
-				C546B2011F37B10F003C5B7E /* fd_util.h in Headers */,
-				C546B2211F37B10F003C5B7E /* socket.h in Headers */,
-				C546B2091F37B10F003C5B7E /* iso8601.h in Headers */,
-				C546B2311F37B116003C5B7E /* directory.h in Headers */,
-				C546B2451F37B116003C5B7E /* socket.h in Headers */,
-				C546B2301F37B116003C5B7E /* database.h in Headers */,
-				C546B2021F37B10F003C5B7E /* iasync.h in Headers */,
-				C546B24A1F37B116003C5B7E /* tag.h in Headers */,
-				C546B2341F37B116003C5B7E /* idle.h in Headers */,
-				C546B22E1F37B116003C5B7E /* compiler.h in Headers */,
-				C546B23C1F37B116003C5B7E /* player.h in Headers */,
-				C546B2181F37B10F003C5B7E /* resolver.h in Headers */,
-				C546B2411F37B116003C5B7E /* response.h in Headers */,
-				C546B1F31F37B10F003C5B7E /* buffer.h in Headers */,
-				C5770B3923A02B900050EB1E /* readpicture.h in Headers */,
-				C546B23B1F37B116003C5B7E /* password.h in Headers */,
-				C546B22F1F37B116003C5B7E /* connection.h in Headers */,
-				C546B23E1F37B116003C5B7E /* protocol.h in Headers */,
-				C546B22D1F37B116003C5B7E /* client.h in Headers */,
-				C546B2401F37B116003C5B7E /* recv.h in Headers */,
-				C546B2391F37B116003C5B7E /* pair.h in Headers */,
-				C546B2331F37B116003C5B7E /* error.h in Headers */,
-				C546B22A1F37B116003C5B7E /* async.h in Headers */,
-				C546B2431F37B116003C5B7E /* send.h in Headers */,
-				C546B2061F37B10F003C5B7E /* internal.h in Headers */,
-				C546B2491F37B116003C5B7E /* sticker.h in Headers */,
-				C546B2051F37B10F003C5B7E /* ierror.h in Headers */,
-				C546B2291F37B10F003C5B7E /* uri.h in Headers */,
-				C546B23F1F37B116003C5B7E /* queue.h in Headers */,
 				C546B1ED1F37AFF9003C5B7E /* MPDConnector_tvOS.h in Headers */,
-				C546B23D1F37B116003C5B7E /* playlist.h in Headers */,
-				C546B2471F37B116003C5B7E /* stats.h in Headers */,
-				C546B22B1F37B116003C5B7E /* audio_format.h in Headers */,
-				C546B2071F37B10F003C5B7E /* isend.h in Headers */,
-				C546B22C1F37B116003C5B7E /* capabilities.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1004,8 +331,11 @@
 			dependencies = (
 			);
 			name = MPDConnector_iOS;
+			packageProductDependencies = (
+				C5C6CB5823B5FF3800767B41 /* libmpdclient */,
+			);
 			productName = MPDConnector;
-			productReference = C546AF3C1F35A824003C5B7E /* MPDConnector.framework */;
+			productReference = C5C6CB4A23B5F0DD00767B41 /* MPDConnector.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		C546B1581F37AAA9003C5B7E /* MPDConnector_MacOS */ = {
@@ -1024,7 +354,7 @@
 			);
 			name = MPDConnector_MacOS;
 			productName = MPDConnector_Mac;
-			productReference = C546B1591F37AAA9003C5B7E /* MPDConnector.framework */;
+			productReference = C5C6CB4B23B5F0DD00767B41 /* MPDConnector.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		C546B1E81F37AFF9003C5B7E /* MPDConnector_tvOS */ = {
@@ -1043,7 +373,7 @@
 			);
 			name = MPDConnector_tvOS;
 			productName = MPDConnector_tvOS;
-			productReference = C546B1E91F37AFF9003C5B7E /* MPDConnector.framework */;
+			productReference = C5C6CB4C23B5F0DD00767B41 /* MPDConnector.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		C546B2771F3B0A8E003C5B7E /* MPDConnectorTests */ = {
@@ -1063,7 +393,7 @@
 			);
 			name = MPDConnectorTests;
 			productName = MPDConnectorTests;
-			productReference = C546B2781F3B0A8E003C5B7E /* MPDConnectorTests.xctest */;
+			productReference = C5C6CB4D23B5F0DD00767B41 /* MPDConnectorTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -1109,7 +439,10 @@
 				Base,
 			);
 			mainGroup = C546AF321F35A824003C5B7E;
-			productRefGroup = C546AF3D1F35A824003C5B7E /* Products */;
+			packageReferences = (
+				C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */,
+			);
+			productRefGroup = C546AF321F35A824003C5B7E;
 			projectDirPath = "";
 			projectReferences = (
 				{
@@ -1184,7 +517,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B2841F3B158C003C5B7E /* MPDConnector.framework in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1303,73 +635,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				C5C9F7F82042B6B900D239A8 /* MPDArtistBrowseViewModel.swift in Sources */,
-				C546B05A1F35FAF0003C5B7E /* rplaylist.c in Sources */,
 				C54AFF92204C585600CCAE3B /* MPDSongBrowseViewModel.swift in Sources */,
-				C546B0291F35FAF0003C5B7E /* message.c in Sources */,
-				C546B0181F35FAF0003C5B7E /* cstatus.c in Sources */,
-				C546B0621F35FAF0003C5B7E /* song.c in Sources */,
-				C54687C8227F274100BDCA18 /* fingerprint.c in Sources */,
-				C546B0141F35FAF0003C5B7E /* connection.c in Sources */,
 				C546AF9F1F35EE5D003C5B7E /* MPDPlayer.swift in Sources */,
-				C546B02A1F35FAF0003C5B7E /* mixer.c in Sources */,
-				C5770B3A23A02B900050EB1E /* readpicture.c in Sources */,
-				C546B0501F35FAF0003C5B7E /* player.c in Sources */,
 				C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */,
 				C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */,
-				C5FE88F5239EF167002DD055 /* cneighbor.c in Sources */,
-				C546B0511F35FAF0003C5B7E /* playlist.c in Sources */,
-				C546B04F1F35FAF0003C5B7E /* password.c in Sources */,
 				C554CB391F7AD2B800B83403 /* MPDPlayerBrowser.swift in Sources */,
-				C546B0531F35FAF0003C5B7E /* quote.c in Sources */,
-				C546B0641F35FAF0003C5B7E /* status.c in Sources */,
-				C546B05B1F35FAF0003C5B7E /* run.c in Sources */,
 				C546B2731F3B042A003C5B7E /* MPDWrapper.swift in Sources */,
-				C546B0681F35FAF0003C5B7E /* tag.c in Sources */,
-				C546B0191F35FAF0003C5B7E /* database.c in Sources */,
-				C546B0551F35FAF0003C5B7E /* rdirectory.c in Sources */,
-				C546B05D1F35FAF0003C5B7E /* search.c in Sources */,
-				C546B0121F35FAF0003C5B7E /* capabilities.c in Sources */,
-				C546B0101F35FAF0003C5B7E /* async.c in Sources */,
-				C546B0661F35FAF0003C5B7E /* sync.c in Sources */,
-				C546B0521F35FAF0003C5B7E /* queue.c in Sources */,
-				C546B0171F35FAF0003C5B7E /* cstats.c in Sources */,
-				C546B01E1F35FAF0003C5B7E /* fd_util.c in Sources */,
 				C548EF411FFCDCC500FBE535 /* MPDStatus.swift in Sources */,
-				C546B0651F35FAF0003C5B7E /* sticker.c in Sources */,
-				C546B01B1F35FAF0003C5B7E /* entity.c in Sources */,
 				C585B3661F519A5D00D7B784 /* MPDControl.swift in Sources */,
-				C546B0151F35FAF0003C5B7E /* coutput.c in Sources */,
 				C55D1CB32061934700ACAC86 /* MPDGenreBrowseViewModel.swift in Sources */,
-				C546B0161F35FAF0003C5B7E /* cplaylist.c in Sources */,
-				C546B0281F35FAF0003C5B7E /* list.c in Sources */,
-				C5FE88F6239EF167002DD055 /* cpartition.c in Sources */,
 				C5C6830D21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift in Sources */,
-				C546B0261F35FAF0003C5B7E /* iso8601.c in Sources */,
-				C546B0211F35FAF0003C5B7E /* idle.c in Sources */,
-				C546B01D1F35FAF0003C5B7E /* example.c in Sources */,
-				C5FE88F8239EF167002DD055 /* neighbor.c in Sources */,
-				C546B0601F35FAF0003C5B7E /* socket.c in Sources */,
-				C546B01C1F35FAF0003C5B7E /* error.c in Sources */,
 				C5883B45203CA8FF002CE8CF /* MPDAlbumBrowseViewModel.swift in Sources */,
-				C54687C7227F274100BDCA18 /* audio_format.c in Sources */,
-				C546B05F1F35FAF0003C5B7E /* settings.c in Sources */,
-				C546B0221F35FAF0003C5B7E /* ierror.c in Sources */,
-				C5FE88F7239EF167002DD055 /* partition.c in Sources */,
-				C546B05E1F35FAF0003C5B7E /* send.c in Sources */,
 				C548EF431FFCE21900FBE535 /* MPDHelper.swift in Sources */,
-				C546B0571F35FAF0003C5B7E /* resolver.c in Sources */,
 				C546B26E1F3B0305003C5B7E /* MPDProtocol.swift in Sources */,
 				C54AFF80204BF5B300CCAE3B /* MPDPlaylistBrowseViewModel.swift in Sources */,
-				C546B01A1F35FAF0003C5B7E /* directory.c in Sources */,
-				C546B0561F35FAF0003C5B7E /* recv.c in Sources */,
-				C546B0591F35FAF0003C5B7E /* response.c in Sources */,
-				C54687C5227F274100BDCA18 /* mount.c in Sources */,
-				C546B0631F35FAF0003C5B7E /* stats.c in Sources */,
-				C546B04D1F35FAF0003C5B7E /* output.c in Sources */,
-				C54687C4227F274100BDCA18 /* cmount.c in Sources */,
-				C546B04E1F35FAF0003C5B7E /* parser.c in Sources */,
-				C53629DB21318B22004D5C1C /* kvlist.c in Sources */,
-				C546B0131F35FAF0003C5B7E /* cmessage.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1377,51 +656,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B18D1F37AB13003C5B7E /* run.c in Sources */,
 				C546B1BE1F37AB32003C5B7E /* MPDPlayer.swift in Sources */,
-				C546B1971F37AB13003C5B7E /* sticker.c in Sources */,
-				C5770B3B23A02B900050EB1E /* readpicture.c in Sources */,
-				C546B18C1F37AB13003C5B7E /* rplaylist.c in Sources */,
-				C546B1711F37AB13003C5B7E /* example.c in Sources */,
-				C546B17D1F37AB13003C5B7E /* message.c in Sources */,
-				C546B1801F37AB13003C5B7E /* parser.c in Sources */,
-				C546B1721F37AB13003C5B7E /* fd_util.c in Sources */,
-				C546B1671F37AB13003C5B7E /* cmessage.c in Sources */,
-				C546B17C1F37AB13003C5B7E /* list.c in Sources */,
-				C546B1811F37AB13003C5B7E /* password.c in Sources */,
-				C546B16F1F37AB13003C5B7E /* entity.c in Sources */,
-				C546B1901F37AB13003C5B7E /* send.c in Sources */,
-				C546B1981F37AB13003C5B7E /* sync.c in Sources */,
-				C546B1871F37AB13003C5B7E /* rdirectory.c in Sources */,
-				C546B16C1F37AB13003C5B7E /* cstatus.c in Sources */,
-				C546B16B1F37AB13003C5B7E /* cstats.c in Sources */,
-				C546B1921F37AB13003C5B7E /* socket.c in Sources */,
-				C546B1951F37AB13003C5B7E /* stats.c in Sources */,
-				C546B17A1F37AB13003C5B7E /* iso8601.c in Sources */,
-				C546B1841F37AB13003C5B7E /* queue.c in Sources */,
-				C546B17E1F37AB13003C5B7E /* mixer.c in Sources */,
-				C546B16E1F37AB13003C5B7E /* directory.c in Sources */,
-				C546B16A1F37AB13003C5B7E /* cplaylist.c in Sources */,
-				C546B1701F37AB13003C5B7E /* error.c in Sources */,
-				C546B1681F37AB13003C5B7E /* connection.c in Sources */,
-				C546B1751F37AB13003C5B7E /* idle.c in Sources */,
-				C546B18F1F37AB13003C5B7E /* search.c in Sources */,
-				C546B1881F37AB13003C5B7E /* recv.c in Sources */,
-				C546B1691F37AB13003C5B7E /* coutput.c in Sources */,
-				C546B1761F37AB13003C5B7E /* ierror.c in Sources */,
-				C546B1641F37AB13003C5B7E /* async.c in Sources */,
-				C546B1851F37AB13003C5B7E /* quote.c in Sources */,
-				C546B17F1F37AB13003C5B7E /* output.c in Sources */,
-				C546B1831F37AB13003C5B7E /* playlist.c in Sources */,
-				C546B1661F37AB13003C5B7E /* capabilities.c in Sources */,
-				C546B1941F37AB13003C5B7E /* song.c in Sources */,
-				C546B1821F37AB13003C5B7E /* player.c in Sources */,
-				C546B19A1F37AB13003C5B7E /* tag.c in Sources */,
-				C546B1911F37AB13003C5B7E /* settings.c in Sources */,
-				C546B16D1F37AB13003C5B7E /* database.c in Sources */,
-				C546B1961F37AB13003C5B7E /* status.c in Sources */,
-				C546B18B1F37AB13003C5B7E /* response.c in Sources */,
-				C546B1891F37AB13003C5B7E /* resolver.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1429,51 +664,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C546B2221F37B10F003C5B7E /* song.c in Sources */,
-				C546B1FA1F37B10F003C5B7E /* cstatus.c in Sources */,
-				C546B21F1F37B10F003C5B7E /* settings.c in Sources */,
-				C5770B3C23A02B900050EB1E /* readpicture.c in Sources */,
-				C546B21E1F37B10F003C5B7E /* send.c in Sources */,
-				C546B21D1F37B10F003C5B7E /* search.c in Sources */,
-				C546B2111F37B10F003C5B7E /* playlist.c in Sources */,
-				C546B2041F37B10F003C5B7E /* ierror.c in Sources */,
-				C546B2231F37B10F003C5B7E /* stats.c in Sources */,
-				C546B1F81F37B10F003C5B7E /* cplaylist.c in Sources */,
-				C546B1FC1F37B10F003C5B7E /* directory.c in Sources */,
-				C546B1FE1F37B10F003C5B7E /* error.c in Sources */,
-				C546B1F71F37B10F003C5B7E /* coutput.c in Sources */,
-				C546B20F1F37B10F003C5B7E /* password.c in Sources */,
-				C546B20A1F37B10F003C5B7E /* list.c in Sources */,
-				C546B2171F37B10F003C5B7E /* resolver.c in Sources */,
-				C546B2191F37B10F003C5B7E /* response.c in Sources */,
-				C546B2031F37B10F003C5B7E /* idle.c in Sources */,
-				C546B2131F37B10F003C5B7E /* quote.c in Sources */,
-				C546B20E1F37B10F003C5B7E /* parser.c in Sources */,
-				C546B1F61F37B10F003C5B7E /* connection.c in Sources */,
-				C546B2151F37B10F003C5B7E /* rdirectory.c in Sources */,
-				C546B2081F37B10F003C5B7E /* iso8601.c in Sources */,
-				C546B2281F37B10F003C5B7E /* tag.c in Sources */,
-				C546B2261F37B10F003C5B7E /* sync.c in Sources */,
-				C546B2241F37B10F003C5B7E /* status.c in Sources */,
-				C546B21A1F37B10F003C5B7E /* rplaylist.c in Sources */,
-				C546B2001F37B10F003C5B7E /* fd_util.c in Sources */,
-				C546B1FF1F37B10F003C5B7E /* example.c in Sources */,
-				C546B20C1F37B10F003C5B7E /* mixer.c in Sources */,
-				C546B1F91F37B10F003C5B7E /* cstats.c in Sources */,
-				C546B20D1F37B10F003C5B7E /* output.c in Sources */,
-				C546B1FD1F37B10F003C5B7E /* entity.c in Sources */,
-				C546B1F41F37B10F003C5B7E /* capabilities.c in Sources */,
-				C546B20B1F37B10F003C5B7E /* message.c in Sources */,
-				C546B1F21F37B10F003C5B7E /* async.c in Sources */,
-				C546B2201F37B10F003C5B7E /* socket.c in Sources */,
 				C546B1F11F37B103003C5B7E /* MPDPlayer.swift in Sources */,
-				C546B2161F37B10F003C5B7E /* recv.c in Sources */,
-				C546B21B1F37B10F003C5B7E /* run.c in Sources */,
-				C546B2251F37B10F003C5B7E /* sticker.c in Sources */,
-				C546B1FB1F37B10F003C5B7E /* database.c in Sources */,
-				C546B2121F37B10F003C5B7E /* queue.c in Sources */,
-				C546B2101F37B10F003C5B7E /* player.c in Sources */,
-				C546B1F51F37B10F003C5B7E /* cmessage.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1616,7 +807,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -1637,17 +829,15 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnector_iOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DDEFAULT_HOST=\\\"localhost\\\"",
@@ -1675,17 +865,15 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient/framework",
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/libmpdclient",
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = MPDConnector_iOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DDEFAULT_HOST=\\\"localhost\\\"",
@@ -1722,7 +910,11 @@
 				);
 				INFOPLIST_FILE = MPDConnector_MacOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = (
 					"-DDEFAULT_HOST=\\\"localhost\\\"",
@@ -1760,7 +952,11 @@
 				);
 				INFOPLIST_FILE = MPDConnector_MacOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = (
 					"-DDEFAULT_HOST=\\\"localhost\\\"",
@@ -1796,7 +992,11 @@
 				);
 				INFOPLIST_FILE = MPDConnector_tvOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				OTHER_CFLAGS = (
 					"-DDEFAULT_HOST=\\\"localhost\\\"",
 					"-DDEFAULT_PORT=6600",
@@ -1833,7 +1033,11 @@
 				);
 				INFOPLIST_FILE = MPDConnector_tvOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				OTHER_CFLAGS = (
 					"-DDEFAULT_HOST=\\\"localhost\\\"",
 					"-DDEFAULT_PORT=6600",
@@ -1865,7 +1069,11 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = MPDConnectorTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.katoemba.MPDConnectorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
@@ -1888,7 +1096,11 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = MPDConnectorTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.katoemba.MPDConnectorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
@@ -1945,6 +1157,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/katoemba/libmpdclient-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.21.17;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C5C6CB5823B5FF3800767B41 /* libmpdclient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
+			productName = libmpdclient;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C546AF331F35A824003C5B7E /* Project object */;
 }
