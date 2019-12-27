@@ -37,6 +37,8 @@
 		C5B7CD96203772E600C087ED /* MPDBrowseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B7CD95203772E600C087ED /* MPDBrowseTests.swift */; };
 		C5C6830D21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C6830C21F1097100D2F8E7 /* MPDAlbumSectionBrowseViewModel.swift */; };
 		C5C6CB5923B5FF3800767B41 /* libmpdclient in Frameworks */ = {isa = PBXBuildFile; productRef = C5C6CB5823B5FF3800767B41 /* libmpdclient */; };
+		C5C9592D23B65BC9005A0C9B /* SWXMLHash in Frameworks */ = {isa = PBXBuildFile; productRef = C5C9592C23B65BC9005A0C9B /* SWXMLHash */; };
+		C5C9593323B65BD7005A0C9B /* SWXMLHash in Frameworks */ = {isa = PBXBuildFile; productRef = C5C9593223B65BD7005A0C9B /* SWXMLHash */; };
 		C5C9F7F82042B6B900D239A8 /* MPDArtistBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C9F7F72042B6B900D239A8 /* MPDArtistBrowseViewModel.swift */; };
 		C5F569451F7FC7CA00D53500 /* MPDBrowse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F569441F7FC7CA00D53500 /* MPDBrowse.swift */; };
 		C5FEE8E72098EC25001A811A /* MPDFolderBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FEE8E62098EC25001A811A /* MPDFolderBrowseViewModel.swift */; };
@@ -135,6 +137,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C5C9592D23B65BC9005A0C9B /* SWXMLHash in Frameworks */,
 				C546B0791F3742F8003C5B7E /* ConnectorProtocol.framework in Frameworks */,
 				E33103277332C0A6CFEB11F1 /* Pods_MPDConnector_iOS.framework in Frameworks */,
 				C5C6CB5923B5FF3800767B41 /* libmpdclient in Frameworks */,
@@ -161,6 +164,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C5C9593323B65BD7005A0C9B /* SWXMLHash in Frameworks */,
 				0723B6C659107F196E8F19A7 /* Pods_MPDConnectorTests.framework in Frameworks */,
 				C578C47C23B6217500AEA897 /* libmpdclient in Frameworks */,
 			);
@@ -335,6 +339,7 @@
 			name = MPDConnector_iOS;
 			packageProductDependencies = (
 				C5C6CB5823B5FF3800767B41 /* libmpdclient */,
+				C5C9592C23B65BC9005A0C9B /* SWXMLHash */,
 			);
 			productName = MPDConnector;
 			productReference = C5C6CB4A23B5F0DD00767B41 /* MPDConnector.framework */;
@@ -391,12 +396,12 @@
 			buildRules = (
 			);
 			dependencies = (
-				C578C47623B6216400AEA897 /* PBXTargetDependency */,
 				C546B27F1F3B0A8E003C5B7E /* PBXTargetDependency */,
 			);
 			name = MPDConnectorTests;
 			packageProductDependencies = (
 				C578C47B23B6217500AEA897 /* libmpdclient */,
+				C5C9593223B65BD7005A0C9B /* SWXMLHash */,
 			);
 			productName = MPDConnectorTests;
 			productReference = C5C6CB4D23B5F0DD00767B41 /* MPDConnectorTests.xctest */;
@@ -447,6 +452,7 @@
 			mainGroup = C546AF321F35A824003C5B7E;
 			packageReferences = (
 				C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */,
+				C5C9592B23B65BC9005A0C9B /* XCRemoteSwiftPackageReference "SWXMLHash" */,
 			);
 			productRefGroup = C546AF321F35A824003C5B7E;
 			projectDirPath = "";
@@ -552,27 +558,12 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/RxCocoa/RxCocoa.framework",
-				"${BUILT_PRODUCTS_DIR}/RxRelay/RxRelay.framework",
-				"${BUILT_PRODUCTS_DIR}/RxSwift/RxSwift.framework",
-				"${BUILT_PRODUCTS_DIR}/SWXMLHash/SWXMLHash.framework",
-				"${BUILT_PRODUCTS_DIR}/RxSwiftExt/RxSwiftExt.framework",
-				"${BUILT_PRODUCTS_DIR}/RxBlocking/RxBlocking.framework",
-				"${BUILT_PRODUCTS_DIR}/RxTest/RxTest.framework",
-				"${BUILT_PRODUCTS_DIR}/RxNetService/RxNetService.framework",
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxCocoa.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxRelay.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxSwift.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SWXMLHash.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxSwiftExt.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxBlocking.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxTest.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RxNetService.framework",
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MPDConnectorTests/Pods-MPDConnectorTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -695,10 +686,6 @@
 			isa = PBXTargetDependency;
 			target = C546AF3B1F35A824003C5B7E /* MPDConnector_iOS */;
 			targetProxy = C546B27E1F3B0A8E003C5B7E /* PBXContainerItemProxy */;
-		};
-		C578C47623B6216400AEA897 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = C578C47523B6216400AEA897 /* libmpdclient */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1141,14 +1128,17 @@
 				minimumVersion = 0.21.17;
 			};
 		};
+		C5C9592B23B65BC9005A0C9B /* XCRemoteSwiftPackageReference "SWXMLHash" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/drmohundro/SWXMLHash.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C578C47523B6216400AEA897 /* libmpdclient */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
-			productName = libmpdclient;
-		};
 		C578C47B23B6217500AEA897 /* libmpdclient */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
@@ -1158,6 +1148,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C5C6CB5723B5FF3800767B41 /* XCRemoteSwiftPackageReference "libmpdclient-swift" */;
 			productName = libmpdclient;
+		};
+		C5C9592C23B65BC9005A0C9B /* SWXMLHash */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5C9592B23B65BC9005A0C9B /* XCRemoteSwiftPackageReference "SWXMLHash" */;
+			productName = SWXMLHash;
+		};
+		C5C9593223B65BD7005A0C9B /* SWXMLHash */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5C9592B23B65BC9005A0C9B /* XCRemoteSwiftPackageReference "SWXMLHash" */;
+			productName = SWXMLHash;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
