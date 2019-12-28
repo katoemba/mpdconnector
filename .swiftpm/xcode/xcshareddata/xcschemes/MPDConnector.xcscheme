@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1030"
+   LastUpgradeVersion = "1130"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C546B1581F37AAA9003C5B7E"
-               BuildableName = "MPDConnector.framework"
-               BlueprintName = "MPDConnector_MacOS"
-               ReferencedContainer = "container:MPDConnector.xcodeproj">
+               BlueprintIdentifier = "MPDConnector"
+               BuildableName = "MPDConnector"
+               BlueprintName = "MPDConnector"
+               ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,15 +40,6 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C546B1581F37AAA9003C5B7E"
-            BuildableName = "MPDConnector.framework"
-            BlueprintName = "MPDConnector_MacOS"
-            ReferencedContainer = "container:MPDConnector.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -59,10 +50,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C546B1581F37AAA9003C5B7E"
-            BuildableName = "MPDConnector.framework"
-            BlueprintName = "MPDConnector_MacOS"
-            ReferencedContainer = "container:MPDConnector.xcodeproj">
+            BlueprintIdentifier = "MPDConnector"
+            BuildableName = "MPDConnector"
+            BlueprintName = "MPDConnector"
+            ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>
