@@ -30,11 +30,11 @@ import RxCocoa
 import ConnectorProtocol
 
 public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
-    private var _albumsSubject = PublishSubject<[Album]>()
+    private var albumsSubject = PublishSubject<[Album]>()
     private var numberOfItems = BehaviorRelay<Int>(value: 0)
     public var albumsObservable: Observable<[Album]> {
         get {
-            return _albumsSubject.asObservable()
+            return albumsSubject.asObservable()
         }
     }
     private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
@@ -44,21 +44,11 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         }
     }
     
-    private var _filters = [BrowseFilter]([])
-    public var filters: [BrowseFilter] {
-        get {
-            return _filters
-        }
-    }
-    private var _sort = SortType.artist
-    public var sort: SortType {
-        get {
-            return _sort
-        }
-    }
+    public private(set) var filters: [BrowseFilter]
+    public private(set) var sort = SortType.artist
     public var availableSortOptions: [SortType] {
         get {
-            if _albums.count > 0 {
+            if albums.count > 0 {
                 return []
             }
             else if filters.count > 0, case .artist(_) = filters[0] {
@@ -76,34 +66,34 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     private let extendTriggerSubject = PublishSubject<Int>()
     private var bag = DisposeBag()
     private var extendSize = 60
-    private let _browse: MPDBrowse
-    private let _albums: [Album]
+    private let browse: MPDBrowse
+    private let albums: [Album]
     
     deinit {
         print("Cleanup MPDAlbumBrowseViewModel")
     }
     
     init(browse: MPDBrowse, albums: [Album] = [], filters: [BrowseFilter] = []) {
-        _browse = browse
-        _albums = albums
-        _filters = filters
+        self.browse = browse
+        self.albums = albums
+        self.filters = filters
     }
     
     public func load(sort: SortType) {
-        _sort = sort
+        self.sort = sort
         load()
     }
     
     public func load(filters: [BrowseFilter]) {
-        _filters = filters
+        self.filters = filters
         load()
     }
     
     private func load() {
-        if _albums.count > 0 {
+        if albums.count > 0 {
             loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
-            _albumsSubject.onNext(_albums)
+            albumsSubject.onNext(albums)
         }
         else if filters.count > 0 {
             switch filters[0] {
@@ -129,12 +119,12 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         bag = DisposeBag()
         
         // Clear the contents
-        _albumsSubject.onNext([])        
+        albumsSubject.onNext([])
         loadProgress.accept(.loading)
 
         // Load new contents
-        let browse = _browse
-        let albumsSubject = self._albumsSubject
+        let browse = self.browse
+        let albumsSubject = self.albumsSubject
         var albumsObservable : Observable<[Album]>
         
         if let artist = artist {
