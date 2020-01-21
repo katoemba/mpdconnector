@@ -330,12 +330,14 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// - Parameter connectionProperties: dictionary of connection properties
     /// - Returns: An observable on which a created Player can published.
     public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
+        guard connectionProperties[MPDConnectionProperties.MPDType.rawValue] != nil else { return Observable.just(nil) }
+        
+        let userDefaults = self.userDefaults
         return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler)
-            .flatMap({ [weak self] (mpdConnection) -> Observable<PlayerProtocol?> in
+            .flatMap({ (mpdConnection) -> Observable<PlayerProtocol?> in
                 guard mpdConnection != nil else { return Observable.just(nil) }
-                guard let weakSelf = self else { return Observable.just(nil) }
 
-                return Observable.just(MPDPlayer.init(connectionProperties: connectionProperties, userDefaults: weakSelf.userDefaults))
+                return Observable.just(MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults))
             })
             .observeOn(MainScheduler.instance)
     }
