@@ -53,10 +53,10 @@ class MPDHelperTests: XCTestCase {
     func testConnectToMPDWithConnectionProperties() {
         // Given nothing
         mpdWrapper.password = ""
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
             .toBlocking()
@@ -72,10 +72,10 @@ class MPDHelperTests: XCTestCase {
     func testConnectToMPDWithConnectionPropertiesValidPassword() {
         // Given nothing
         mpdWrapper.password = "pwd"
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: "pwd"] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: "pwd"] as [String: Any]
         
         let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
             .toBlocking()
@@ -93,10 +93,10 @@ class MPDHelperTests: XCTestCase {
     func testConnectToMPDWithConnectionPropertiesInvalidPassword() {
         // Given nothing
         mpdWrapper.password = "other"
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: "pwd"] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: "pwd"] as [String: Any]
         
         // When connecting to MPD
         let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
@@ -117,10 +117,10 @@ class MPDHelperTests: XCTestCase {
         // Given a problem when connecting
         mpdWrapper.password = ""
         mpdWrapper.connectionErrorCount = 4
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When connecting to MPD
         let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)
@@ -138,10 +138,10 @@ class MPDHelperTests: XCTestCase {
         // Given a problem when connecting
         mpdWrapper.password = ""
         mpdWrapper.connectionErrorCount = 2
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When connecting to MPD
         let conn = try! MPDHelper.connectToMPD(mpd: mpdWrapper, connectionProperties: connectionProperties, scheduler: MainScheduler.instance)

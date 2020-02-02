@@ -53,10 +53,6 @@ public class MPDFolderBrowseViewModel: FolderBrowseViewModel {
         }
     }
     
-    deinit {
-        print("Cleanup MPDFolderBrowseViewModel")
-    }
-    
     public required init(browse: MPDBrowse, folderContents: [FolderContent] = [], parentFolder: Folder? = nil) {
         _browse = browse
         _folderContents = folderContents

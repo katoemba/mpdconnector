@@ -55,10 +55,6 @@ public class MPDAlbumSectionBrowseViewModel: AlbumSectionBrowseViewModel {
         return albumSectionsSubject.asObservable()
     }
     
-    deinit {
-        print("Cleanup MPDAlbumSectionBrowseViewModel")
-    }
-    
     init(browse: MPDBrowse) {
         _browse = browse
     }

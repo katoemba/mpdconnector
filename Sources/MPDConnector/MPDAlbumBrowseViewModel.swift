@@ -69,10 +69,6 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
     private let browse: MPDBrowse
     private let albums: [Album]
     
-    deinit {
-        print("Cleanup MPDAlbumBrowseViewModel")
-    }
-    
     init(browse: MPDBrowse, albums: [Album] = [], filters: [BrowseFilter] = []) {
         self.browse = browse
         self.albums = albums

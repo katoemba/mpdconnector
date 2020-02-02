@@ -33,10 +33,13 @@ import RxNetService
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
+    public var controllerType: String {
+        MPDPlayer.controllerType
+    }
     private let mpdNetServiceBrowser : NetServiceBrowser
     private let httpNetServiceBrowser : NetServiceBrowser
     private let backgroundScheduler = ConcurrentDispatchQueueScheduler.init(qos: .background)
-
+    
     private let addManualPlayerSubject = PublishSubject<MPDPlayer>()
     private let removeManualPlayerSubject = PublishSubject<PlayerProtocol>()
     public let addPlayerObservable : Observable<PlayerProtocol>
@@ -44,19 +47,19 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     
     private var isListening = false
     private var userDefaults: UserDefaults
-
+    
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
         mpdNetServiceBrowser = NetServiceBrowser()
         httpNetServiceBrowser = NetServiceBrowser()
-
+        
         // Create an observable that monitors when new players are discovered.
         let mpdPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
             .map({ (netService) -> (String, String, Int, MPDType) in
                 let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
                 let typeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
                 let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
-
+                
                 return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
             })
             .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
@@ -122,7 +125,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
             })
             .share(replay: 1)
-
+        
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
         let httpPlayerObservable = httpNetServiceBrowser.rx.serviceAdded
             .observeOn(backgroundScheduler)
@@ -144,47 +147,47 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 
                 return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
             })
-            
+        
         let volumioHttpPlayerObservable = httpPlayerObservable
             .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
-                    // Check if this is a Volumio based player
-                    Observable.create { observer in
-                        if type != .unknown {
-                            observer.onNext((name, host, 6600, type))
-                            observer.onCompleted()
-                        }
-                        else {
-                            // Make a request to the player for the state
-                            let session = URLSession.shared
-                            let request = URLRequest(url: URL(string: "http://\(host):\(port)/api/v1/getstate")!)
-                            let task = session.dataTask(with: request){
-                                (data, response, error) -> Void in
-                                if error == nil {
-                                    if let data = data {
-                                        do {
-                                            // When getting back sensible data, we can assume this is a Volumio player
-                                            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-                                                ,json["album"] != nil, json["artist"] != nil {
-                                                observer.onNext((name, host, 6600, .volumio))
-                                            }
-                                        }
-                                        catch {
+                // Check if this is a Volumio based player
+                Observable.create { observer in
+                    if type != .unknown {
+                        observer.onNext((name, host, 6600, type))
+                        observer.onCompleted()
+                    }
+                    else {
+                        // Make a request to the player for the state
+                        let session = URLSession.shared
+                        let request = URLRequest(url: URL(string: "http://\(host):\(port)/api/v1/getstate")!)
+                        let task = session.dataTask(with: request){
+                            (data, response, error) -> Void in
+                            if error == nil {
+                                if let data = data {
+                                    do {
+                                        // When getting back sensible data, we can assume this is a Volumio player
+                                        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                                            ,json["album"] != nil, json["artist"] != nil {
+                                            observer.onNext((name, host, 6600, .volumio))
                                         }
                                     }
+                                    catch {
+                                    }
                                 }
-                                observer.onCompleted()
                             }
-                            task.resume()
+                            observer.onCompleted()
                         }
-                    
-                        return Disposables.create()
+                        task.resume()
                     }
-                })
+                    
+                    return Disposables.create()
+                }
+            })
             .map({ (name, host, port, type) -> MPDPlayer in
                 return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
             })
             .share(replay: 1)
-
+        
         let moodeAudioHttpPlayerObservable = httpPlayerObservable
             .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
                 // Check if this is a Moode based player
@@ -222,7 +225,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
             })
             .share(replay: 1)
-
+        
         // Merge the detected players, and get a version out of them.
         addPlayerObservable = Observable.merge(mpdPlayerObservable, volumioHttpPlayerObservable, moodeAudioHttpPlayerObservable, addManualPlayerSubject)
             .observeOn(backgroundScheduler)
@@ -265,7 +268,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                         commands.append(command.1)
                     }
                     _ = mpd.response_finish(connection)
-
+                    
                     return MPDPlayer.init(connectionProperties: player.connectionProperties,
                                           type: player.type,
                                           version: version,
@@ -274,7 +277,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                           userDefaults: userDefaults,
                                           commands: commands)
                 }
-
+                
                 return player
             })
             .observeOn(MainScheduler.instance)
@@ -285,7 +288,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: netService.port, userDefaults: userDefaults)
             })
             .asObservable()
-
+        
         // Create an observable that monitors when players disappear from the network.
         let removeHttpPlayerObservable = httpNetServiceBrowser.rx.serviceRemoved
             .map({ (netService) -> PlayerProtocol in
@@ -319,7 +322,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         guard isListening == true else {
             return
         }
-
+        
         isListening = false
         mpdNetServiceBrowser.stop()
         httpNetServiceBrowser.stop()
@@ -330,37 +333,83 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// - Parameter connectionProperties: dictionary of connection properties
     /// - Returns: An observable on which a created Player can published.
     public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
-        guard connectionProperties[MPDConnectionProperties.MPDType.rawValue] != nil else { return Observable.just(nil) }
+        guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType else { return Observable.just(nil) }
         
         let userDefaults = self.userDefaults
         return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler)
             .flatMap({ (mpdConnection) -> Observable<PlayerProtocol?> in
                 guard mpdConnection != nil else { return Observable.just(nil) }
-
+                
                 return Observable.just(MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults))
             })
             .observeOn(MainScheduler.instance)
     }
     
     public func persistPlayer(_ connectionProperties: [String: Any]) {
+        guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType else { return }
+        
         var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         
-        if persistedPlayers[connectionProperties[ConnectionProperties.Name.rawValue] as! String] != nil {
+        if persistedPlayers[connectionProperties[ConnectionProperties.name.rawValue] as! String] != nil {
             removeManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties, userDefaults: userDefaults))
         }
-        persistedPlayers[connectionProperties[ConnectionProperties.Name.rawValue] as! String] = connectionProperties
+        persistedPlayers[connectionProperties[ConnectionProperties.name.rawValue] as! String] = connectionProperties
         addManualPlayerSubject.onNext(MPDPlayer.init(connectionProperties: connectionProperties, discoverMode: .manual, userDefaults: userDefaults))
-
+        
         userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
     }
     
     public func removePlayer(_ player: PlayerProtocol) {
+        guard player.controllerType == MPDPlayer.controllerType else { return }
+        
         var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         
         if persistedPlayers[player.name] != nil {
             removeManualPlayerSubject.onNext(player)
             persistedPlayers.removeValue(forKey: player.name)
             userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
+        }
+    }
+    
+    public var addManualPlayerSettings: [PlayerSettingGroup] {
+        get {
+            let hostSetting = StringSetting.init(id: ConnectionProperties.host.rawValue,
+                                                 description: "IP Address",
+                                                 placeholder: "IP Address or Hostname",
+                                                 value: "",
+                                                 restriction: .regular)
+            hostSetting.validation = { (setting, value) -> String? in
+                ((value as? String?) ?? "") == "" ? "Enter a valid ip-address for the player." : nil
+            }
+
+            let portSetting = StringSetting.init(id: ConnectionProperties.port.rawValue,
+                                                 description: "Port",
+                                                 placeholder: "Portnumber",
+                                                 value: "6600",
+                                                 restriction: .numeric)
+            portSetting.validation = { (setting, value) -> String? in
+                ((value as? Int?) ?? 0) == 0 ? "Enter a valid port number for the player (default = 6600)." : nil
+            }
+
+            let nameSetting = StringSetting.init(id: ConnectionProperties.name.rawValue,
+                                                 description: "Name",
+                                                 placeholder: "Player name",
+                                                 value: "",
+                                                 restriction: .regular)
+            nameSetting.validation = { (setting, value) -> String? in
+                ((value as? String?) ?? "") == "" ? "Enter a name for the player." : nil
+            }
+
+            let passwordSetting = StringSetting.init(id: ConnectionProperties.password.rawValue,
+                                                     description: "Password",
+                                                     placeholder: "Password",
+                                                     value: "",
+                                                     restriction: .password)
+            
+            return [PlayerSettingGroup(title: "Connection Settings", description: "Some players can't be automatically detected. In that case you can add it manually by entering the connection settings here.\n" +
+                "After entering them, click 'Test' to let Rigelian test if it can connect to the player.\n\n" +
+                "For details on the connection settings, refer to the documentation that comes with your player.",
+                                       settings:[nameSetting, hostSetting, portSetting, passwordSetting])]
         }
     }
 }

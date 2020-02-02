@@ -61,10 +61,10 @@ class MPDPlayerTests: XCTestCase {
     
     func testMPDPlayerStatusShared() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDPlayer object and connecting to it
         let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
@@ -78,10 +78,10 @@ class MPDPlayerTests: XCTestCase {
     
     func testMPDPlayerControlNotShared() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDPlayer object and connecting to it
         let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
@@ -95,10 +95,10 @@ class MPDPlayerTests: XCTestCase {
 
     func testMPDPlayerBrowseNotShared() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDPlayer object and connecting to it
         let mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
@@ -112,14 +112,14 @@ class MPDPlayerTests: XCTestCase {
     
     func testMPDPlayerEqual() {
         // Given 2 players both named "Player 1"
-        let connectionProperties1 = [ConnectionProperties.Name.rawValue: "Player 1",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
-        let connectionProperties2 = [ConnectionProperties.Name.rawValue: "Player 1",
-                                     ConnectionProperties.Host.rawValue: "host",
-                                     ConnectionProperties.Port.rawValue: 1000,
-                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties1 = [ConnectionProperties.name.rawValue: "Player 1",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
+        let connectionProperties2 = [ConnectionProperties.name.rawValue: "Player 1",
+                                     ConnectionProperties.host.rawValue: "host",
+                                     ConnectionProperties.port.rawValue: 1000,
+                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
 
         // When creating player objects for them
         let mpdPlayer1 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties1, userDefaults: UserDefaults.standard)
@@ -131,14 +131,14 @@ class MPDPlayerTests: XCTestCase {
 
     func testMPDPlayerDifferent() {
         // Given 2 players named "Player 1" and "Player 2"
-        let connectionProperties1 = [ConnectionProperties.Name.rawValue: "Player 1",
-                                     ConnectionProperties.Host.rawValue: "host 1",
-                                     ConnectionProperties.Port.rawValue: 1000,
-                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
-        let connectionProperties2 = [ConnectionProperties.Name.rawValue: "Player 1",
-                                     ConnectionProperties.Host.rawValue: "host 2",
-                                     ConnectionProperties.Port.rawValue: 1000,
-                                     ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties1 = [ConnectionProperties.name.rawValue: "Player 1",
+                                     ConnectionProperties.host.rawValue: "host 1",
+                                     ConnectionProperties.port.rawValue: 1000,
+                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
+        let connectionProperties2 = [ConnectionProperties.name.rawValue: "Player 1",
+                                     ConnectionProperties.host.rawValue: "host 2",
+                                     ConnectionProperties.port.rawValue: 1000,
+                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating player objects for them
         let mpdPlayer1 = MPDPlayer.init(mpd: mpdWrapper, connectionProperties: connectionProperties1, userDefaults: UserDefaults.standard)
@@ -150,10 +150,10 @@ class MPDPlayerTests: XCTestCase {
     
     func testActivateDeactivate() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         self.mpdWrapper.songIndex = 5
         
         // When creating a new MPDStatus object and starting it

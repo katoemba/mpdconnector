@@ -47,10 +47,6 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
     private let _browse: MPDBrowse
     private let _providedPlaylists: [Playlist]
     
-    deinit {
-        print("Cleanup MPDPlaylistBrowseViewModel")
-    }
-    
     public required init(browse: MPDBrowse, playlists: [Playlist] = []) {
         _browse = browse
         _providedPlaylists = playlists

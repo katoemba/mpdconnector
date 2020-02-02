@@ -74,10 +74,6 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         }
     }
     
-    deinit {
-        print("Cleanup MPDArtistSectionBrowseViewModel")
-    }
-    
     init(browse: MPDBrowse, filters: [BrowseFilter] = [], artists: [Artist]? = nil) {
         _browse = browse
         _filters = filters

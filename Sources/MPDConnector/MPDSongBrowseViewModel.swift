@@ -83,10 +83,6 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
     private let _filter: BrowseFilter?
     private let _subFilter: BrowseFilter?
     
-    deinit {
-        print("Cleanup MPDSongBrowseViewModel")
-    }
-    
     public required init(browse: MPDBrowse, songs: [Song] = [], filter: BrowseFilter? = nil, subFilter: BrowseFilter? = nil) {
         _browse = browse
         _songs = songs

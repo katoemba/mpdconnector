@@ -138,9 +138,9 @@ public class MPDHelper {
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
     public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> MPDConnection? {
         return connect(mpd: mpd,
-                       host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
-                       port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
-                       password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
+                       host: connectionProperties[ConnectionProperties.host.rawValue] as! String,
+                       port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
+                       password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                        timeout: timeout)
     }
     
@@ -200,9 +200,9 @@ public class MPDHelper {
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
     public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000) -> Observable<MPDConnection?> {
         return connectToMPD(mpd: mpd,
-                            host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
-                            port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
-                            password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
+                            host: connectionProperties[ConnectionProperties.host.rawValue] as! String,
+                            port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
+                            password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                             scheduler: scheduler,
                             timeout: timeout)
     }
@@ -354,7 +354,7 @@ public class MPDHelper {
         let coverURI = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
         var coverHost = connectionProperties[MPDConnectionProperties.alternativeCoverHost.rawValue] as? String ?? ""
         if coverHost == "" {
-            coverHost = connectionProperties[ConnectionProperties.Host.rawValue] as? String ?? ""
+            coverHost = connectionProperties[ConnectionProperties.host.rawValue] as? String ?? ""
         }
         let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
         let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"

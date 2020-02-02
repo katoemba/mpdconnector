@@ -334,9 +334,9 @@ public class MPDStatus: StatusProtocol {
         }
         
         let mpdConnection = MPDHelper.connect(mpd: mpd,
-                                                 host: connectionProperties[ConnectionProperties.Host.rawValue] as! String,
-                                                 port: connectionProperties[ConnectionProperties.Port.rawValue] as! Int,
-                                                 password: connectionProperties[ConnectionProperties.Password.rawValue] as! String,
+                                                 host: connectionProperties[ConnectionProperties.host.rawValue] as! String,
+                                                 port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
+                                                 password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                                                  timeout: 1000)
         guard let connection = mpdConnection?.connection else {
             return Observable.just([])

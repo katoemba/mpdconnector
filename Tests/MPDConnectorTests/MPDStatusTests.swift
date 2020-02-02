@@ -51,10 +51,10 @@ class MPDStatusTests: XCTestCase {
     
     func testStartAndStopConnection() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
@@ -90,10 +90,10 @@ class MPDStatusTests: XCTestCase {
 
     func testStartAndStop() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         self.mpdWrapper.songIndex = 2
         
         // When creating a new MPDStatus object and starting it
@@ -132,10 +132,10 @@ class MPDStatusTests: XCTestCase {
     
     func testMultipleStarts() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
@@ -162,10 +162,10 @@ class MPDStatusTests: XCTestCase {
 
     func testPlayerStatus() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
@@ -252,10 +252,10 @@ class MPDStatusTests: XCTestCase {
     
     func testPlayerStatusQualityDSD() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
@@ -304,10 +304,10 @@ class MPDStatusTests: XCTestCase {
 
     func testPlayerStatusQualityFloat() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
@@ -353,10 +353,10 @@ class MPDStatusTests: XCTestCase {
     
     func testPlayqueuSongs() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         mpdWrapper.songs = [["title": "t1", "album": "alb1", "artist": "art1"],
                             ["title": "t2", "album": "alb2", "artist": "art2"],
@@ -387,10 +387,10 @@ class MPDStatusTests: XCTestCase {
     
     func testEmptyRangePlayqueuSongs() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
         
@@ -409,10 +409,10 @@ class MPDStatusTests: XCTestCase {
 
     func testInvalidRangePlayqueuSongs() {
         // Given a mpd player
-        let connectionProperties = [ConnectionProperties.Name.rawValue: "player",
-                                    ConnectionProperties.Host.rawValue: "host",
-                                    ConnectionProperties.Port.rawValue: 1000,
-                                    ConnectionProperties.Password.rawValue: ""] as [String: Any]
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // Get an invalid range of songs
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)

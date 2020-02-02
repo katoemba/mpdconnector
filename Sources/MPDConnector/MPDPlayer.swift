@@ -75,40 +75,25 @@ public enum MPDConnectionProperties: String {
 public class MPDPlayer: PlayerProtocol {
     private let userDefaults: UserDefaults
     private let mpd: MPDProtocol
+    public static let controllerType = "MPD"
 
-    private var _name: String
-    public var name: String {
-        return _name
-    }
-    
+    public private(set) var name: String
     public var controllerType: String {
-        return "MPD"
+        return MPDPlayer.controllerType
     }
-    private var _discoverMode = DiscoverMode.automatic
-    public var discoverMode: DiscoverMode {
-        return _discoverMode
-    }
-    
+    public private(set) var discoverMode = DiscoverMode.automatic
+
     private var host: String
     private var port: Int
     //private var password: String
-    private var _type: MPDType
-    public var type: MPDType {
-        return _type
-    }
+    public private(set) var type: MPDType
     
-    private var _version: String
-    public var version: String {
-        return _version
-    }
+    public private(set) var version: String
     
-    private var _connectionWarning = nil as String?
-    public var connectionWarning: String? {
-        return _connectionWarning
-    }
+    public private(set) var connectionWarning: String?
     
     public var description: String {
-        return _type.description + " " + _version
+        return type.description + " " + version
     }
     
     private var commands: [String]
@@ -149,11 +134,12 @@ public class MPDPlayer: PlayerProtocol {
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
             let postfix = (self.loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue) as? StringSetting)?.value ?? ""
             let alternativePostfix = (self.loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue) as? StringSetting)?.value ?? ""
-            let password = (self.loadSetting(id: ConnectionProperties.Password.rawValue) as? StringSetting)?.value ?? ""
-            return [ConnectionProperties.Name.rawValue: name,
-                    ConnectionProperties.Host.rawValue: host,
-                    ConnectionProperties.Port.rawValue: port,
-                    ConnectionProperties.Password.rawValue: password,
+            let password = (self.loadSetting(id: ConnectionProperties.password.rawValue) as? StringSetting)?.value ?? ""
+            return [ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
+                    ConnectionProperties.name.rawValue: name,
+                    ConnectionProperties.host.rawValue: host,
+                    ConnectionProperties.port.rawValue: port,
+                    ConnectionProperties.password.rawValue: password,
                     MPDConnectionProperties.alternativeCoverHost.rawValue: alternativCoverHost,
                     MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
@@ -193,8 +179,11 @@ public class MPDPlayer: PlayerProtocol {
                 coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, normally on port 80. This webserver must be configured to support browsing the music directories.\n\n" +
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
             }
-            return [PlayerSettingGroup(title: "Player Type", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
-                                                                                        loadSetting(id: ConnectionProperties.Password.rawValue)!]),
+            return [PlayerSettingGroup(title: "Player", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
+                                                                                   loadSetting(id: ConnectionProperties.name.rawValue)!,
+                                                                                   loadSetting(id: ConnectionProperties.host.rawValue)!,
+                                                                                   loadSetting(id: ConnectionProperties.port.rawValue)!,
+                                                                                   loadSetting(id: ConnectionProperties.password.rawValue)!]),
                     PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
@@ -250,24 +239,24 @@ public class MPDPlayer: PlayerProtocol {
                 commands: [String] = []) {
         self.userDefaults = userDefaults
         self.mpd = mpd ?? MPDWrapper()
-        self._name = name
+        self.name = name
         self.host = host
         self.port = port
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
-        self._connectionWarning = connectionWarning
+        self.connectionWarning = connectionWarning
         self.commands = commands
-        _version = version
-        _discoverMode = discoverMode
+        self.version = version
+        self.discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
         
         if password != nil {
-            userDefaults.set(password, forKey: ConnectionProperties.Password.rawValue + "." + initialUniqueID)
+            userDefaults.set(password, forKey: ConnectionProperties.password.rawValue + "." + initialUniqueID)
         }
-        let password = userDefaults.string(forKey: "\(ConnectionProperties.Password.rawValue).\(initialUniqueID)") ?? ""
+        let password = userDefaults.string(forKey: "\(ConnectionProperties.password.rawValue).\(initialUniqueID)") ?? ""
         let defaultTypeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
         if defaultTypeInt > 0 {
-            _type = MPDType(rawValue: defaultTypeInt)!
+            self.type = MPDType(rawValue: defaultTypeInt)!
         }
         else {
             // Note: using _name here instead of _uniqueId because that is not yet available.
@@ -302,9 +291,9 @@ public class MPDPlayer: PlayerProtocol {
                 userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + initialUniqueID)
             }
             userDefaults.set(type.rawValue, forKey: MPDConnectionProperties.MPDType.rawValue + "." + initialUniqueID)
-            _type = type
+            self.type = type
         }
-        _type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
+        self.type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
 
         // Note: using _name here instead of _uniqueId because that is not yet available.
         let coverHttpPort = userDefaults.string(forKey: "\(MPDConnectionProperties.coverHttpPort.rawValue).\(initialUniqueID)") ?? ""
@@ -312,16 +301,16 @@ public class MPDPlayer: PlayerProtocol {
         let postfix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPostfix.rawValue).\(initialUniqueID)") ?? ""
         let alternativePostfix = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverPostfix.rawValue).\(initialUniqueID)") ?? ""
         let alternativeCoverHost = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverHost.rawValue).\(initialUniqueID)") ?? ""
-        let connectionProperties = [ConnectionProperties.Name.rawValue: name,
-                ConnectionProperties.Host.rawValue: host,
-                ConnectionProperties.Port.rawValue: port,
-                ConnectionProperties.Password.rawValue: password,
+        let connectionProperties = [ConnectionProperties.name.rawValue: name,
+                ConnectionProperties.host.rawValue: host,
+                ConnectionProperties.port.rawValue: port,
+                ConnectionProperties.password.rawValue: password,
                 MPDConnectionProperties.alternativeCoverHost.rawValue: alternativeCoverHost,
                 MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                 MPDConnectionProperties.coverPrefix.rawValue: prefix,
                 MPDConnectionProperties.coverPostfix.rawValue: postfix,
                 MPDConnectionProperties.alternativeCoverPostfix.rawValue: alternativePostfix,
-                MPDConnectionProperties.MPDType.rawValue: _type,
+                MPDConnectionProperties.MPDType.rawValue: self.type,
                 MPDConnectionProperties.version.rawValue: version] as [String : Any]
         
         self.mpdStatus = MPDStatus.init(mpd: mpd,
@@ -344,9 +333,9 @@ public class MPDPlayer: PlayerProtocol {
                             connectionWarning: String? = nil,
                             userDefaults: UserDefaults,
                             commands: [String] = []) {
-        guard let name = connectionProperties[ConnectionProperties.Name.rawValue] as? String,
-            let host = connectionProperties[ConnectionProperties.Host.rawValue] as? String,
-            let port = connectionProperties[ConnectionProperties.Port.rawValue] as? Int else {
+        guard let name = connectionProperties[ConnectionProperties.name.rawValue] as? String,
+            let host = connectionProperties[ConnectionProperties.host.rawValue] as? String,
+            let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else {
                 self.init(mpd: mpd,
                           name: "",
                           host: "",
@@ -365,7 +354,7 @@ public class MPDPlayer: PlayerProtocol {
                   name: name,
                   host: host,
                   port: port,
-                  password: connectionProperties[ConnectionProperties.Password.rawValue] as? String,
+                  password: connectionProperties[ConnectionProperties.password.rawValue] as? String,
                   scheduler: scheduler,
                   type: type,
                   version: version,
@@ -418,35 +407,35 @@ public class MPDPlayer: PlayerProtocol {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
-                    _type = MPDType.volumio
+                    type = MPDType.volumio
                 }
                 else if selectionSetting.value == MPDType.bryston.rawValue {
                     userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("bdp_front_250.jpg", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
-                    _type = MPDType.bryston
+                    type = MPDType.bryston
                 }
                 else if selectionSetting.value == MPDType.runeaudio.rawValue {
                     userDefaults.set("music/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
-                    _type = MPDType.runeaudio
+                    type = MPDType.runeaudio
                 }
                 else if selectionSetting.value == MPDType.moodeaudio.rawValue {
                     userDefaults.set("coverart.php/", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("<track>", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
-                    _type = MPDType.moodeaudio
+                    type = MPDType.moodeaudio
                 }
                 else {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
-                    _type = MPDType.classic
+                    type = MPDType.classic
                 }
             }
         }
@@ -470,7 +459,7 @@ public class MPDPlayer: PlayerProtocol {
             let stringSetting = setting as! StringSetting
             userDefaults.set(stringSetting.value, forKey: playerSpecificId)
         }
-        else if setting.id == ConnectionProperties.Password.rawValue {
+        else if setting.id == ConnectionProperties.password.rawValue {
             let stringSetting = setting as! StringSetting
             userDefaults.set(stringSetting.value, forKey: playerSpecificId)
         }
@@ -491,6 +480,27 @@ public class MPDPlayer: PlayerProtocol {
                                                   MPDType.runeaudio.rawValue: MPDType.runeaudio.description,
                                                   MPDType.moodeaudio.rawValue: MPDType.moodeaudio.description],
                                           value: userDefaults.integer(forKey: playerSpecificId))
+        }
+        else if id == ConnectionProperties.name.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Name",
+                                      placeholder: "",
+                                      value: name,
+                                      restriction: .readonly)
+        }
+        else if id == ConnectionProperties.host.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Host",
+                                      placeholder: "",
+                                      value: host,
+                                      restriction: .readonly)
+        }
+        else if id == ConnectionProperties.port.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Port",
+                                      placeholder: "",
+                                      value: "\(port)",
+                                      restriction: .readonly)
         }
         else if id == MPDConnectionProperties.alternativeCoverHost.rawValue {
             return StringSetting.init(id: id,
@@ -523,7 +533,7 @@ public class MPDPlayer: PlayerProtocol {
                                       placeholder: "Alternative",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
-        else if id == ConnectionProperties.Password.rawValue {
+        else if id == ConnectionProperties.password.rawValue {
             return StringSetting.init(id: id,
                                       description: "Password",
                                       placeholder: "Password",

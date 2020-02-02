@@ -48,10 +48,6 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
     private let _genres: [Genre]
     public var parentGenre: Genre?
 
-    deinit {
-        print("Cleanup MPDGenreBrowseViewModel")
-    }
-    
     public required init(browse: MPDBrowse, genres: [Genre] = [], parentGenre: Genre? = nil) {
         if parentGenre != nil {
             print("Warning: parentGenre not supported on MPD")
