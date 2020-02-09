@@ -212,8 +212,45 @@ public class MPDStatus: StatusProtocol {
         return true
     }
     
+    /// Put quality data from status into the proper format
+    ///
+    /// - Parameter status: a mpd status objects
+    /// - Returns: a filled QualityStatus struct
+    private func processQuality(_ status: OpaquePointer) -> QualityStatus {
+        var quality = QualityStatus()
+        
+        let bitrate = self.mpd.status_get_kbit_rate(status)
+        quality.bitrate = bitrate > 0 ? "\(bitrate)kbps" : "-"
+        if let audioFormat = self.mpd.status_get_audio_format(status) {
+            if audioFormat.0 > 0 {
+                quality.samplerate = "\(audioFormat.0/1000)kHz"
+            }
+            else {
+                quality.samplerate = "-"
+            }
+            
+            if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
+                quality.encoding = "FLOAT"
+            }
+            else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
+                quality.encoding = "DSD"
+            }
+            else if audioFormat.1 > 0 {
+                quality.encoding = "\(audioFormat.1)bit"
+            }
+            else {
+                quality.encoding = "???"
+            }
+            
+            quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
+        }
+        
+        return quality
+    }
+    
     /// Get the current status of a controller
     ///
+    /// - Parameter connection: an active connection to a mpd player
     /// - Returns: a filled PlayerStatus struct
     public func fetchPlayerStatus(_ connection: OpaquePointer) -> PlayerStatus {
         var playerStatus = PlayerStatus()
@@ -249,31 +286,7 @@ public class MPDStatus: StatusProtocol {
                 playerStatus.playqueue.version = Int(self.mpd.status_get_queue_version(status))
                 playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
                 
-                let samplerate = self.mpd.status_get_kbit_rate(status)
-                playerStatus.quality.samplerate = samplerate > 0 ? "\(self.mpd.status_get_kbit_rate(status))bit" : "-"
-                if let audioFormat = self.mpd.status_get_audio_format(status) {
-                    if audioFormat.0 > 0 {
-                        playerStatus.quality.samplerate = "\(audioFormat.0/1000)kHz"
-                    }
-                    else {
-                        playerStatus.quality.samplerate = "-"
-                    }
-                    
-                    if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
-                        playerStatus.quality.encoding = "FLOAT"
-                    }
-                    else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
-                        playerStatus.quality.encoding = "DSD"
-                    }
-                    else if audioFormat.1 > 0 {
-                        playerStatus.quality.encoding = "\(audioFormat.1)bit"
-                    }
-                    else {
-                        playerStatus.quality.encoding = "???"
-                    }
-                    
-                    playerStatus.quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
-                }
+                playerStatus.quality = processQuality(status)
             }
             
             var song = self.mpd.run_current_song(connection)
