@@ -5,16 +5,16 @@ import PackageDescription
 
 let package = Package(
     name: "MPDConnector",
-    platforms: [.iOS(.v10)],
+    platforms: [.macOS(.v10_11), .iOS(.v10), .tvOS(.v9), .watchOS(.v3)],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
         .library(name: "MPDConnector", targets: ["MPDConnector"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(path: "../ConnectorProtocol"),
-        .package(url: "https://github.com/katoemba/libmpdclient-swift.git", .upToNextMajor(from: "0.21.17")),
-        .package(url: "https://github.com/katoemba/rxnetservice.git", .upToNextMajor(from: "0.2.1")),
+        .package(url: "https://github.com/katoemba/connectorprotocol.git", .upToNextMajor(from: "1.7.4")),
+        .package(url: "https://github.com/katoemba/libmpdclient-swift.git", .upToNextMajor(from: "2.18.0")),
+        .package(url: "https://github.com/katoemba/rxnetservice.git", .upToNextMajor(from: "0.2.2")),
         .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "5.0.1")),
         .package(url: "https://github.com/RxSwiftCommunity/RxSwiftExt.git", .upToNextMajor(from: "5.2.0")),
         .package(url: "https://github.com/drmohundro/SWXMLHash.git", .upToNextMajor(from: "5.0.1"))

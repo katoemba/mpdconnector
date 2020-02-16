@@ -2,12 +2,30 @@
   "object": {
     "pins": [
       {
+        "package": "ConnectorProtocol",
+        "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
+        "state": {
+          "branch": null,
+          "revision": "7f54b27c7a9ce728dd24a7d0e6ddfaf2e0fddb97",
+          "version": "1.7.4"
+        }
+      },
+      {
         "package": "libmpdclient",
         "repositoryURL": "https://github.com/katoemba/libmpdclient-swift.git",
         "state": {
           "branch": null,
-          "revision": "317ed1a963c9a3d71a644569cb96634e9e10f440",
-          "version": "0.21.17"
+          "revision": "2cb031231a486caf66f7606ad933b5a0d5d3b91f",
+          "version": "2.18.0"
+        }
+      },
+      {
+        "package": "RxNetService",
+        "repositoryURL": "https://github.com/katoemba/rxnetservice.git",
+        "state": {
+          "branch": null,
+          "revision": "e615dcaef5ffd055951ab14a90d7e90fe9a29d46",
+          "version": "0.2.2"
         }
       },
       {
@@ -26,6 +44,15 @@
           "branch": null,
           "revision": "9620cd55a58c1cf3370375140c45379c40049f55",
           "version": "5.2.0"
+        }
+      },
+      {
+        "package": "SWXMLHash",
+        "repositoryURL": "https://github.com/drmohundro/SWXMLHash.git",
+        "state": {
+          "branch": null,
+          "revision": "a4931e5c3bafbedeb1601d3bb76bbe835c6d475a",
+          "version": "5.0.1"
         }
       }
     ]
