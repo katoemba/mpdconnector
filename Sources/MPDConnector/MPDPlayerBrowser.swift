@@ -72,21 +72,25 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     else {
                         // Make a request to the player for the api version
                         let session = URLSession.shared
-                        let request = URLRequest(url: URL(string: "http://\(host)/bdbapiver")!)
-                        let task = session.dataTask(with: request) {
-                            (data, response, error) -> Void in
-                            if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200,
-                                let data = data, let responseString = String(data: data, encoding: String.Encoding.utf8),
-                                responseString.starts(with: "1") {
-                                observer.onNext((name, host, port, .bryston))
+                        if let url = URL(string: "http://\(host)/bdbapiver") {
+                            let request = URLRequest(url: url)
+                            let task = session.dataTask(with: request) {
+                                (data, response, error) -> Void in
+                                if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200,
+                                    let data = data, let responseString = String(data: data, encoding: String.Encoding.utf8),
+                                    responseString.starts(with: "1") {
+                                    observer.onNext((name, host, port, .bryston))
+                                }
+                                else {
+                                    observer.onNext((name, host, port, type))
+                                }
+                                observer.onCompleted()
                             }
-                            else {
-                                observer.onNext((name, host, port, type))
-                            }
+                            task.resume()
+                        }
+                        else {
                             observer.onCompleted()
                         }
-                        
-                        task.resume()
                     }
                     
                     return Disposables.create()
@@ -102,20 +106,25 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     else {
                         // Make a request to the player for the stats command
                         let session = URLSession.shared
-                        let request = URLRequest(url: URL(string: "http://\(host)/command/?cmd=stats")!)
-                        let task = session.dataTask(with: request){
-                            (data, response, error) -> Void in
-                            if error == nil, let data = data,
-                                let responseString = String(data: data, encoding: String.Encoding.utf8),
-                                responseString.contains("db_update") {
-                                observer.onNext((name, host, port, .runeaudio))
+                        if let url = URL(string: "http://\(host)/command/?cmd=stats") {
+                            let request = URLRequest(url: url)
+                            let task = session.dataTask(with: request){
+                                (data, response, error) -> Void in
+                                if error == nil, let data = data,
+                                    let responseString = String(data: data, encoding: String.Encoding.utf8),
+                                    responseString.contains("db_update") {
+                                    observer.onNext((name, host, port, .runeaudio))
+                                }
+                                else {
+                                    observer.onNext((name, host, port, type))
+                                }
+                                observer.onCompleted()
                             }
-                            else {
-                                observer.onNext((name, host, port, type))
-                            }
+                            task.resume()
+                        }
+                        else {
                             observer.onCompleted()
                         }
-                        task.resume()
                     }
                     
                     return Disposables.create()
@@ -159,25 +168,30 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     else {
                         // Make a request to the player for the state
                         let session = URLSession.shared
-                        let request = URLRequest(url: URL(string: "http://\(host):\(port)/api/v1/getstate")!)
-                        let task = session.dataTask(with: request){
-                            (data, response, error) -> Void in
-                            if error == nil {
-                                if let data = data {
-                                    do {
-                                        // When getting back sensible data, we can assume this is a Volumio player
-                                        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-                                            ,json["album"] != nil, json["artist"] != nil {
-                                            observer.onNext((name, host, 6600, .volumio))
+                        if let url = URL(string: "http://\(host):\(port)/api/v1/getstate") {
+                            let request = URLRequest(url: url)
+                            let task = session.dataTask(with: request){
+                                (data, response, error) -> Void in
+                                if error == nil {
+                                    if let data = data {
+                                        do {
+                                            // When getting back sensible data, we can assume this is a Volumio player
+                                            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                                                ,json["album"] != nil, json["artist"] != nil {
+                                                observer.onNext((name, host, 6600, .volumio))
+                                            }
+                                        }
+                                        catch {
                                         }
                                     }
-                                    catch {
-                                    }
                                 }
+                                observer.onCompleted()
                             }
+                            task.resume()
+                        }
+                        else {
                             observer.onCompleted()
                         }
-                        task.resume()
                     }
                     
                     return Disposables.create()
@@ -200,22 +214,27 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     else {
                         // Make a request to the player for the state
                         let session = URLSession.shared
-                        let request = URLRequest(url: URL(string: "http://\(host):\(port)/browserconfig.xml")!)
-                        let task = session.dataTask(with: request){
-                            (data, response, error) -> Void in
-                            if error == nil {
-                                if let data = data {
-                                    let xml = SWXMLHash.parse(data)
-                                    let browserConfig = xml["browserconfig"]
-                                    if browserConfig.children.count > 0 {
-                                        let abbreviatedName = name.replacingOccurrences(of: "moOde audio player: ", with: "")
-                                        observer.onNext((abbreviatedName, host, 6600, .moodeaudio))
+                        if let url = URL(string: "http://\(host):\(port)/browserconfig.xml") {
+                            let request = URLRequest(url: url)
+                            let task = session.dataTask(with: request){
+                                (data, response, error) -> Void in
+                                if error == nil {
+                                    if let data = data {
+                                        let xml = SWXMLHash.parse(data)
+                                        let browserConfig = xml["browserconfig"]
+                                        if browserConfig.children.count > 0 {
+                                            let abbreviatedName = name.replacingOccurrences(of: "moOde audio player: ", with: "")
+                                            observer.onNext((abbreviatedName, host, 6600, .moodeaudio))
+                                        }
                                     }
                                 }
+                                observer.onCompleted()
                             }
+                            task.resume()
+                        }
+                        else {
                             observer.onCompleted()
                         }
-                        task.resume()
                     }
                     
                     return Disposables.create()
