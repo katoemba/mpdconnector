@@ -1019,6 +1019,44 @@ public class MPDBrowse: BrowseProtocol {
             .observeOn(MainScheduler.instance)
     }
 
+    public func fetchExistingArtists(artists: [Artist]) -> Observable<[Artist]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[Artist]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
+                do {
+                    let foundArtists = try artists
+                        .compactMap { (artist) -> Artist? in
+                            try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist.name)
+                            try self.mpd.search_commit(connection)
+                            let found = (self.mpd.recv_pair(connection) != nil)
+                            _ = self.mpd.response_finish(connection)
+                            
+                            return found ? artist : nil
+                        }
+                    
+                    return Observable.just(foundArtists.sorted(by: { (lhs, rhs) -> Bool in
+                        let sortOrder = lhs.sortName.caseInsensitiveCompare(rhs.sortName)
+                        if sortOrder == .orderedSame {
+                            return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
+                        }
+                        else {
+                            return sortOrder == .orderedAscending
+                        }
+                    }))
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    
+                    return Observable.empty()
+                }
+            })
+            .observeOn(MainScheduler.instance)
+    }
+
     /// Return a view model for a list of artists, which can return artists in batches.
     ///
     /// - Returns: an ArtistBrowseViewModel instance
@@ -1385,6 +1423,17 @@ public class MPDBrowse: BrowseProtocol {
                 let updatedCoverURI = weakSelf.completeCoverURI(connection, coverURI)
                 return Observable.just(updatedCoverURI)
             })
+    }
+    
+    /// Filter artists that exist in the library
+    /// - Parameter artist: the set of artists to check
+    /// - Returns: an observable of the filtered array of artists
+    public func existingArtists(artists: [Artist]) -> Observable<[Artist]> {
+        return fetchExistingArtists(artists: artists)
+            .flatMap { [weak self] (artists) -> Observable<[Artist]> in
+                guard let weakSelf = self else { return Observable.empty() }
+                return weakSelf.completeArtists(artists)
+        }
     }
     
     func updateDB() {
