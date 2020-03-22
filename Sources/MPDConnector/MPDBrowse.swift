@@ -86,6 +86,7 @@ public class MPDBrowse: BrowseProtocol {
 
                 return Observable.just(searchResult)
             })
+            .catchErrorJustReturn(SearchResult())
     }
     
     private func searchType(_ search: String, connection: OpaquePointer, tagType: mpd_tag_type, filter: [SourceType] = []) -> SearchResult {
@@ -269,6 +270,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(songs)
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
 
@@ -287,6 +289,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(songs)
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -316,6 +319,7 @@ public class MPDBrowse: BrowseProtocol {
                 }
                 return Observable.just(randomSongs)
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -378,6 +382,7 @@ public class MPDBrowse: BrowseProtocol {
             return false
         })
     }
+    
     /// - Parameters:
     ///   - artist: An Artist object.
     ///   - sort: How to sort the albums.
@@ -385,10 +390,11 @@ public class MPDBrowse: BrowseProtocol {
     public func albumsByArtist(_ artist: Artist, sort: SortType) -> Observable<[Album]> {
         return songsByArtist(artist)
             .flatMap({ [weak self] (songs) -> Observable<[Album]> in
-                guard let weakself = self else { return Observable.empty() }
+                guard let weakself = self else { return Observable.just([]) }
                 
                 return Observable.just(weakself.albumsFromSongs(songs, sort: sort))
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -428,9 +434,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
 
@@ -552,9 +559,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -669,9 +677,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -791,9 +800,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
 
@@ -870,6 +880,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(completeAlbums)
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
 
@@ -911,6 +922,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(completeArtists)
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -1013,9 +1025,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
 
@@ -1051,9 +1064,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
 
@@ -1122,6 +1136,7 @@ public class MPDBrowse: BrowseProtocol {
                     return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
                 }))
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -1162,6 +1177,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(songs)
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -1270,9 +1286,10 @@ public class MPDBrowse: BrowseProtocol {
                     print(self.mpd.connection_get_error_message(connection))
                     _ = self.mpd.connection_clear_error(connection)
                     
-                    return Observable.empty()
+                    return Observable.just([])
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -1342,6 +1359,7 @@ public class MPDBrowse: BrowseProtocol {
                     return Observable.just(folderContents)
                 }
             })
+            .catchErrorJustReturn([])
             .observeOn(MainScheduler.instance)
     }
     
@@ -1403,6 +1421,7 @@ public class MPDBrowse: BrowseProtocol {
                 
                 return Observable.just(commands)
             })
+            .catchErrorJustReturn([])
     }
     
     /// Preprocess a CoverURI. This allows additional processing of base URI data.
@@ -1431,9 +1450,10 @@ public class MPDBrowse: BrowseProtocol {
     public func existingArtists(artists: [Artist]) -> Observable<[Artist]> {
         return fetchExistingArtists(artists: artists)
             .flatMap { [weak self] (artists) -> Observable<[Artist]> in
-                guard let weakSelf = self else { return Observable.empty() }
+                guard let weakSelf = self else { return Observable.just([]) }
                 return weakSelf.completeArtists(artists)
-        }
+            }
+            .catchErrorJustReturn([])
     }
     
     func updateDB() {
@@ -1476,6 +1496,7 @@ public class MPDBrowse: BrowseProtocol {
                 }
                 return Observable.just("Last updated: \(dateFormatter.string(from: lastUpdateDate))")
             })
+            .catchErrorJustReturn("Couldn't read status.")
             .observeOn(MainScheduler.instance)
     }
     
@@ -1569,6 +1590,7 @@ public class MPDBrowse: BrowseProtocol {
 
                 return Observable.just(diagnostics)
             })
+            .catchErrorJustReturn("Couldn't get diagnostics.")
             .observeOn(MainScheduler.instance)
     }
     
@@ -1621,6 +1643,7 @@ public class MPDBrowse: BrowseProtocol {
 
                 return Observable.just(imageData)
             })
+            .catchErrorJustReturn(nil)
             .observeOn(MainScheduler.instance)
     }
 }
