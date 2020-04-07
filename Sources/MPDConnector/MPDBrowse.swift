@@ -1511,6 +1511,7 @@ public class MPDBrowse: BrowseProtocol {
                 guard let connection = mpdConnection?.connection else { return Observable.just("") }
 
                 var diagnostics = ""
+                var startTime = Date()
                 
                 diagnostics += "player type: \(self.connectionProperties[MPDConnectionProperties.MPDType.rawValue] ?? "Type unknown")\n"
                 diagnostics += "mpd version: \(self.connectionProperties[MPDConnectionProperties.version.rawValue] ?? "Version unknown")\n"
@@ -1522,7 +1523,10 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
-
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+                
+                startTime = Date()
                 diagnostics += "\nsearch MPD_TAG_ARTIST, album.title = \(album.title)\n"
                 try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
@@ -1531,7 +1535,10 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
 
+                startTime = Date()
                 diagnostics += "\nsearch MPD_TAG_COMPOSER, album.title = \(album.title)\n"
                 try self.mpd.search_db_tags(connection, tagType: MPD_TAG_COMPOSER)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
@@ -1540,7 +1547,10 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
-                
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+
+                startTime = Date()
                 diagnostics += "\nsearch MPD_TAG_PERFORMER, album.title = \(album.title)\n"
                 try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
@@ -1549,7 +1559,10 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
-                
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+
+                startTime = Date()
                 diagnostics += "\nsearch MPD_TAG_TITLE, album.title = \(album.title),\n"
                 try self.mpd.search_db_tags(connection, tagType: MPD_TAG_TITLE)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
@@ -1558,7 +1571,10 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
-                
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+
+                startTime = Date()
                 diagnostics += "\nsearch MPD_TAG_TITLE, album.title = \(album.title), album.artist = \(album.artist)\n"
                 try self.mpd.search_db_tags(connection, tagType: MPD_TAG_TITLE)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
@@ -1568,7 +1584,10 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
-                
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+
+                startTime = Date()
                 diagnostics += "\nsearch MPD_TAG_TITLE, album.title = \(album.title), album.albumartist = \(album.artist)\n"
                 try self.mpd.search_db_tags(connection, tagType: MPD_TAG_TITLE)
                 try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
@@ -1578,8 +1597,11 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "tag='\(result.0)', value='\(result.1)'\n"
                 }
                 _ = self.mpd.response_finish(connection)
-                
-                diagnostics += "\nsearch songs, album.title = \(album.title), album.artist = \(album.artist)\n"
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+
+                startTime = Date()
+                diagnostics += "\nsongsForArtistAndOrAlbum(artist: \(album.artist), album: \(album.title)\n"
                 let artist = Artist(id: album.artist, type: .artist, source: .Local, name: album.artist)
                 let songs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist, album: album.title)
                 for song in songs {
@@ -1587,6 +1609,19 @@ public class MPDBrowse: BrowseProtocol {
                     diagnostics += "title='\(song.title)', artist='\(song.artist)', albumartist='\(song.albumartist)', album='\(song.album)', year='\(song.year)', "
                     diagnostics += "sortartist='\(song.sortArtist)', sortalbum='\(song.sortAlbum)', sortalbumartist='\(song.sortAlbumArtist)', performer='\(song.performer)', composer='\(song.composer)'\n"
                 }
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
+                
+                startTime = Date()
+                diagnostics += "\nsongsForArtistAndOrAlbum(artist: \(album.artist))\n"
+                let artistSongs = self.songsForArtistAndOrAlbum(connection: connection, artist: artist)
+                for song in artistSongs {
+                    diagnostics += "file='\(song.id)'\n"
+                    diagnostics += "title='\(song.title)', artist='\(song.artist)', albumartist='\(song.albumartist)', album='\(song.album)', year='\(song.year)', "
+                    diagnostics += "sortartist='\(song.sortArtist)', sortalbum='\(song.sortAlbum)', sortalbumartist='\(song.sortAlbumArtist)', performer='\(song.performer)', composer='\(song.composer)'\n"
+                }
+                diagnostics += "start: \(startTime), end: \(Date()), duration: \(Date().timeIntervalSince(startTime))\n"
+                diagnostics += "========================================\n"
 
                 return Observable.just(diagnostics)
             })
