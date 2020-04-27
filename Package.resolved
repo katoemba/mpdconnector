@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
         "state": {
           "branch": null,
-          "revision": "7f54b27c7a9ce728dd24a7d0e6ddfaf2e0fddb97",
-          "version": "1.7.4"
+          "revision": "854d225f666249ece1d012b13f76166389a39dcf",
+          "version": "1.7.5"
         }
       },
       {
@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/ReactiveX/RxSwift.git",
         "state": {
           "branch": null,
-          "revision": "b3e888b4972d9bc76495dd74d30a8c7fad4b9395",
-          "version": "5.0.1"
+          "revision": "002d325b0bdee94e7882e1114af5ff4fe1e96afa",
+          "version": "5.1.1"
         }
       },
       {
