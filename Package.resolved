@@ -5,9 +5,9 @@
         "package": "ConnectorProtocol",
         "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
         "state": {
-          "branch": null,
-          "revision": "854d225f666249ece1d012b13f76166389a39dcf",
-          "version": "1.7.5"
+          "branch": "master",
+          "revision": "122306bb61b9de09d8f721e6042a1bb4c417af8a",
+          "version": null
         }
       },
       {

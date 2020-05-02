@@ -227,21 +227,37 @@ public class MPDControl: ControlProtocol {
     /// Set the volume of the player.((randomMode == .On)?,true:false)
     ///
     /// - Parameter volume: The volume to set. Must be a value between 0.0 and 1.0, values outside this range will be ignored.
-    public func setVolume(_ volume: Float) {
-        guard volume >= 0.0, volume <= 1.0 else {
-            return
-        }
-        
-        runCommand()  { connection in
+    /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
+    public func setVolume(_ volume: Float) -> Observable<PlayerStatus> {
+        runCommandWithStatus()  { connection in
+            guard volume >= 0.0, volume <= 1.0 else {
+                return
+            }
+
             _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
         }
     }
     
+    /// Adjust the volume of the player.
+    ///
+    /// - Parameter adjustment: The adjustment to be made. Negative values will decrease the volume, positive values will increase the volume.
+    /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
+    public func adjustVolume(_ adjustment: Float) -> Observable<PlayerStatus> {
+        runCommandWithStatus()  { connection in
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+
+            let volume = adjustment < 0 ? max(playerStatus.volume + adjustment, 0.0) : min(playerStatus.volume + adjustment, 1.0)
+            _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
+        }
+    }
+
     /// Seek to a position in the current song
     ///
     /// - Parameter seconds: seconds in the current song, must be <= length of the song
-    public func setSeek(seconds: UInt32) {
-        runCommand()  { connection in
+    /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
+    public func setSeek(seconds: UInt32) -> Observable<PlayerStatus> {
+        runCommandWithStatus()  { connection in
             let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
@@ -254,8 +270,9 @@ public class MPDControl: ControlProtocol {
     /// Seek to a relative position in the current song
     ///
     /// - Parameter percentage: relative position in the current song, must be between 0.0 and 1.0
-    public func setSeek(percentage: Float) {
-        runCommand()  { connection in
+    /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
+    public func setSeek(percentage: Float) -> Observable<PlayerStatus> {
+        runCommandWithStatus()  { connection in
             let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
             let seconds = UInt32(percentage * Float(playerStatus.currentSong.length))

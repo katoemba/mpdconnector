@@ -57,47 +57,90 @@ class MPDControlTests: XCTestCase {
     }
     
     func testSetValidVolumeSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setVolume(0.6)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(60)"])
-        }
+        self.mpdPlayer?.control.setVolume(0.6)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(60)"])
+            })
+            .disposed(by: self.bag)
         
         testScheduler.start()
     }
 
-    func testSetInvalidVolumeNotSentToMPD() {
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setVolume(-10.0)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
-        }
-        
-        testScheduler.scheduleAt(150) {
-            self.mpdWrapper.clearAllCalls()
-            self.mpdPlayer?.control.setVolume(1.1)
-        }
-        testScheduler.scheduleAt(200) {
-            self.mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
-        }
+    func testSetNegativeVolumeNotSentToMPD() {
+        self.mpdPlayer?.control.setVolume(-10)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
+            })
+            .disposed(by: self.bag)
         
         testScheduler.start()
     }
     
+    func testSetTooLargeVolumeNotSentToMPD() {
+        self.mpdPlayer?.control.setVolume(1.1)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedCallCount: 0)
+            })
+            .disposed(by: self.bag)
+        
+        testScheduler.start()
+    }
+    
+    func testIncreaseVolumeSentToMPD() {
+        mpdWrapper.volume = 20
+        self.mpdPlayer?.control.adjustVolume(0.1)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(30)"])
+            })
+            .disposed(by: self.bag)
+        
+        testScheduler.start()
+    }
+
+    func testIncreaseVolumeMaxSentToMPD() {
+        mpdWrapper.volume = 85
+        self.mpdPlayer?.control.adjustVolume(0.2)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(100)"])
+            })
+            .disposed(by: self.bag)
+        
+        testScheduler.start()
+    }
+
+    func testDecreaseVolumeSentToMPD() {
+        mpdWrapper.volume = 20
+        self.mpdPlayer?.control.adjustVolume(-0.1)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(10)"])
+            })
+            .disposed(by: self.bag)
+        
+        testScheduler.start()
+    }
+
+    func testDecreaseVolumeMinSentToMPD() {
+        mpdWrapper.volume = 25
+        self.mpdPlayer?.control.adjustVolume(-0.4)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_set_volume", expectedParameters: ["volume": "\(0)"])
+            })
+            .disposed(by: self.bag)
+        
+        testScheduler.start()
+    }
+
     func testSetSeek() {
         mpdWrapper.elapsedTime = 5
         mpdWrapper.trackTime = 100
         mpdWrapper.songDuration = 100
         mpdWrapper.songIndex = 5
 
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setSeek(seconds: 10)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_seek", expectedParameters: ["pos": "5", "t": "10"])
-        }
+        self.mpdPlayer?.control.setSeek(seconds: 10)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_seek", expectedParameters: ["pos": "5", "t": "10"])
+            })
+            .disposed(by: self.bag)
 
         testScheduler.start()
     }
@@ -106,19 +149,17 @@ class MPDControlTests: XCTestCase {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
         
-        testScheduler.scheduleAt(10) {
-            var song = Song()
-            song.length = 100
-            song.position = 5
-            playerStatus.currentSong = song
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setSeek(seconds: 200)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_seek", expectedCallCount: 0)
-        }
+        var song = Song()
+        song.length = 100
+        song.position = 5
+        playerStatus.currentSong = song
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+        self.mpdPlayer?.control.setSeek(seconds: 200)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_seek", expectedCallCount: 0)
+            })
+            .disposed(by: self.bag)
         
         testScheduler.start()
     }
@@ -129,13 +170,12 @@ class MPDControlTests: XCTestCase {
         mpdWrapper.songDuration = 100
         mpdWrapper.songIndex = 6
         
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setSeek(percentage: 0.3)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_seek", expectedParameters: ["pos": "6", "t": "30"])
-        }
-        
+        self.mpdPlayer?.control.setSeek(percentage: 0.3)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_seek", expectedParameters: ["pos": "6", "t": "30"])
+            })
+            .disposed(by: self.bag)
+
         testScheduler.start()
     }
     
@@ -143,20 +183,18 @@ class MPDControlTests: XCTestCase {
         let mpdStatus = self.mpdPlayer?.status as! MPDStatus
         var playerStatus = PlayerStatus()
         
-        testScheduler.scheduleAt(10) {
-            var song = Song()
-            song.length = 100
-            song.position = 6
-            playerStatus.currentSong = song
-            mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
-        }
-        testScheduler.scheduleAt(50) {
-            self.mpdPlayer?.control.setSeek(percentage: 1.3)
-        }
-        testScheduler.scheduleAt(100) {
-            self.mpdWrapper.assertCall("run_seek", expectedCallCount: 0)
-        }
-        
+        var song = Song()
+        song.length = 100
+        song.position = 6
+        playerStatus.currentSong = song
+        mpdStatus.testSetPlayerStatus(playerStatus: playerStatus)
+
+        self.mpdPlayer?.control.setSeek(percentage: 1.3)
+            .subscribe(onNext: { (_) in
+                self.mpdWrapper.assertCall("run_seek", expectedCallCount: 0)
+            })
+            .disposed(by: self.bag)
+
         testScheduler.start()
     }
     
