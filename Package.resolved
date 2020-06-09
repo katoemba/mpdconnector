@@ -5,9 +5,9 @@
         "package": "ConnectorProtocol",
         "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
         "state": {
-          "branch": "master",
-          "revision": "122306bb61b9de09d8f721e6042a1bb4c417af8a",
-          "version": null
+          "branch": null,
+          "revision": "06550095969ad9411e51272e0fd4d1cc46e1838c",
+          "version": "1.7.7"
         }
       },
       {
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/katoemba/libmpdclient-swift.git",
         "state": {
           "branch": null,
-          "revision": "2cb031231a486caf66f7606ad933b5a0d5d3b91f",
-          "version": "2.18.0"
+          "revision": "4b1d0786d465fcfd2758f11e0c3b846031acf54b",
+          "version": "2.18.1"
         }
       },
       {

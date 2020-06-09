@@ -130,6 +130,9 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     return Disposables.create()
                 }
             })
+            .map({ (name, host, port, type) -> (String, String, Int, MPDType) in
+                (name, host, port, (type == .unknown && (name.lowercased().contains("chord") || host.lowercased().contains("chord") || host.lowercased().contains("2go") || host.lowercased().contains("2 go"))) ? .chord : type)
+            })
             .map({ (name, host, port, type) -> MPDPlayer in
                 return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
             })
