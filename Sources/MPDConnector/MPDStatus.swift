@@ -28,7 +28,7 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
-import RxCocoa
+import RxRelay
 
 public class MPDStatus: StatusProtocol {
     /// Connection to a MPD Player

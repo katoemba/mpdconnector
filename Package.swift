@@ -12,8 +12,8 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/katoemba/connectorprotocol.git", .upToNextMajor(from: "1.7.7")),
-        .package(url: "https://github.com/katoemba/libmpdclient-swift.git", .upToNextMajor(from: "2.18.1")),
+        .package(url: "https://github.com/katoemba/connectorprotocol.git", .upToNextMajor(from: "1.7.8")),
+        .package(url: "https://github.com/katoemba/libmpdclient-swift.git", .upToNextMajor(from: "2.19.0")),
         .package(url: "https://github.com/katoemba/rxnetservice.git", .upToNextMajor(from: "0.2.2")),
         .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "5.0.1")),
         .package(url: "https://github.com/RxSwiftCommunity/RxSwiftExt.git", .upToNextMajor(from: "5.2.0")),
@@ -24,7 +24,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "MPDConnector",
-            dependencies: ["ConnectorProtocol", "libmpdclient", "RxNetService", "RxSwift", "RxCocoa", "RxSwiftExt", "SWXMLHash"]),
+            dependencies: ["ConnectorProtocol", "libmpdclient", "RxNetService", "RxSwift", "RxRelay", "RxSwiftExt", "SWXMLHash"]),
         .testTarget(
             name: "MPDConnectorTests",
             dependencies: ["MPDConnector", "RxBlocking", "RxTest"])

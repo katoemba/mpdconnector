@@ -275,8 +275,8 @@ public class MPDWrapper: MPDProtocol {
         }
     }
 
-    public func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
-        if mpd_search_add_sort_tag(connection, tagType, false) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+    public func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type, descending: Bool) throws {
+        if mpd_search_add_sort_tag(connection, tagType, descending) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
             throw MPDError.commandFailed
         }
     }

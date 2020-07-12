@@ -28,7 +28,6 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
-import RxCocoa
 
 public class MPDControl: ControlProtocol {
     private let mpd: MPDProtocol

@@ -30,7 +30,6 @@ import ConnectorProtocol
 import MPDConnector
 import libmpdclient
 import RxSwift
-import RxCocoa
 import RxBlocking
 
 class MPDHelperTests: XCTestCase {

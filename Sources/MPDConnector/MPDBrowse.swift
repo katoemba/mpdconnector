@@ -28,7 +28,6 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
-import RxCocoa
 
 extension Array where Element:Hashable {
     var orderedSet: Array {
@@ -1680,5 +1679,93 @@ public class MPDBrowse: BrowseProtocol {
             })
             .catchErrorJustReturn(nil)
             .observeOn(MainScheduler.instance)
+    }
+    
+    /// Search for the existance a certain item
+    /// - Parameter searchItem: what to search for
+    /// - Returns: an observable array of results
+    public func search(searchItem: SearchItem) -> Observable<[FoundItem]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observeOn(scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[FoundItem]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
+                var foundItems = Set<FoundItem>()
+                do {
+                    switch searchItem {
+                    case let .artist(artist):
+                        try self.mpd.search_db_songs(connection, exact: false)
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist)
+                        try self.mpd.search_add_window(connection, start: 0, end: 100)
+                        try self.mpd.search_commit(connection)
+                        while let mpdSong = self.mpd.recv_song(connection) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                foundItems.insert(.artist(self.createArtistFromSong(song)))
+                            }
+                            self.mpd.song_free(mpdSong)
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    case let .artistAlbum(artist: artist, sort: sort):
+                        try self.mpd.search_db_songs(connection, exact: false)
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist)
+                        if sort == .year || sort == .yearReverse {
+                            try self.mpd.search_add_sort_tag(connection, tagType: MPD_TAG_DATE, descending: sort == .yearReverse)
+                        }
+                        // When sorting, only pick the first match
+                        try self.mpd.search_add_window(connection, start: 0, end: 1)
+                        try self.mpd.search_commit(connection)
+                        while let mpdSong = self.mpd.recv_song(connection) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                foundItems.insert(.album(self.createAlbumFromSong(song)))
+                            }
+                            self.mpd.song_free(mpdSong)
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    case let .album(album, artist):
+                        try self.mpd.search_db_songs(connection, exact: false)
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album)
+                        if artist != nil {
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist!)
+                        }
+                        try self.mpd.search_add_window(connection, start: 0, end: 100)
+                        try self.mpd.search_commit(connection)
+                        while let mpdSong = self.mpd.recv_song(connection) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                foundItems.insert(.album(self.createAlbumFromSong(song)))
+                            }
+                            self.mpd.song_free(mpdSong)
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    case let .genre(genre):
+                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_GENRE)
+                        try self.mpd.search_commit(connection)
+                        while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_GENRE) {
+                            if result.1.lowercased() == genre.lowercased() {
+                                foundItems.insert(.genre(Genre(id: result.1, source: .Local, name: result.1)))
+                            }
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    case let .song(title, artist):
+                        try self.mpd.search_db_songs(connection, exact: false)
+                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_TITLE, value: title)
+                        if artist != nil {
+                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist!)
+                        }
+                        try self.mpd.search_add_window(connection, start: 0, end: 100)
+                        try self.mpd.search_commit(connection)
+                        while let mpdSong = self.mpd.recv_song(connection) {
+                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
+                                foundItems.insert(.song(song))
+                            }
+                            self.mpd.song_free(mpdSong)
+                        }
+                        _ = self.mpd.response_finish(connection)
+                    default:
+                        break
+                    }
+                }
+                
+                return Observable.just(Array(foundItems))
+            })
     }
 }

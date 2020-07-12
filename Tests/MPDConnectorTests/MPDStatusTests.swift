@@ -29,7 +29,6 @@ import ConnectorProtocol
 import MPDConnector
 import libmpdclient
 import RxSwift
-import RxCocoa
 
 class MPDStatusTests: XCTestCase {
     var mpdPlayer: MPDPlayer?
