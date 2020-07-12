@@ -30,7 +30,7 @@ import RxRelay
 import ConnectorProtocol
 
 public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
-    private var _playlists = PublishSubject<[Playlist]>()
+    private var _playlists = BehaviorRelay<[Playlist]>(value: [])
     public var playlistsObservable: Observable<[Playlist]> {
         get {
             return _playlists.asObservable()
@@ -56,7 +56,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         if _providedPlaylists.count > 0 {
             loadProgress.accept(.allDataLoaded)
             bag = DisposeBag()
-            _playlists.onNext(_providedPlaylists)
+            _playlists.accept(_providedPlaylists)
         }
         else {
             reload()
@@ -68,7 +68,7 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         bag = DisposeBag()
         
         // Clear the contents
-        _playlists.onNext([])
+        _playlists.accept([])
         loadProgress.accept(.loading)
 
         // Load new contents
@@ -112,38 +112,35 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         renamedPlaylist.id = to
         renamedPlaylist.name = to
         
-        playlistsObservable
-            .take(1)
-            .subscribe(onNext: { [weak self] (playlists) in
-                guard let weakSelf = self else { return }
-                
-                if let index = playlists.firstIndex(of: playlist), playlists.contains(renamedPlaylist) == false {
-                    weakSelf._browse.renamePlaylist(playlist, newName: to)
-                    
+        if let index = _playlists.value.firstIndex(of: playlist), _playlists.value.contains(renamedPlaylist) == false {
+            _browse.renamePlaylist(playlist, newName: to)
+            
+            _playlists.take(1)
+                .map { (playlists) -> [Playlist] in
                     var updatedPlaylists = playlists
                     updatedPlaylists[index] = renamedPlaylist
-                    weakSelf._playlists.onNext(updatedPlaylists)
+                    return updatedPlaylists
                 }
-            })
-            .disposed(by: bag)
+                .bind(to: _playlists)
+                .disposed(by: bag)
+            return renamedPlaylist
+        }
         
         return playlist
     }
     
     public func deletePlaylist(_ playlist: Playlist) {
-        playlistsObservable
-            .take(1)
-            .subscribe(onNext: { [weak self] (playlists) in
-                guard let weakSelf = self else { return }
+        if let index = _playlists.value.firstIndex(of: playlist) {
+            _browse.deletePlaylist(playlist)
             
-                if let index = playlists.firstIndex(of: playlist) {
-                    weakSelf._browse.deletePlaylist(playlist)
-                    
+            _playlists.take(1)
+                .map { (playlists) -> [Playlist] in
                     var updatedPlaylists = playlists
                     updatedPlaylists.remove(at: index)
-                    weakSelf._playlists.onNext(updatedPlaylists)
+                    return updatedPlaylists
                 }
-            })
-            .disposed(by: bag)
+                .bind(to: _playlists)
+                .disposed(by: bag)
+        }
     }
 }

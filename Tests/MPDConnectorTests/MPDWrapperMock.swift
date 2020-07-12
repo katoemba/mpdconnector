@@ -396,8 +396,8 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         registerCall("search_add_tag_constraint", ["oper": "\(oper)", "tagType": "\(tagType)", "value": stringFromMPDString(value)])
     }
     
-    func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws {
-        registerCall("search_add_sort_tag", ["tagType": "\(tagType)"])
+    func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type, descending: Bool) throws {
+        registerCall("search_add_sort_tag", ["tagType": "\(tagType)", "descending": "\(descending)"])
     }
     
     func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws {
