@@ -1632,15 +1632,10 @@ public class MPDBrowse: BrowseProtocol {
         guard coverURI.path != "" else { return Observable.just(nil) }
         return readBinary(command: "albumart", uri: coverURI.path)
     }
-    
-    private func readPicture(coverURI: CoverURI) -> Observable<Data?> {
+
+    public func embeddedImageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
         guard coverURI.path != "" else { return Observable.just(nil) }
         return readBinary(command: "readpicture", uri: coverURI.path)
-    }
-
-    private func albumArt(coverURI: CoverURI) -> Observable<Data?> {
-        guard coverURI.path != "" else { return Observable.just(nil) }
-        return readBinary(command: "albumart", uri: coverURI.path)
     }
 
     private func readBinary(command: String, uri: String) -> Observable<Data?> {
