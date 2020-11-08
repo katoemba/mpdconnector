@@ -347,7 +347,8 @@ public class MPDBrowse: BrowseProtocol {
     
     private func createAlbumFromSong(_ song: Song) -> Album {
         let artist = song.albumartist != "" ? song.albumartist : song.artist
-        var album = Album(id: "\(artist):\(song.album)", source: song.source, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0)
+        let sortArtist = song.sortAlbumArtist != "" ? song.sortAlbumArtist : song.sortArtist
+        var album = Album(id: "\(artist):\(song.album)", source: song.source, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0, sortArtist: sortArtist)
         album.coverURI = song.coverURI
         album.lastModified = song.lastModified
     
@@ -538,20 +539,14 @@ public class MPDBrowse: BrowseProtocol {
                         
                         if sort == .artist {
                             let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
-                            if artistCompare == .orderedAscending {
-                                return true
+                            if artistCompare == .orderedSame {
+                                return (lhs.year == rhs.year) ? (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending) : (lhs.year < rhs.year)
                             }
-                            if artistCompare == .orderedDescending {
-                                return false
-                            }
+                                                    
+                            return (artistCompare == .orderedAscending)
                         }
                         
-                        let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)
-                        if albumCompare == .orderedAscending {
-                            return true
-                        }
-                        
-                        return false
+                        return (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending)
                     }))
                 }
                 catch {
@@ -656,20 +651,14 @@ public class MPDBrowse: BrowseProtocol {
 
                         if sort == .artist {
                             let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
-                            if artistCompare == .orderedAscending {
-                                return true
+                            if artistCompare == .orderedSame {
+                                return (lhs.year == rhs.year) ? (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending) : (lhs.year < rhs.year)
                             }
-                            if artistCompare == .orderedDescending {
-                                return false
-                            }
+                                                    
+                            return (artistCompare == .orderedAscending)
                         }
                         
-                        let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)
-                        if albumCompare == .orderedAscending {
-                            return true
-                        }
-
-                        return false
+                        return (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending)
                     }))
                 }
                 catch {
@@ -699,14 +688,14 @@ public class MPDBrowse: BrowseProtocol {
                         try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
                     }
                     try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
-                    if sort == .year || sort == .yearReverse {
-                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_DATE)
-                    }
+                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
+                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_DATE)
                     try self.mpd.search_commit(connection)
                     
                     var albumIDs = [String: Int]()
                     
                     var albumArtist = ""
+                    var albumArtistSort = ""
                     var year = 0
                     while let result = self.mpd.recv_pair(connection) {
                         let tagName = result.0
@@ -720,13 +709,16 @@ public class MPDBrowse: BrowseProtocol {
                             else if tag == MPD_TAG_ALBUM_ARTIST {
                                 albumArtist = value
                             }
+                            else if tag == MPD_TAG_ALBUM_ARTIST_SORT {
+                                albumArtistSort = value
+                            }
                             else if tag == MPD_TAG_ALBUM {
                                 let title = value
                                 let albumID = "\(albumArtist):\(title)"
                                 // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
                                 if albumIDs[albumID] == nil {
                                     albumIDs[albumID] = 1
-                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0)
+                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0, sortTitle: albumArtistSort)
                                     albums.append(album)
                                 }
                             }
@@ -779,20 +771,14 @@ public class MPDBrowse: BrowseProtocol {
                         
                         if sort == .artist {
                             let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
-                            if artistCompare == .orderedAscending {
-                                return true
+                            if artistCompare == .orderedSame {
+                                return (lhs.year == rhs.year) ? (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending) : (lhs.year < rhs.year)
                             }
-                            if artistCompare == .orderedDescending {
-                                return false
-                            }
+                                                    
+                            return (artistCompare == .orderedAscending)
                         }
                         
-                        let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)
-                        if albumCompare == .orderedAscending {
-                            return true
-                        }
-                        
-                        return false
+                        return (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending)
                     }))
                 }
                 catch {
