@@ -135,7 +135,9 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
                 return dict.keys
                     .sorted()
                     .map({ (key) -> (String, [Artist]) in
-                        (key, dict[key]!)
+                        return (key, dict[key]!.sorted(by: { (lhs, rhs) -> Bool in
+                            return lhs.sortName.caseInsensitiveCompare(rhs.sortName) == .orderedAscending
+                        }))
                     })
             })
             .map({ (sectionDictionary) -> ArtistSections in

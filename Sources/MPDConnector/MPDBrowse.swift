@@ -323,7 +323,8 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     private func createArtistFromSong(_ song: Song) -> Artist {
-        var artist = Artist(id: song.artist, source: song.source, name: song.artist)
+        let sortName = song.sortArtist != "" ? song.sortArtist : song.sortAlbumArtist
+        var artist = Artist(id: song.artist, source: song.source, name: song.artist, sortName: sortName)
         if case let .filenameOptionsURI(baseUri, path, possibleFilenames) = song.coverURI {
             let baseUriComponents = baseUri.components(separatedBy: "/")
             var newBaseUri = ""
@@ -701,7 +702,8 @@ public class MPDBrowse: BrowseProtocol {
                         let tagName = result.0
                         let value = result.1
                         let tag = self.mpd.tag_name_parse(tagName)
-                        
+                        print("albums    \(tagName) \(value)")
+
                         if value != "" {
                             if tag == MPD_TAG_DATE {
                                 year = Int(String(value.prefix(4))) ?? 0
@@ -718,7 +720,7 @@ public class MPDBrowse: BrowseProtocol {
                                 // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
                                 if albumIDs[albumID] == nil {
                                     albumIDs[albumID] = 1
-                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0, sortTitle: albumArtistSort)
+                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0, sortArtist: albumArtistSort)
                                     albums.append(album)
                                 }
                             }
@@ -956,15 +958,17 @@ public class MPDBrowse: BrowseProtocol {
                 guard let connection = mpdConnection?.connection else { return Observable.just([]) }
 
                 do {
-                    var artists = [Artist]()
+                    var artists = Set<Artist>()
                     
                     switch type {
                     case .artist:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
                         try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
+                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
                     case .albumArtist:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM_ARTIST)
                         try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
+                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
                     case .performer:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
                     case .composer:
@@ -977,25 +981,36 @@ public class MPDBrowse: BrowseProtocol {
                     
                     // Get pairs instead of looking by tag name, to ensure we also get the sort values if present.
                     var title = ""
-                    var sortTitle = ""
+                    var sortArtist = ""
+                    var sortAlbumArtist = ""
                     while let result = self.mpd.recv_pair(connection) {
                         let tagName = result.0
                         let value = result.1
                         let tag = self.mpd.tag_name_parse(tagName)
+                        print("\(tagName) \(value)")
                         
                         if [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST, MPD_TAG_PERFORMER, MPD_TAG_COMPOSER].contains(tag) {
                             title = value
                             if title != "" {
-                                artists.append(Artist(id: title, type: type, source: .Local, name: title, sortName: sortTitle))
+                                let sortName = (type != .albumArtist)
+                                    ? sortArtist
+                                    : ((sortAlbumArtist != sortArtist && title == sortAlbumArtist) ? sortArtist : sortAlbumArtist)
+                                artists.insert(Artist(id: title, type: type, source: .Local, name: title, sortName: sortName))
+                                title = ""
+                                sortArtist = ""
+                                sortAlbumArtist = ""
                             }
                         }
-                        else if [MPD_TAG_ARTIST_SORT, MPD_TAG_ALBUM_ARTIST_SORT].contains(tag) {
-                            sortTitle = value
+                        else if MPD_TAG_ARTIST_SORT == tag {
+                            sortArtist = value
+                        }
+                        else if MPD_TAG_ALBUM_ARTIST_SORT == tag {
+                            sortAlbumArtist = value
                         }
                     }
                     
                     _ = self.mpd.response_finish(connection)
-                    
+
                     return Observable.just(artists.sorted(by: { (lhs, rhs) -> Bool in
                         let sortOrder = lhs.sortName.caseInsensitiveCompare(rhs.sortName)
                         if sortOrder == .orderedSame {

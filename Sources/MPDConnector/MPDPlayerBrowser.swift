@@ -278,9 +278,28 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                             tagTypes.append(pair.1)
                         }
                         _ = mpd.response_finish(connection)
-                        if tagTypes.contains("AlbumArtist") == false &&
-                            tagTypes.contains("albumartist") == false {
-                            connectionWarning = "id3-tag albumartist is not configured"
+                        var missingTagTypes = [String]()
+                        if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
+                            missingTagTypes.append("albumartist")
+                        }
+                        if tagTypes.contains("ArtistSort") == false && tagTypes.contains("artistsort") == false {
+                            missingTagTypes.append("artistsort")
+                        }
+                        if tagTypes.contains("AlbumArtistSort") == false && tagTypes.contains("albumartistsort") == false {
+                            missingTagTypes.append("albumartistsort")
+                        }
+                        if missingTagTypes.count == 1 {
+                            connectionWarning = "id3-tag \(missingTagTypes[0]) is not configured"
+                        }
+                        else if missingTagTypes.count > 1 {
+                            connectionWarning = "id3-tags "
+                            for tag in missingTagTypes {
+                                if connectionWarning! != "id3-tags " {
+                                    connectionWarning! += ", "
+                                }
+                                connectionWarning! += tag
+                            }
+                            connectionWarning! += " are not configured"
                         }
                     }
                     
