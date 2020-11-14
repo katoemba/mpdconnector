@@ -702,7 +702,6 @@ public class MPDBrowse: BrowseProtocol {
                         let tagName = result.0
                         let value = result.1
                         let tag = self.mpd.tag_name_parse(tagName)
-                        print("albums    \(tagName) \(value)")
 
                         if value != "" {
                             if tag == MPD_TAG_DATE {
@@ -987,7 +986,6 @@ public class MPDBrowse: BrowseProtocol {
                         let tagName = result.0
                         let value = result.1
                         let tag = self.mpd.tag_name_parse(tagName)
-                        print("\(tagName) \(value)")
                         
                         if [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST, MPD_TAG_PERFORMER, MPD_TAG_COMPOSER].contains(tag) {
                             title = value
