@@ -951,6 +951,9 @@ public class MPDBrowse: BrowseProtocol {
     }
 
     public func fetchArtists(genre: Genre?, type: ArtistType) -> Observable<[Artist]> {
+        let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
+        let supportMultipleGroupBy = MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.21.10") == .orderedDescending
+        
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observeOn(scheduler)
             .flatMap({ (mpdConnection) -> Observable<[Artist]> in
@@ -963,11 +966,15 @@ public class MPDBrowse: BrowseProtocol {
                     case .artist:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
                         try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
-                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
+                        if supportMultipleGroupBy {
+                            try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
+                        }
                     case .albumArtist:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM_ARTIST)
                         try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
-                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
+                        if supportMultipleGroupBy {
+                            try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
+                        }
                     case .performer:
                         try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
                     case .composer:
