@@ -121,7 +121,7 @@ public class MPDStatus: StatusProtocol {
     
     private func startMonitoring() {
         let timerObservable = Observable<Int>
-            .timer(RxTimeInterval.seconds(1), period: RxTimeInterval.seconds(1), scheduler: elapsedTimeScheduler)
+            .timer(RxTimeInterval.milliseconds(300), period: RxTimeInterval.milliseconds(300), scheduler: elapsedTimeScheduler)
             .map({ [weak self] (_) -> PlayerStatus? in
                 if let weakSelf = self {
                     if weakSelf._playerStatus.value.playing.playPauseMode == .Playing {
@@ -133,7 +133,22 @@ public class MPDStatus: StatusProtocol {
 
                 return nil
             })
-        
+
+        let forceReloadObservable = Observable<Int>
+            .timer(RxTimeInterval.seconds(1), period: RxTimeInterval.seconds(5), scheduler: elapsedTimeScheduler)
+            .flatMap({ [weak self] (_) -> Observable<PlayerStatus?> in
+                guard let weakSelf = self else { return Observable.empty() }
+                
+                return MPDHelper.connectToMPD(mpd: weakSelf.mpd, connectionProperties: weakSelf.connectionProperties, scheduler: weakSelf.elapsedTimeScheduler, timeout: 1000)
+                    .map( { [weak self] (mpdConnection) -> PlayerStatus? in
+                        guard let weakSelf = self, let connection = mpdConnection?.connection else {
+                            return nil
+                        }
+
+                        return weakSelf.fetchPlayerStatus(connection)
+                })
+            })
+
         let changeStatusUpdateStream = Observable<PlayerStatus?>.create { [weak self] observer in
             guard let weakSelf = self else {
                 observer.on(.completed)
@@ -180,7 +195,7 @@ public class MPDStatus: StatusProtocol {
             })
             .disposed(by: bag)
 
-        Observable.merge(timerObservable, changeStatusUpdateStream)
+        Observable.merge(timerObservable, forceReloadObservable, changeStatusUpdateStream)
             .subscribe(onNext: { [weak self] playerStatus in
                 guard let weakSelf = self, let playerStatus = playerStatus else {
                     return
