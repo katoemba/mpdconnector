@@ -74,7 +74,7 @@ public class MPDAlbumSectionBrowseViewModel: AlbumSectionBrowseViewModel {
         // Load new contents
         let browse = _browse
         let albumsObservable = browse.fetchAlbums(genre: nil, sort: sort)
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .share(replay: 1)
         
         albumsObservable

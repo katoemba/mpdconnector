@@ -185,9 +185,9 @@ public class MPDHelper {
 
             return Disposables.create()
         }
-        .subscribeOn(scheduler)
+        .subscribe(on: scheduler)
         .retry(.exponentialDelayed(maxCount: 4, initial: 0.5, multiplier: 1.0), scheduler: scheduler)
-        .catchErrorJustReturn(nil)
+        .catchAndReturn(nil)
         .asObservable()
     }
     

@@ -52,7 +52,7 @@ public class MPDStatus: StatusProtocol {
     public var playerStatusObservable : Observable<PlayerStatus> {
         get {
             return _playerStatus
-                .observeOn(MainScheduler.instance)
+                .observe(on: MainScheduler.instance)
         }
     }
     let disconnectHandler = PublishSubject<Int>()
@@ -83,7 +83,7 @@ public class MPDStatus: StatusProtocol {
         }
         
         _connectionStatusObservable = _connectionStatus
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
 
         HelpMePlease.allocUp(name: "MPDStatus")
     }

@@ -81,7 +81,7 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
         let genresSubject = self._genresSubject
         
         let genresObservable = browse.fetchGenres()
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .share(replay: 1)
 
         genresObservable

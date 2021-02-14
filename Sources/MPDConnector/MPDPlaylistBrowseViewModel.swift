@@ -75,11 +75,11 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
         let browse = _browse
         let playlists = self._playlists
         let playlistsObservable = browse.fetchPlaylists()
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .share(replay: 1)
         
         playlistsObservable
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .bind(to: playlists)
             .disposed(by: bag)
         

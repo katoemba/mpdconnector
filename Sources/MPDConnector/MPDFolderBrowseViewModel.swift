@@ -83,7 +83,7 @@ public class MPDFolderBrowseViewModel: FolderBrowseViewModel {
         let folderContentsSubject = self._folderContentsSubject
         
         let folderContentsObservable = browse.fetchFolderContents(parentFolder: parentFolder)
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .share(replay: 1)
         
         folderContentsObservable

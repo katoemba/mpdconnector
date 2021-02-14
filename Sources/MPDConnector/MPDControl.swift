@@ -60,7 +60,7 @@ public class MPDControl: ControlProtocol {
         return runCommandWithStatus()  { connection in
             _ = self.mpd.run_play(connection)
             }
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
     }
     
     /// Start playback of a specific track.
@@ -681,7 +681,7 @@ public class MPDControl: ControlProtocol {
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
         MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
-            .observeOn(serialScheduler)
+            .observe(on: serialScheduler)
             .subscribe(onNext: { (mpdConnection) in
                 guard let connection = mpdConnection?.connection else { return }
 
@@ -701,7 +701,7 @@ public class MPDControl: ControlProtocol {
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
-            .observeOn(serialScheduler)
+            .observe(on: serialScheduler)
             .do(onNext: { (mpdConnection) in
                 guard let connection = mpdConnection?.connection else { return }
                 
@@ -713,6 +713,6 @@ public class MPDControl: ControlProtocol {
                 
                 return Observable.just(MPDStatus(mpd: mpd, connectionProperties: connectionProperties).fetchPlayerStatus(connection))
             }
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
     }
 }

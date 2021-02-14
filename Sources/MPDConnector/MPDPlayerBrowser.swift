@@ -140,7 +140,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
         let httpPlayerObservable = httpNetServiceBrowser.rx.serviceAdded
-            .observeOn(backgroundScheduler)
+            .observe(on: backgroundScheduler)
             .filter({ (netService) -> Bool in
                 netService.name.contains("[runeaudio]") == false && netService.name.contains("bryston") == false
             })
@@ -250,7 +250,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         // Merge the detected players, and get a version out of them.
         addPlayerObservable = Observable.merge(mpdPlayerObservable, volumioHttpPlayerObservable, moodeAudioHttpPlayerObservable, addManualPlayerSubject)
-            .observeOn(backgroundScheduler)
+            .observe(on: backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
                 let mpdConnection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties)
@@ -321,7 +321,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 
                 return player
             })
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
         
         // Create an observable that monitors when players disappear from the network.
         let removeMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceRemoved
@@ -338,7 +338,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .asObservable()
         
         removePlayerObservable = Observable.merge(removeMPDPlayerObservable, removeHttpPlayerObservable, removeManualPlayerSubject)
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .asObservable()
     }
     
@@ -383,7 +383,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 
                 return Observable.just(MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults))
             })
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
     }
     
     public func persistPlayer(_ connectionProperties: [String: Any]) {

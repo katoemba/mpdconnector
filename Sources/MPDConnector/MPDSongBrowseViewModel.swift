@@ -114,7 +114,7 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
         switch filter! {
         case let .playlist(playlist):
             browse.songsInPlaylist(playlist)
-                .observeOn(MainScheduler.instance)
+                .observe(on: MainScheduler.instance)
                 .subscribe(onNext: { (songs) in
                     localSongsSubject.onNext(songs)
                 })

@@ -126,13 +126,13 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         if let artist = artist {
             self.extendSize = 60
             albumsObservable = browse.albumsByArtist(artist, sort: sort)
-                .observeOn(MainScheduler.instance)
+                .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }
         else if let recent = recent {
             self.extendSize = 200
             albumsObservable = browse.fetchRecentAlbums(numberOfDays: recent)
-                .observeOn(MainScheduler.instance)
+                .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }
         else if let random = random {
@@ -152,7 +152,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         else {
             self.extendSize = 60
             albumsObservable = browse.fetchAlbums(genre: genre, sort: sort)
-                .observeOn(MainScheduler.instance)
+                .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }
         
@@ -172,7 +172,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             })
         
         albumsObservable
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .map { (_) -> LoadProgress in
                 .loading
             }
@@ -187,7 +187,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             .scan([]) { inputAlbums, newAlbums in
                 inputAlbums + newAlbums
             }
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .share(replay: 1)
             
         dataAvailableObservable
@@ -210,7 +210,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             }
         
         albumsObservable
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .filter { (albums) -> Bool in
                 albums.count == 0
             }
@@ -221,7 +221,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             .disposed(by: bag)
 
         Observable.combineLatest(dataAvailableObservable, endReachedObservable)
-            .observeOn(MainScheduler.instance)
+            .observe(on: MainScheduler.instance)
             .filter { (_, end) -> Bool in
                 end
             }

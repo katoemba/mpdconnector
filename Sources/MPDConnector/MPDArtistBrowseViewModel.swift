@@ -108,7 +108,7 @@ public class MPDArtistBrowseViewModel: ArtistBrowseViewModel {
         else {
             multiSection = true
             artistObservable = browse.fetchArtists(genre: nil, type: type)
-                .observeOn(MainScheduler.instance)
+                .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }
         
