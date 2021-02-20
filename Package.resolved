@@ -5,9 +5,9 @@
         "package": "ConnectorProtocol",
         "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
         "state": {
-          "branch": "master",
+          "branch": null,
           "revision": "44c83ac96980f4e021d034c94beb39dd9587bac5",
-          "version": null
+          "version": "1.8.1"
         }
       },
       {
@@ -23,9 +23,9 @@
         "package": "RxNetService",
         "repositoryURL": "https://github.com/katoemba/rxnetservice.git",
         "state": {
-          "branch": "master",
-          "revision": "3a5e17687bd4a5671f9e38f1c488274df4cdbddf",
-          "version": null
+          "branch": null,
+          "revision": "4298820ea9914d5cef82173cf93c576dd47eeaa7",
+          "version": "0.2.3"
         }
       },
       {

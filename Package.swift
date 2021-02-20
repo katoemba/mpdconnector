@@ -12,9 +12,9 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/katoemba/connectorprotocol.git", .branch("master")),
+        .package(url: "https://github.com/katoemba/connectorprotocol.git", .upToNextMajor(from: "1.8.1")),
         .package(url: "https://github.com/katoemba/libmpdclient-swift.git", .upToNextMajor(from: "2.19.0")),
-        .package(url: "https://github.com/katoemba/rxnetservice.git", .branch("master")),
+        .package(url: "https://github.com/katoemba/rxnetservice.git", .upToNextMajor(from: "0.2.3")),
         .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "6.0.0")),
         .package(url: "https://github.com/RxSwiftCommunity/RxSwiftExt.git", .upToNextMajor(from: "6.0.0")),
         .package(url: "https://github.com/drmohundro/SWXMLHash.git", .upToNextMajor(from: "5.0.1"))
