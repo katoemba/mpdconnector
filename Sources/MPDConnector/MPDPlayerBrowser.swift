@@ -33,6 +33,26 @@ import RxNetService
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
+    struct MPDConnectionData {
+        let name: String
+        let host: String
+        let ip: String?
+        let port: Int
+        let type: MPDType
+        
+        func withType(_ newType: MPDType) -> MPDConnectionData {
+            MPDConnectionData(name: name, host: host, ip: ip, port: port, type: newType)
+        }
+
+        func withPortAndType(_ newPort: Int, _ newType: MPDType) -> MPDConnectionData {
+            MPDConnectionData(name: name, host: host, ip: ip, port: newPort, type: newType)
+        }
+
+        func withNameAndPortAndType(_ newName: String, _ newPort: Int, _ newType: MPDType) -> MPDConnectionData {
+            MPDConnectionData(name: newName, host: host, ip: ip, port: newPort, type: newType)
+        }
+    }
+    
     public var controllerType: String {
         MPDPlayer.controllerType
     }
@@ -55,34 +75,34 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         // Create an observable that monitors when new players are discovered.
         let mpdPlayerObservable = mpdNetServiceBrowser.rx.serviceAdded
-            .map({ (netService) -> (String, String, Int, MPDType) in
+            .map({ (netService) -> (MPDConnectionData) in
                 let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
                 let typeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
                 let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
                 
-                return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
+                return (MPDConnectionData(name: netService.name, host: netService.hostName ?? "Unknown", ip: netService.firstIPv4Address, port: netService.port, type: mpdType))
             })
-            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+            .flatMap({ (connectionData) -> Observable<MPDConnectionData> in
                 // Check if this is a Bryston player
                 return Observable.create { observer in
-                    if type != .unknown {
-                        observer.onNext((name, host, port, type))
+                    if connectionData.type != .unknown {
+                        observer.onNext(connectionData)
                         observer.onCompleted()
                     }
                     else {
                         // Make a request to the player for the api version
                         let session = URLSession.shared
-                        if let url = URL(string: "http://\(host)/bdbapiver") {
+                        if let url = URL(string: "http://\(connectionData.host)/bdbapiver") {
                             let request = URLRequest(url: url)
                             let task = session.dataTask(with: request) {
                                 (data, response, error) -> Void in
                                 if error == nil, let status = (response as? HTTPURLResponse)?.statusCode, status == 200,
                                     let data = data, let responseString = String(data: data, encoding: String.Encoding.utf8),
                                     responseString.starts(with: "1") {
-                                    observer.onNext((name, host, port, .bryston))
+                                    observer.onNext(connectionData.withType(.bryston))
                                 }
                                 else {
-                                    observer.onNext((name, host, port, type))
+                                    observer.onNext(connectionData)
                                 }
                                 observer.onCompleted()
                             }
@@ -96,27 +116,27 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     return Disposables.create()
                 }
             })
-            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+            .flatMap({ (connectionData) -> Observable<MPDConnectionData> in
                 // Check if this is a Rune Audio based player
                 Observable.create { observer in
-                    if type != .unknown {
-                        observer.onNext((name, host, port, type))
+                    if connectionData.type != .unknown {
+                        observer.onNext(connectionData)
                         observer.onCompleted()
                     }
                     else {
                         // Make a request to the player for the stats command
                         let session = URLSession.shared
-                        if let url = URL(string: "http://\(host)/command/?cmd=stats") {
+                        if let url = URL(string: "http://\(connectionData.host)/command/?cmd=stats") {
                             let request = URLRequest(url: url)
                             let task = session.dataTask(with: request){
                                 (data, response, error) -> Void in
                                 if error == nil, let data = data,
                                     let responseString = String(data: data, encoding: String.Encoding.utf8),
                                     responseString.contains("db_update") {
-                                    observer.onNext((name, host, port, .runeaudio))
+                                    observer.onNext(connectionData.withType(.runeaudio))
                                 }
                                 else {
-                                    observer.onNext((name, host, port, type))
+                                    observer.onNext(connectionData)
                                 }
                                 observer.onCompleted()
                             }
@@ -130,11 +150,12 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     return Disposables.create()
                 }
             })
-            .map({ (name, host, port, type) -> (String, String, Int, MPDType) in
-                (name, host, port, (type == .unknown && (name.lowercased().contains("chord") || host.lowercased().contains("chord") || host.lowercased().contains("2go") || host.lowercased().contains("2 go"))) ? .chord : type)
+            .map({ (connectionData) -> MPDConnectionData in
+                connectionData.withType((connectionData.type == .unknown && (connectionData.name.lowercased().contains("chord") || connectionData.host.lowercased().contains("chord") ||
+                                                                                connectionData.host.lowercased().contains("2go") || connectionData.host.lowercased().contains("2 go"))) ? .chord : connectionData.type)
             })
-            .map({ (name, host, port, type) -> MPDPlayer in
-                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
+            .map({ (connectionData) -> MPDPlayer in
+                return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
             })
             .share(replay: 1)
         
@@ -147,31 +168,31 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .filter({ (netService) -> Bool in
                 // Check if an MPD player is present at the default port
                 let mpd = MPDWrapper()
-                if MPDHelper.connect(mpd: mpd, host: netService.hostName ?? "Unknown", port: 6600, password: "") != nil {
+                if MPDHelper.connect(mpd: mpd, host: netService.hostName ?? (netService.firstIPv4Address ?? "Unknown"), port: 6600, password: "") != nil {
                     return true
                 }
                 return false
             })
-            .map({ (netService) -> (String, String, Int, MPDType) in
+            .map({ (netService) -> (MPDConnectionData) in
                 let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
                 let typeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
                 let mpdType = MPDType.init(rawValue: typeInt) ?? .unknown
                 
-                return (netService.name, netService.hostName ?? "Unknown", netService.port, mpdType)
+                return MPDConnectionData(name: netService.name, host: netService.hostName ?? "Unknown", ip: netService.firstIPv4Address, port: netService.port, type: mpdType)
             })
         
         let volumioHttpPlayerObservable = httpPlayerObservable
-            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+            .flatMap({ (connectionData) -> Observable<MPDConnectionData> in
                 // Check if this is a Volumio based player
                 Observable.create { observer in
-                    if type != .unknown {
-                        observer.onNext((name, host, 6600, type))
+                    if connectionData.type != .unknown {
+                        observer.onNext(connectionData.withPortAndType(6600, connectionData.type))
                         observer.onCompleted()
                     }
                     else {
                         // Make a request to the player for the state
                         let session = URLSession.shared
-                        if let url = URL(string: "http://\(host):\(port)/api/v1/getstate") {
+                        if let url = URL(string: "http://\(connectionData.host):\(connectionData.port)/api/v1/getstate") {
                             let request = URLRequest(url: url)
                             let task = session.dataTask(with: request){
                                 (data, response, error) -> Void in
@@ -181,7 +202,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                             // When getting back sensible data, we can assume this is a Volumio player
                                             if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                                                 ,json["album"] != nil, json["artist"] != nil {
-                                                observer.onNext((name, host, 6600, .volumio))
+                                                observer.onNext(connectionData.withPortAndType(6600, .volumio))
                                             }
                                         }
                                         catch {
@@ -200,24 +221,24 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     return Disposables.create()
                 }
             })
-            .map({ (name, host, port, type) -> MPDPlayer in
-                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
+            .map({ (connectionData) -> MPDPlayer in
+                return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
             })
             .share(replay: 1)
         
         let moodeAudioHttpPlayerObservable = httpPlayerObservable
-            .flatMap({ (name, host, port, type) -> Observable<(String, String, Int, MPDType)> in
+            .flatMap({ (connectionData) -> Observable<MPDConnectionData> in
                 // Check if this is a Moode based player
                 Observable.create { observer in
-                    if type != .unknown {
-                        let abbreviatedName = name.replacingOccurrences(of: "moOde audio player: ", with: "")
-                        observer.onNext((abbreviatedName, host, 6600, type))
+                    if connectionData.type != .unknown {
+                        let abbreviatedName = connectionData.name.replacingOccurrences(of: "moOde audio player: ", with: "")
+                        observer.onNext(connectionData.withNameAndPortAndType(abbreviatedName, 6600, connectionData.type))
                         observer.onCompleted()
                     }
                     else {
                         // Make a request to the player for the state
                         let session = URLSession.shared
-                        if let url = URL(string: "http://\(host):\(port)/browserconfig.xml") {
+                        if let url = URL(string: "http://\(connectionData.host):\(connectionData.port)/browserconfig.xml") {
                             let request = URLRequest(url: url)
                             let task = session.dataTask(with: request){
                                 (data, response, error) -> Void in
@@ -226,8 +247,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                         let xml = SWXMLHash.parse(data)
                                         let browserConfig = xml["browserconfig"]
                                         if browserConfig.children.count > 0 {
-                                            let abbreviatedName = name.replacingOccurrences(of: "moOde audio player: ", with: "")
-                                            observer.onNext((abbreviatedName, host, 6600, .moodeaudio))
+                                            let abbreviatedName = connectionData.name.replacingOccurrences(of: "moOde audio player: ", with: "")
+                                            observer.onNext(connectionData.withNameAndPortAndType(abbreviatedName, 6600, .moodeaudio))
                                         }
                                     }
                                 }
@@ -243,8 +264,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                     return Disposables.create()
                 }
             })
-            .map({ (name, host, port, type) -> MPDPlayer in
-                return MPDPlayer.init(name: name, host: host, port: port, type: type == .unknown ? .classic : type, userDefaults: userDefaults)
+            .map({ (connectionData) -> MPDPlayer in
+                return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
             })
             .share(replay: 1)
         
@@ -326,14 +347,14 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         // Create an observable that monitors when players disappear from the network.
         let removeMPDPlayerObservable = mpdNetServiceBrowser.rx.serviceRemoved
             .map({ (netService) -> PlayerProtocol in
-                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: netService.port, userDefaults: userDefaults)
+                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", ipAddress: netService.firstIPv4Address, port: netService.port, userDefaults: userDefaults)
             })
             .asObservable()
         
         // Create an observable that monitors when players disappear from the network.
         let removeHttpPlayerObservable = httpNetServiceBrowser.rx.serviceRemoved
             .map({ (netService) -> PlayerProtocol in
-                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", port: 6600, userDefaults: userDefaults)
+                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "Unknown", ipAddress: netService.firstIPv4Address, port: 6600, userDefaults: userDefaults)
             })
             .asObservable()
         

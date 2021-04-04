@@ -55,7 +55,6 @@ public class MPDStatus: StatusProtocol {
                 .observe(on: MainScheduler.instance)
         }
     }
-    let disconnectHandler = PublishSubject<Int>()
     
     private var lastKnownElapsedTime = 0
     private var lastKnownElapsedTimeRecorded = Date()
@@ -63,6 +62,7 @@ public class MPDStatus: StatusProtocol {
     private var statusScheduler: SchedulerType
     private var elapsedTimeScheduler: SchedulerType
     private var bag = DisposeBag()
+    private var monitoringBag: DisposeBag? = nil
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
@@ -184,17 +184,9 @@ public class MPDStatus: StatusProtocol {
             
             return Disposables.create()
         }
+        .subscribe(on: statusScheduler)
         
-        disconnectHandler.asObservable()
-            .subscribe(onNext: { [weak self] (_) in
-                guard let weakSelf = self, let connection = weakSelf.statusConnection?.connection else {
-                    return
-                }
-                
-                _ = weakSelf.mpd.send_noidle(connection)
-            })
-            .disposed(by: bag)
-
+        monitoringBag = DisposeBag()
         Observable.merge(timerObservable, forceReloadObservable, changeStatusUpdateStream)
             .subscribe(onNext: { [weak self] playerStatus in
                 guard let weakSelf = self, let playerStatus = playerStatus else {
@@ -203,13 +195,15 @@ public class MPDStatus: StatusProtocol {
 
                 weakSelf._playerStatus.accept(playerStatus)
             })
-            .disposed(by: bag)
+            .disposed(by: monitoringBag!)
     }
     
     /// Stop monitoring status changes on a player, and close the active connection
     public func stop() {
-        disconnectHandler.onNext(1)
-        //disconnectHandler.onCompleted()
+        if let connection = statusConnection?.connection {
+            _ = mpd.send_noidle(connection)
+        }
+        monitoringBag = nil
     }
     
     /// Validate if the current connection is valid.
@@ -362,10 +356,10 @@ public class MPDStatus: StatusProtocol {
         }
         
         let mpdConnection = MPDHelper.connect(mpd: mpd,
-                                                 host: connectionProperties[ConnectionProperties.host.rawValue] as! String,
-                                                 port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
-                                                 password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
-                                                 timeout: 1000)
+                                              host: MPDHelper.hostToUse(connectionProperties),
+                                              port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
+                                              password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
+                                              timeout: 1000)
         guard let connection = mpdConnection?.connection else {
             return Observable.just([])
         }

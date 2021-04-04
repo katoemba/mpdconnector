@@ -75,6 +75,8 @@ public enum MPDConnectionProperties: String {
     case version = "MPD.Version"
     case outputHost = "MPD.Output.Host"
     case outputPort = "MPD.Output.Port"
+    case ipAddress = "MPD.IpAddress"
+    case connectToIpAddress = "MPD.ConnectToIpAddress"
 }
 
 public class MPDPlayer: PlayerProtocol {
@@ -89,6 +91,7 @@ public class MPDPlayer: PlayerProtocol {
     public private(set) var discoverMode = DiscoverMode.automatic
     
     private var host: String
+    private var ipAddress: String?
     private var port: Int
     //private var password: String
     public private(set) var type: MPDType
@@ -134,6 +137,8 @@ public class MPDPlayer: PlayerProtocol {
     
     public var connectionProperties: [String: Any] {
         get {
+            let ipAddress = (self.loadSetting(id: MPDConnectionProperties.ipAddress.rawValue) as? StringSetting)?.value ?? ""
+            let connectToIpAddress = (self.loadSetting(id: MPDConnectionProperties.connectToIpAddress.rawValue) as? ToggleSetting)?.value ?? false
             let alternativCoverHost = (self.loadSetting(id: MPDConnectionProperties.alternativeCoverHost.rawValue) as? StringSetting)?.value ?? ""
             let coverHttpPort = (self.loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue) as? StringSetting)?.value ?? ""
             let prefix = (self.loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue) as? StringSetting)?.value ?? ""
@@ -147,6 +152,8 @@ public class MPDPlayer: PlayerProtocol {
                     ConnectionProperties.host.rawValue: host,
                     ConnectionProperties.port.rawValue: port,
                     ConnectionProperties.password.rawValue: password,
+                    MPDConnectionProperties.ipAddress.rawValue: ipAddress,
+                    MPDConnectionProperties.connectToIpAddress.rawValue: connectToIpAddress,
                     MPDConnectionProperties.alternativeCoverHost.rawValue: alternativCoverHost,
                     MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
@@ -191,11 +198,14 @@ public class MPDPlayer: PlayerProtocol {
                 coverArtDescription = "To enable cover art retrieval, a webserver needs to be running on the player, normally on port 80. This webserver must be configured to support browsing the music directories.\n\n" +
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
             }
+            let advancedPlayerDescription = "If you're experiencing connection problems, you can try to connect to the player using the ip-address. Don't enable this when things are working okay."
             return [PlayerSettingGroup(title: "Player", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
                                                                                    loadSetting(id: ConnectionProperties.name.rawValue)!,
                                                                                    loadSetting(id: ConnectionProperties.host.rawValue)!,
                                                                                    loadSetting(id: ConnectionProperties.port.rawValue)!,
                                                                                    loadSetting(id: ConnectionProperties.password.rawValue)!]),
+                    PlayerSettingGroup(title: "Advanced Player", description: advancedPlayerDescription, settings:[loadSetting(id: MPDConnectionProperties.ipAddress.rawValue)!,
+                                                                                                                   loadSetting(id: MPDConnectionProperties.connectToIpAddress.rawValue)!]),
                     PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue)!,
                                                                                                        loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
@@ -250,6 +260,7 @@ public class MPDPlayer: PlayerProtocol {
     public init(mpd: MPDProtocol? = nil,
                 name: String,
                 host: String,
+                ipAddress: String?,
                 port: Int,
                 password: String? = nil,
                 scheduler: SchedulerType? = nil,
@@ -263,6 +274,7 @@ public class MPDPlayer: PlayerProtocol {
         self.mpd = mpd ?? MPDWrapper()
         self.name = name
         self.host = host
+        self.ipAddress = ipAddress
         self.port = port
         self.scheduler = scheduler
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdplayer")
@@ -272,6 +284,7 @@ public class MPDPlayer: PlayerProtocol {
         self.discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
         
+        userDefaults.set(ipAddress, forKey: MPDConnectionProperties.ipAddress.rawValue + "." + initialUniqueID)
         if password != nil {
             userDefaults.set(password, forKey: ConnectionProperties.password.rawValue + "." + initialUniqueID)
         }
@@ -325,10 +338,13 @@ public class MPDPlayer: PlayerProtocol {
         let alternativeCoverHost = userDefaults.string(forKey: "\(MPDConnectionProperties.alternativeCoverHost.rawValue).\(initialUniqueID)") ?? ""
         let outputHost = userDefaults.string(forKey: "\(MPDConnectionProperties.outputHost.rawValue).\(initialUniqueID)") ?? ""
         let outputPort = userDefaults.string(forKey: "\(MPDConnectionProperties.outputPort.rawValue).\(initialUniqueID)") ?? ""
+        let connectToIpAddress = userDefaults.bool(forKey: "\(MPDConnectionProperties.connectToIpAddress.rawValue).\(initialUniqueID)")
         let connectionProperties = [ConnectionProperties.name.rawValue: name,
                                     ConnectionProperties.host.rawValue: host,
                                     ConnectionProperties.port.rawValue: port,
                                     ConnectionProperties.password.rawValue: password,
+                                    MPDConnectionProperties.ipAddress.rawValue: ipAddress ?? "",
+                                    MPDConnectionProperties.connectToIpAddress.rawValue: connectToIpAddress,
                                     MPDConnectionProperties.alternativeCoverHost.rawValue: alternativeCoverHost,
                                     MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
@@ -365,6 +381,7 @@ public class MPDPlayer: PlayerProtocol {
                 self.init(mpd: mpd,
                           name: "",
                           host: "",
+                          ipAddress: connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String,
                           port: 6600,
                           scheduler: scheduler,
                           type: type,
@@ -379,6 +396,7 @@ public class MPDPlayer: PlayerProtocol {
         self.init(mpd: mpd,
                   name: name,
                   host: host,
+                  ipAddress: connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String,
                   port: port,
                   password: connectionProperties[ConnectionProperties.password.rawValue] as? String,
                   scheduler: scheduler,
@@ -393,7 +411,6 @@ public class MPDPlayer: PlayerProtocol {
     deinit {
         mpdStatus.stop()
         
-        print("Cleaning up player \(name)")
         HelpMePlease.allocDown(name: "MPDPlayer")
     }
     
@@ -497,6 +514,10 @@ public class MPDPlayer: PlayerProtocol {
             let stringSetting = setting as! StringSetting
             userDefaults.set(stringSetting.value, forKey: playerSpecificId)
         }
+        else if setting.id == MPDConnectionProperties.connectToIpAddress.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
     }
     
     /// Get data for a specific setting
@@ -528,6 +549,18 @@ public class MPDPlayer: PlayerProtocol {
                                       placeholder: "",
                                       value: host,
                                       restriction: .readonly)
+        }
+        else if id == MPDConnectionProperties.ipAddress.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "IP Address",
+                                      placeholder: "",
+                                      value: ipAddress ?? "",
+                                      restriction: .readonly)
+        }
+        else if id == MPDConnectionProperties.connectToIpAddress.rawValue {
+            return ToggleSetting.init(id: id,
+                                      description: "Connect to IP Address",
+                                      value: userDefaults.bool(forKey: playerSpecificId))
         }
         else if id == ConnectionProperties.port.rawValue {
             return StringSetting.init(id: id,

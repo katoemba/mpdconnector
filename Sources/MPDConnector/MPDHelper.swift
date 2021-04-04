@@ -91,6 +91,14 @@ public class MPDHelper {
         case permission
     }
     
+    static func hostToUse(_ connectionProperties: [String: Any]) -> String {
+        var host = connectionProperties[ConnectionProperties.host.rawValue] as! String
+        if (connectionProperties[MPDConnectionProperties.connectToIpAddress.rawValue] as? Bool) == true,
+           let ipAddress = connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String {
+            host = ipAddress
+        }
+        return host
+    }
     
     /// Connect to a MPD Player
     ///
@@ -138,7 +146,7 @@ public class MPDHelper {
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
     public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> MPDConnection? {
         return connect(mpd: mpd,
-                       host: connectionProperties[ConnectionProperties.host.rawValue] as! String,
+                       host: hostToUse(connectionProperties),
                        port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
                        password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                        timeout: timeout)
@@ -200,7 +208,7 @@ public class MPDHelper {
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
     public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000) -> Observable<MPDConnection?> {
         return connectToMPD(mpd: mpd,
-                            host: connectionProperties[ConnectionProperties.host.rawValue] as! String,
+                            host: hostToUse(connectionProperties),
                             port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
                             password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                             scheduler: scheduler,
