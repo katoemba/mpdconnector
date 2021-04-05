@@ -287,7 +287,7 @@ class MPDStatusTests: XCTestCase {
         
         switch playerStatuses {
         case .failed(let playerStatusArray, _):
-            XCTAssertEqual(playerStatusArray.count, 6)
+            XCTAssertGreaterThanOrEqual(playerStatusArray.count, 6)
         default:
             break
         }
