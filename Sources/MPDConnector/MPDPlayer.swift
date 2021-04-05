@@ -406,6 +406,14 @@ public class MPDPlayer: PlayerProtocol {
                   connectionWarning: connectionWarning,
                   userDefaults: userDefaults,
                   commands: commands)
+        
+        if commands.count == 0 {
+            (browse as! MPDBrowse).availableCommands()
+                .subscribe(with: self, onNext: { (owner, commands) in
+                    self.commands = commands
+                })
+                .disposed(by: bag)
+        }
     }
     
     deinit {

@@ -31,6 +31,7 @@ class MockBase {
     /// Dictionary of calls (functionName as key) and parameters as value.
     /// Values is an array of dictionaries, where key=parameter-name, value=parameter-value
     private var calls = [String: [[String: String]]]()
+    private let semaphore = DispatchSemaphore(value: 1)
     
     /// Register that a call was made.
     ///
@@ -38,6 +39,7 @@ class MockBase {
     ///   - functionName: Name of the function that was called.
     ///   - parameters: Dictionary of parameters that were passed to the function.
     func registerCall(_ functionName: String, _ parameters: [String: String]) {
+        semaphore.wait()
         if var callInfos = calls[functionName] {
             callInfos.append(parameters)
             calls[functionName] = callInfos
@@ -45,6 +47,7 @@ class MockBase {
         else {
             calls[functionName] = [parameters]
         }
+        semaphore.signal()
     }
     
     func clearAllCalls() {
