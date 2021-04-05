@@ -102,14 +102,14 @@ class MPDStatusTests: XCTestCase {
         // And changing the songIndex, stopping and changing the songIndex again
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.mpdWrapper.songIndex = 3
-            status.forceStatusRefresh()
+            self.mpdWrapper.statusChanged()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             status.stop()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             self.mpdWrapper.songIndex = 4
-            status.forceStatusRefresh()
+            self.mpdWrapper.statusChanged()
         }
         
         // Then only the songIndex values before the 'stop' are reported.
@@ -248,7 +248,63 @@ class MPDStatusTests: XCTestCase {
         }
         
     }
-    
+
+    func testPlayerStatusContinuous() {
+        // Given a mpd player
+        let connectionProperties = [ConnectionProperties.name.rawValue: "player",
+                                    ConnectionProperties.host.rawValue: "host",
+                                    ConnectionProperties.port.rawValue: 1000,
+                                    ConnectionProperties.password.rawValue: ""] as [String: Any]
+        
+        self.mpdWrapper.songIndex = 3
+        self.mpdWrapper.album = "Everything Now"
+        self.mpdWrapper.artist = "Arcade Fire"
+        self.mpdWrapper.songTitle = "Creature Comfort"
+        self.mpdWrapper.queueVersion = 10
+        self.mpdWrapper.queueLength = 15
+        self.mpdWrapper.volume = 75
+        self.mpdWrapper.random = true
+        self.mpdWrapper.singleValue = true
+        self.mpdWrapper.repeatValue = true
+        self.mpdWrapper.songDuration = 330
+        self.mpdWrapper.songIndex = 5
+        self.mpdWrapper.state = MPD_STATE_PLAY
+        self.mpdWrapper.samplerate = 192000
+        self.mpdWrapper.encoding = 24
+        self.mpdWrapper.channels = 1
+        self.mpdWrapper.elapsedTime = 5
+
+        // When creating a new MPDStatus object and starting it twice
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        status.start()
+        
+        // Then the statuses .online is reported once
+        var playerStatuses = status.playerStatusObservable
+            .toBlocking(timeout: 5.5)
+            .materialize()
+        
+        status.stop()
+        
+        switch playerStatuses {
+        case .failed(let playerStatusArray, _):
+            XCTAssertEqual(playerStatusArray.count, 6)
+        default:
+            break
+        }
+
+        // Then the statuses .online is reported once
+        playerStatuses = status.playerStatusObservable
+            .toBlocking(timeout: 5.5)
+            .materialize()
+        
+        switch playerStatuses {
+        case .failed(let playerStatusArray, _):
+            XCTAssertEqual(playerStatusArray.count, 1)
+        default:
+            break
+        }
+    }
+
     func testPlayerStatusQualityDSD() {
         // Given a mpd player
         let connectionProperties = [ConnectionProperties.name.rawValue: "player",

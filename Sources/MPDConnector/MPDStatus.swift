@@ -52,6 +52,7 @@ public class MPDStatus: StatusProtocol {
     public var playerStatusObservable : Observable<PlayerStatus> {
         get {
             return _playerStatus
+                .distinctUntilChanged()
                 .observe(on: MainScheduler.instance)
         }
     }

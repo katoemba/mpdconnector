@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
         "state": {
           "branch": null,
-          "revision": "44c83ac96980f4e021d034c94beb39dd9587bac5",
-          "version": "1.8.1"
+          "revision": "abcbe069394867004dda917c918df1ec41e82384",
+          "version": "1.8.2"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/katoemba/rxnetservice.git",
         "state": {
           "branch": null,
-          "revision": "4298820ea9914d5cef82173cf93c576dd47eeaa7",
-          "version": "0.2.3"
+          "revision": "1c9298e859ef0a79d6304bed3ca8a195e6a53dd0",
+          "version": "0.2.4"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/RxSwiftCommunity/RxSwiftExt.git",
         "state": {
           "branch": null,
-          "revision": "89ebf7d143f4343d11767b86717efa61be0984e7",
-          "version": "6.0.0"
+          "revision": "827bd11853983383b708feaf7da95c560982b2b8",
+          "version": "6.0.1"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/drmohundro/SWXMLHash.git",
         "state": {
           "branch": null,
-          "revision": "a4931e5c3bafbedeb1601d3bb76bbe835c6d475a",
-          "version": "5.0.1"
+          "revision": "9183170d20857753d4f331b0ca63f73c60764bf3",
+          "version": "5.0.2"
         }
       }
     ]

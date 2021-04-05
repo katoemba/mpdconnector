@@ -154,6 +154,39 @@ class MPDHelperTests: XCTestCase {
         mpdWrapper.assertCall("connection_free", expectedCallCount: 2)
     }
     
+    func testHostToUse() {
+        XCTAssertEqual(MPDHelper.hostToUse([ConnectionProperties.name.rawValue: "player",
+                                            ConnectionProperties.host.rawValue: "host",
+                                            ConnectionProperties.port.rawValue: 1000,
+                                            ConnectionProperties.password.rawValue: ""] as [String: Any]), "host")
+
+        XCTAssertEqual(MPDHelper.hostToUse([ConnectionProperties.name.rawValue: "player",
+                                            ConnectionProperties.host.rawValue: "host",
+                                            MPDConnectionProperties.ipAddress.rawValue: "127.0.0.1",
+                                            ConnectionProperties.port.rawValue: 1000,
+                                            ConnectionProperties.password.rawValue: ""] as [String: Any]), "host")
+
+        XCTAssertEqual(MPDHelper.hostToUse([ConnectionProperties.name.rawValue: "player",
+                                            ConnectionProperties.host.rawValue: "host",
+                                            MPDConnectionProperties.ipAddress.rawValue: "127.0.0.1",
+                                            MPDConnectionProperties.connectToIpAddress.rawValue: true,
+                                            ConnectionProperties.port.rawValue: 1000,
+                                            ConnectionProperties.password.rawValue: ""] as [String: Any]), "127.0.0.1")
+
+        XCTAssertEqual(MPDHelper.hostToUse([ConnectionProperties.name.rawValue: "player",
+                                            ConnectionProperties.host.rawValue: "host",
+                                            MPDConnectionProperties.ipAddress.rawValue: "127.0.0.1",
+                                            MPDConnectionProperties.connectToIpAddress.rawValue: false,
+                                            ConnectionProperties.port.rawValue: 1000,
+                                            ConnectionProperties.password.rawValue: ""] as [String: Any]), "host")
+
+        XCTAssertEqual(MPDHelper.hostToUse([ConnectionProperties.name.rawValue: "player",
+                                            ConnectionProperties.host.rawValue: "host",
+                                            MPDConnectionProperties.connectToIpAddress.rawValue: true,
+                                            ConnectionProperties.port.rawValue: 1000,
+                                            ConnectionProperties.password.rawValue: ""] as [String: Any]), "host")
+    }
+    
     func testCompareVersion() {
         var result: ComparisonResult
         

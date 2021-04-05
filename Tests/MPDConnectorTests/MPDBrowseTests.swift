@@ -44,7 +44,7 @@ class MPDBrowseTests: XCTestCase {
         
         testScheduler = TestScheduler(initialClock: 0)
         mpdWrapper = MPDWrapperMock()
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: nil, userDefaults: UserDefaults.standard)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", ipAddress: "127.0.0.1", port: 6600, scheduler: nil, userDefaults: UserDefaults.standard)
     }
     
     override func tearDown() {
@@ -167,7 +167,7 @@ class MPDBrowseTests: XCTestCase {
     }
     
     func testDeletePlaylist() {
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler, userDefaults: UserDefaults.standard)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", ipAddress: "127.0.0.1", port: 6600, scheduler: testScheduler, userDefaults: UserDefaults.standard)
 
         let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
         testScheduler.scheduleAt(50) {
@@ -188,7 +188,7 @@ class MPDBrowseTests: XCTestCase {
     }
 
     func testRenamePlaylist() {
-        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", port: 6600, scheduler: testScheduler, userDefaults: UserDefaults.standard)
+        mpdPlayer = MPDPlayer.init(mpd: mpdWrapper, name: "player", host: "localhost", ipAddress: "127.0.0.1", port: 6600, scheduler: testScheduler, userDefaults: UserDefaults.standard)
         
         let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
         testScheduler.scheduleAt(50) {

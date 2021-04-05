@@ -91,7 +91,7 @@ public class MPDHelper {
         case permission
     }
     
-    static func hostToUse(_ connectionProperties: [String: Any]) -> String {
+    public static func hostToUse(_ connectionProperties: [String: Any]) -> String {
         var host = connectionProperties[ConnectionProperties.host.rawValue] as! String
         if (connectionProperties[MPDConnectionProperties.connectToIpAddress.rawValue] as? Bool) == true,
            let ipAddress = connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String {
