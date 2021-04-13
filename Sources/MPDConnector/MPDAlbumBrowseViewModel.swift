@@ -97,8 +97,8 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 reload(genre: genre, sort: sort)
             case let .artist(artist):
                 reload(artist: artist, sort: sort)
-            case let .recent(duration):
-                reload(recent: duration, sort: sort)
+            case let .recent(numberOfAlbums):
+                reload(recent: numberOfAlbums, sort: sort)
             case let .random(count):
                 reload(random: count, sort: sort)
             default:
@@ -131,7 +131,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         }
         else if let recent = recent {
             self.extendSize = 200
-            albumsObservable = browse.fetchRecentAlbums(numberOfDays: recent)
+            albumsObservable = browse.fetchRecentAlbums(numberOfAlbums: recent)
                 .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }

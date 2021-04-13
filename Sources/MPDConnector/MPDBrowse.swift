@@ -399,7 +399,7 @@ public class MPDBrowse: BrowseProtocol {
             .observe(on: MainScheduler.instance)
     }
     
-    func fetchRecentAlbums(numberOfDays: Int = 0) -> Observable<[Album]> {
+    func fetchRecentAlbums(numberOfAlbums: Int) -> Observable<[Album]> {
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observe(on: scheduler)
             .flatMap({ (mpdConnection) -> Observable<[Album]> in
@@ -409,7 +409,9 @@ public class MPDBrowse: BrowseProtocol {
                     var albums = [Album]()
                     
                     try self.mpd.search_db_songs(connection, exact: true)
-                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSinceNow: TimeInterval(-1 * (numberOfDays > 0 ? numberOfDays : 180) * 24 * 60 * 60)))
+                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSince1970: TimeInterval(0)))
+                    try self.mpd.search_add_sort_name(connection, name: "Last-Modified", descending: true)
+                    try self.mpd.search_add_window(connection, start: 0, end: UInt32(numberOfAlbums * 12))
                     try self.mpd.search_commit(connection)
                     
                     var albumIDs = [String: Int]()
@@ -427,9 +429,7 @@ public class MPDBrowse: BrowseProtocol {
                     }
                     _ = self.mpd.response_finish(connection)
                     
-                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
-                        return lhs.lastModified > rhs.lastModified
-                    }))
+                    return Observable.just(albums)
                 }
                 catch {
                     print(self.mpd.connection_get_error_message(connection))

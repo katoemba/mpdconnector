@@ -399,7 +399,11 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type, descending: Bool) throws {
         registerCall("search_add_sort_tag", ["tagType": "\(tagType)", "descending": "\(descending)"])
     }
-    
+
+    func search_add_sort_name(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, descending: Bool) throws {
+        registerCall("search_add_sort_name", ["name": stringFromMPDString(name), "descending": "\(descending)"])
+    }
+
     func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws {
         registerCall("search_add_window", ["start": "\(start)", "end": "\(end)"])
     }

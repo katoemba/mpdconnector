@@ -89,6 +89,7 @@ public protocol MPDProtocol {
     func search_add_tag_constraint(_ connection: OpaquePointer!, oper: mpd_operator, tagType: mpd_tag_type, value: UnsafePointer<Int8>!) throws
     func search_add_modified_since_constraint(_ connection: OpaquePointer!, oper: mpd_operator, since: Date) throws
     func search_add_sort_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type, descending: Bool) throws
+    func search_add_sort_name(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, descending: Bool) throws
     func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws
     func search_add_group_tag(_ connection: OpaquePointer!, tagType: mpd_tag_type) throws
     func search_commit(_ connection: OpaquePointer!) throws

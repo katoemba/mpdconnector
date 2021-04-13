@@ -281,6 +281,12 @@ public class MPDWrapper: MPDProtocol {
         }
     }
     
+    public func search_add_sort_name(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!, descending: Bool) throws {
+        if mpd_search_add_sort_name(connection, name, descending) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
+            throw MPDError.commandFailed
+        }
+    }
+    
     public func search_add_window(_ connection: OpaquePointer!, start: UInt32, end: UInt32) throws {
         if mpd_search_add_window(connection, start, end) == false || mpd_connection_get_error(connection) != MPD_ERROR_SUCCESS {
             throw MPDError.commandFailed
