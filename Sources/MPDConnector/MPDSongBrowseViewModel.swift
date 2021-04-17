@@ -189,4 +189,8 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
             })
             .disposed(by: bag)
     }
+    
+    public func songBatch(start: Int, count: Int) -> Observable<[Song]> {
+        return _browse.fetchSongs(start: start, count: count)
+    }
 }

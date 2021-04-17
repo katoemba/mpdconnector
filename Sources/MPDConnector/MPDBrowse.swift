@@ -1207,6 +1207,44 @@ public class MPDBrowse: BrowseProtocol {
         return songs
     }
     
+    func fetchSongs(start: Int, count: Int) -> Observable<[Song]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observe(on: scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[Song]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
+                do {
+                    var songs = [Song]()
+                    
+                    try self.mpd.search_db_songs(connection, exact: true)
+                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSince1970: TimeInterval(0)))
+                    try self.mpd.search_add_sort_name(connection, name: "Last-Modified", descending: true)
+                    try self.mpd.search_add_window(connection, start: UInt32(start), end: UInt32(start + count))
+                    try self.mpd.search_commit(connection)
+                    
+                    while let mpdSong = self.mpd.recv_song(connection) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
+                            songs.append(song)
+                        }
+
+                        self.mpd.song_free(mpdSong)
+                    }
+                    _ = self.mpd.response_finish(connection)
+                    
+                    return Observable.just(songs)
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    
+                    return Observable.just([])
+                }
+            })
+            .catchAndReturn([])
+            .observe(on: MainScheduler.instance)
+    }
+
+    
     /// Delete a playlist
     ///
     /// - Parameter playlist: the playlist to delete
@@ -1623,8 +1661,8 @@ public class MPDBrowse: BrowseProtocol {
     }
 
     public func embeddedImageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
-        guard coverURI.path != "" else { return Observable.just(nil) }
-        return readBinary(command: "readpicture", uri: coverURI.path)
+        guard let path = coverURI.embeddedUri else { return Observable.just(nil) }
+        return readBinary(command: "readpicture", uri: path)
     }
 
     private func readBinary(command: String, uri: String) -> Observable<Data?> {

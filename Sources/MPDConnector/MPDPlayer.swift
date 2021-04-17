@@ -393,6 +393,7 @@ public class MPDPlayer: PlayerProtocol {
                 return
         }
         
+        
         self.init(mpd: mpd,
                   name: name,
                   host: host,
@@ -401,7 +402,7 @@ public class MPDPlayer: PlayerProtocol {
                   password: connectionProperties[ConnectionProperties.password.rawValue] as? String,
                   scheduler: scheduler,
                   type: type,
-                  version: version,
+                  version: version != "" ? version : (connectionProperties[MPDConnectionProperties.version.rawValue] as? String ?? ""),
                   discoverMode: discoverMode,
                   connectionWarning: connectionWarning,
                   userDefaults: userDefaults,
@@ -614,6 +615,12 @@ public class MPDPlayer: PlayerProtocol {
                                       placeholder: "Password",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "",
                                       restriction: .password)
+        }
+        else if id == MPDConnectionProperties.version.rawValue {
+            return StringSetting.init(id: id,
+                                      description: "Version",
+                                      placeholder: "Version",
+                                      value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
         else if id == MPDConnectionProperties.outputHost.rawValue {
             return StringSetting.init(id: id,
