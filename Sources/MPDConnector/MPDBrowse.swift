@@ -1666,7 +1666,7 @@ public class MPDBrowse: BrowseProtocol {
     }
 
     private func readBinary(command: String, uri: String) -> Observable<Data?> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler, prio: .low)
             .observe(on: scheduler)
             .flatMapFirst({ (mpdConnection) -> Observable<Data?> in
                 guard let connection = mpdConnection?.connection else { return Observable.just(nil) }

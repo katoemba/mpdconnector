@@ -31,16 +31,23 @@ import ConnectorProtocol
 import RxSwiftExt
 
 public class MPDConnection {
+    public enum Priority: String {
+        case low = "Low"
+        case high = "High"
+    }
     private static let maxConcurrentConnections = 4
+    private static var highPrioConnectionCount = 0
+    private static var lowPrioConnectionCount = 0
+    private static let countSemaphoreMutex = DispatchSemaphore(value: 1)
     private static let playerSemaphoreMutex = DispatchSemaphore(value: 1)
     private static var playerSemaphores = [String: DispatchSemaphore]()
-    private static func semaphoreForPlayer(host: String, port: Int) -> DispatchSemaphore {
+    private static func semaphoreForPlayer(host: String, port: Int, prio: Priority) -> DispatchSemaphore {
         defer {
             playerSemaphoreMutex.signal()
         }
         
         playerSemaphoreMutex.wait()
-        let key = "\(host):\(port)"
+        let key = "\(prio.rawValue):\(host):\(port)"
         if playerSemaphores[key] == nil {
             playerSemaphores[key] = DispatchSemaphore(value: MPDConnection.maxConcurrentConnections)
         }
@@ -57,17 +64,20 @@ public class MPDConnection {
     
     private var host: String
     private var port: Int
+    private var prio: Priority
     
-    init(mpd: MPDProtocol, host: String, port: Int, timeout: Int) {
-        MPDConnection.semaphoreForPlayer(host: host, port: port).wait()
+    init(mpd: MPDProtocol, host: String, port: Int, timeout: Int, prio: Priority = .high) {
+        MPDConnection.semaphoreForPlayer(host: host, port: port, prio: prio).wait()
 
         self.mpd = mpd
         self.host = host
         self.port = port
+        self.prio = prio
         _connection = mpd.connection_new(host, UInt32(port), UInt32(timeout))
+        //MPDConnection.connected(prio: prio)
         
         if _connection == nil {
-            MPDConnection.semaphoreForPlayer(host: host, port: port).signal()
+            MPDConnection.semaphoreForPlayer(host: host, port: port, prio: prio).signal()
         }
     }
     
@@ -79,9 +89,36 @@ public class MPDConnection {
         if let connection = connection {
             mpd.connection_free(connection)
             _connection = nil
+            //MPDConnection.released(prio: prio)
 
-            MPDConnection.semaphoreForPlayer(host: host, port: port).signal()
+            MPDConnection.semaphoreForPlayer(host: host, port: port, prio: prio).signal()
         }
+    }
+    
+    private static func connected(prio: Priority) {
+        countSemaphoreMutex.wait()
+        switch prio {
+        case .high:
+            highPrioConnectionCount += 1
+            print("Increment \(prio.rawValue) connection count to \(highPrioConnectionCount)")
+        case .low:
+            lowPrioConnectionCount += 1
+            print("Increment \(prio.rawValue) connection count to \(lowPrioConnectionCount)")
+        }
+        countSemaphoreMutex.signal()
+    }
+    
+    private static func released(prio: Priority) {
+        countSemaphoreMutex.wait()
+        switch prio {
+        case .high:
+            highPrioConnectionCount -= 1
+            print("Decrement \(prio.rawValue) connection count to \(highPrioConnectionCount)")
+        case .low:
+            lowPrioConnectionCount -= 1
+            print("Decrement \(prio.rawValue) connection count to \(lowPrioConnectionCount)")
+        }
+        countSemaphoreMutex.signal()
     }
 }
 
@@ -109,12 +146,12 @@ public class MPDHelper {
     ///   - password: Password to use after connecting.
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000) -> MPDConnection? {
+    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> MPDConnection? {
         if Thread.current.isMainThread {
             print("Warning: connecting to MPD on the main thread could cause blocking")
         }
         
-        let mpdConnection = MPDConnection(mpd: mpd, host: host, port: port, timeout: timeout)
+        let mpdConnection = MPDConnection(mpd: mpd, host: host, port: port, timeout: timeout, prio: prio)
         guard let connection = mpdConnection.connection else {
             return nil
         }
@@ -144,12 +181,13 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000) -> MPDConnection? {
+    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> MPDConnection? {
         return connect(mpd: mpd,
                        host: hostToUse(connectionProperties),
                        port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
                        password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
-                       timeout: timeout)
+                       timeout: timeout,
+                       prio: prio)
     }
     
     /// Reactive connection function
@@ -161,9 +199,9 @@ public class MPDHelper {
     ///   - password: Password to use after connecting, default = "".
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000) -> Observable<MPDConnection?> {
+    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> Observable<MPDConnection?> {
         return Observable<MPDConnection?>.create { observer in
-            if let mpdConnection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout) {
+            if let mpdConnection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout, prio: prio) {
                 var allIsWell = true
                 // Check if perhaps we need a password
                 if password == "" {
@@ -206,13 +244,14 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000) -> Observable<MPDConnection?> {
+    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> Observable<MPDConnection?> {
         return connectToMPD(mpd: mpd,
                             host: hostToUse(connectionProperties),
                             port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
                             password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                             scheduler: scheduler,
-                            timeout: timeout)
+                            timeout: timeout,
+                            prio: prio)
     }
     
     /// Fill a generic Song object from an mpdSong
