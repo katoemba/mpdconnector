@@ -400,7 +400,7 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     func fetchRecentAlbums(numberOfAlbums: Int) -> Observable<[Album]> {
-        let version = "0.19.0" //connectionProperties[MPDConnectionProperties.version.rawValue] as! String
+        let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
         guard MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.20.19") == .orderedDescending else {
             return fetchRecentAlbums_below_0_20_20(numberOfDays: 183)
         }
