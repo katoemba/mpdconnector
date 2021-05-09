@@ -400,6 +400,11 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     func fetchRecentAlbums(numberOfAlbums: Int) -> Observable<[Album]> {
+        let version = "0.19.0" //connectionProperties[MPDConnectionProperties.version.rawValue] as! String
+        guard MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.20.19") == .orderedDescending else {
+            return fetchRecentAlbums_below_0_20_20(numberOfDays: 183)
+        }
+
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observe(on: scheduler)
             .flatMap({ (mpdConnection) -> Observable<[Album]> in
@@ -441,6 +446,50 @@ public class MPDBrowse: BrowseProtocol {
             .catchAndReturn([])
             .observe(on: MainScheduler.instance)
     }
+    
+    func fetchRecentAlbums_below_0_20_20(numberOfDays: Int = 0) -> Observable<[Album]> {
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+            .observe(on: scheduler)
+            .flatMap({ (mpdConnection) -> Observable<[Album]> in
+                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+
+                do {
+                    var albums = [Album]()
+                    
+                    try self.mpd.search_db_songs(connection, exact: true)
+                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSinceNow: TimeInterval(-1 * (numberOfDays > 0 ? numberOfDays : 180) * 24 * 60 * 60)))
+                    try self.mpd.search_commit(connection)
+                    
+                    var albumIDs = [String: Int]()
+                    while let mpdSong = self.mpd.recv_song(connection) {
+                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
+                            let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
+                            let albumID = "\(albumartist):\(song.album)"
+                            if albumIDs[albumID] == nil {
+                                albumIDs[albumID] = 1
+                                albums.append(self.createAlbumFromSong(song))
+                            }
+                        }
+
+                        self.mpd.song_free(mpdSong)
+                    }
+                    _ = self.mpd.response_finish(connection)
+                    
+                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
+                        return lhs.lastModified > rhs.lastModified
+                    }))
+                }
+                catch {
+                    print(self.mpd.connection_get_error_message(connection))
+                    _ = self.mpd.connection_clear_error(connection)
+                    
+                    return Observable.just([])
+                }
+            })
+            .catchAndReturn([])
+            .observe(on: MainScheduler.instance)
+    }
+
 
     func fetchAlbums(genre: Genre?, sort: SortType) -> Observable<[Album]> {
         let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
