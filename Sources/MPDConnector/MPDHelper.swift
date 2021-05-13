@@ -413,7 +413,7 @@ public class MPDHelper {
             song.coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverURI)")
         }
         else if postfix == "<track>" {
-            song.coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(song.id)")
+            song.coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(song.id)", newPath, ["cover.jpg"])
         }
         else if alternativePostfix == "" {
             song.coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverURI)", newPath, [postfix, CoverURI.embeddedPrefix + song.id])
