@@ -106,7 +106,7 @@ public class MPDPlayer: PlayerProtocol {
     
     private var commands: [String]
     public var supportedFunctions: [Functions] {
-        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums, .stream] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : [])
+        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums, .stream, .playlists] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : [])
     }
     
     /// Current status
