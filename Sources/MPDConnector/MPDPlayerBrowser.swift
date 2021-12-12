@@ -57,6 +57,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         MPDPlayer.controllerType
     }
     private let mpdNetServiceBrowser : NetServiceBrowser
+    private let volumioNetServiceBrowser : NetServiceBrowser
     private let httpNetServiceBrowser : NetServiceBrowser
     private let backgroundScheduler = ConcurrentDispatchQueueScheduler.init(qos: .background)
     
@@ -71,6 +72,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
         mpdNetServiceBrowser = NetServiceBrowser()
+        volumioNetServiceBrowser = NetServiceBrowser()
         httpNetServiceBrowser = NetServiceBrowser()
         
         // Create an observable that monitors when new players are discovered.
@@ -152,7 +154,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             })
             .map({ (connectionData) -> MPDConnectionData in
                 connectionData.withType((connectionData.type == .unknown && (connectionData.name.lowercased().contains("chord") || connectionData.host.lowercased().contains("chord") ||
-                                                                                connectionData.host.lowercased().contains("2go") || connectionData.host.lowercased().contains("2 go"))) ? .chord : connectionData.type)
+                                                                                connectionData.host.lowercased().contains("2go") || connectionData.host.lowercased().contains("2 go") ||
+                                                                                connectionData.host.lowercased().contains("hugo") || connectionData.host.lowercased().contains("hugo"))) ? .chord : connectionData.type)
             })
             .map({ (connectionData) -> MPDPlayer in
                 return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
@@ -268,9 +271,15 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
             })
             .share(replay: 1)
-        
+
+        let volumio3PlayerObservable = volumioNetServiceBrowser.rx.serviceAdded
+            .map({ (netService) -> MPDPlayer in
+                return MPDPlayer.init(name: netService.name, host: netService.hostName ?? "volumio", ipAddress: netService.firstIPv4Address, port: 6600, type: .volumio, userDefaults: userDefaults)
+            })
+            .share(replay: 1)
+
         // Merge the detected players, and get a version out of them.
-        addPlayerObservable = Observable.merge(mpdPlayerObservable, volumioHttpPlayerObservable, moodeAudioHttpPlayerObservable, addManualPlayerSubject)
+        addPlayerObservable = Observable.merge(mpdPlayerObservable, volumioHttpPlayerObservable, moodeAudioHttpPlayerObservable, volumio3PlayerObservable, addManualPlayerSubject)
             .observe(on: backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
@@ -371,6 +380,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         isListening = true
         mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "")
+        volumioNetServiceBrowser.searchForServices(ofType: "_Volumio._tcp.", inDomain: "")
         httpNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
         
         let persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
@@ -387,6 +397,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         
         isListening = false
         mpdNetServiceBrowser.stop()
+        volumioNetServiceBrowser.stop()
         httpNetServiceBrowser.stop()
     }
     
