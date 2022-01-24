@@ -387,6 +387,40 @@ public class MPDStatus: StatusProtocol {
         return Observable.just(songs)
     }
     
+    /// Get a block of song id's from the playqueue
+    ///
+    /// - Parameters:
+    ///   - start: the start position of the requested block
+    ///   - end: the end position of the requested block
+    /// - Returns: Array of tuples of playqueue position and track id, not guaranteed to have the same number of songs as requested.
+    public func playqueueSongIds(start: Int, end: Int) -> Observable<[(Int, Int)]> {
+        guard start >= 0, start < end else {
+            return Observable.just([])
+        }
+        
+        let mpdConnection = MPDHelper.connect(mpd: mpd,
+                                              host: MPDHelper.hostToUse(connectionProperties),
+                                              port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
+                                              password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
+                                              timeout: 1000)
+        guard let connection = mpdConnection?.connection else {
+            return Observable.just([])
+        }
+        
+        var positions = [(Int, Int)]()
+        if mpd.send_queue_changes_brief(connection, version: 0) == true {
+            var mpdPositionId = mpd.recv_queue_change_brief(connection)
+            while let currentMpdPositionId = mpdPositionId {
+                positions.append((Int(currentMpdPositionId.0), Int(currentMpdPositionId.1)))
+                mpdPositionId = mpd.recv_queue_change_brief(connection)
+            }
+            
+            _ = mpd.response_finish(connection)
+        }
+        
+        return Observable.just(positions)
+    }
+    
     public func disconnectFromMPD() {
         statusConnection?.disconnect()
         statusConnection = nil

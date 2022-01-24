@@ -437,7 +437,6 @@ class MPDStatusTests: XCTestCase {
         let songFreeCount = self.mpdWrapper.callCount("song_free")
         XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
         mpdWrapper.assertCall("send_list_queue_range_meta", expectedParameters: ["start": "\(2)", "end": "\(5)"])
-        XCTAssert(songCount == songFreeCount, "Expected \(songCount) for songFreeCount, got \(songFreeCount)")
     }
     
     func testEmptyRangePlayqueuSongs() {

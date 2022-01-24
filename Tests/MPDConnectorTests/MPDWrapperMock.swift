@@ -54,6 +54,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var songIndex = Int32(0)
     var songDuration = UInt32(0)
     var songUri = ""
+    var songId = 0
     var songLastModifiedDate = Date(timeIntervalSince1970: 0)
     var searchName = ""
     var searchValue = ""
@@ -79,6 +80,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var outputs = [(UInt32, String, Bool)]()
     var tagTypes = [String]()
     var pairs = [(String,String)]()
+    var queueChanges = [(UInt32,UInt32)]()
 
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -345,9 +347,60 @@ class MPDWrapperMock: MockBase, MPDProtocol {
         return (samplerate, encoding, channels)
     }
 
+    func song_get_id(_ song: OpaquePointer!) -> UInt32 {
+        registerCall("status_get_id", [:])
+        return UInt32(songId)
+    }
+    
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         registerCall("send_list_queue_range_meta", ["start": "\(start)", "end": "\(end)"])
         return true
+    }
+    
+    func send_list_queue_meta(_ connection: OpaquePointer!) -> Bool {
+        registerCall("send_list_queue_meta", [:])
+        return true
+    }
+
+    func run_get_queue_song_pos(_ connection: OpaquePointer!, pos: UInt32) -> OpaquePointer! {
+        registerCall("run_get_queue_song_pos", ["pos": "\(pos)"])
+        return OpaquePointer.init(bitPattern: 6)
+    }
+
+    func run_get_queue_song_id(_ connection: OpaquePointer!, id: UInt32) -> OpaquePointer! {
+        registerCall("run_get_queue_song_id", ["id": "\(id)"])
+        return OpaquePointer.init(bitPattern: 6)
+    }
+
+    func send_queue_changes_meta(_ connection: OpaquePointer!, version: UInt32) -> Bool {
+        registerCall("send_queue_changes_meta", ["version": "\(version)"])
+        return true
+    }
+
+    func send_queue_changes_meta_range(_ connection: OpaquePointer!, version: UInt32, start: UInt32, end: UInt32) -> Bool {
+        registerCall("send_queue_changes_meta_range", ["version": "\(version)", "start": "\(start)", "end": "\(end)"])
+        return true
+    }
+    
+    public func send_queue_changes_brief(_ connection: OpaquePointer!, version: UInt32) -> Bool {
+        registerCall("send_queue_changes_brief", ["version": "\(version)"])
+        return true
+    }
+    
+    public func send_queue_changes_brief_range(_ connection: OpaquePointer!, version: UInt32, start: UInt32, end: UInt32) -> Bool {
+        registerCall("send_queue_changes_brief_range", ["version": "\(version)", "start": "\(start)", "end": "\(end)"])
+        return true
+    }
+    
+    public func recv_queue_change_brief(_ connection: OpaquePointer!) -> (UInt32, UInt32)? {
+        registerCall("recv_queue_change_brief", [:])
+        if queueChanges.count > 0 {
+            let currentQueueChange = queueChanges[0]
+            queueChanges.removeFirst()
+            return (currentQueueChange.0, currentQueueChange.1)
+        }
+        
+        return nil
     }
     
     func send_list_files(_ connection: OpaquePointer!, path: UnsafePointer<Int8>!) -> Bool {

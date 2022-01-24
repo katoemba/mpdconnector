@@ -219,13 +219,65 @@ public class MPDWrapper: MPDProtocol {
         
         return nil
     }
+    
+    public func song_get_id(_ song: OpaquePointer!) -> UInt32 {
+        return mpd_song_get_id(song)
+    }
 
     public func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool {
         return mpd_send_list_queue_range_meta(connection, start, end)
     }
     
+    public func send_list_queue_meta(_ connection: OpaquePointer!) -> Bool {
+        return mpd_send_list_queue_meta(connection)
+    }
+    
+    public func run_get_queue_song_pos(_ connection: OpaquePointer!, pos: UInt32) -> OpaquePointer! {
+        return mpd_run_get_queue_song_pos(connection, pos)
+    }
+    
+    public func run_get_queue_song_id(_ connection: OpaquePointer!, id: UInt32) -> OpaquePointer! {
+        return mpd_run_get_queue_song_id(connection, id)
+    }
+    
+    public func send_queue_changes_meta(_ connection: OpaquePointer!, version: UInt32) -> Bool {
+        return mpd_send_queue_changes_meta(connection, version)
+    }
+    
+    public func send_queue_changes_meta_range(_ connection: OpaquePointer!, version: UInt32, start: UInt32, end: UInt32) -> Bool {
+        return mpd_send_queue_changes_meta_range(connection, version, start, end)
+    }
+    
     public func recv_song(_ connection: OpaquePointer!) -> OpaquePointer! {
         return mpd_recv_song(connection)
+    }
+    
+    public func send_queue_changes_brief(_ connection: OpaquePointer!, version: UInt32) -> Bool {
+        return mpd_send_queue_changes_brief(connection, version)
+    }
+    
+    public func send_queue_changes_brief_range(_ connection: OpaquePointer!, version: UInt32, start: UInt32, end: UInt32) -> Bool {
+        return mpd_send_queue_changes_brief_range(connection, version, start, end)
+    }
+    
+    public func recv_queue_change_brief(_ connection: OpaquePointer!) -> (UInt32, UInt32)? {
+        let posPointer = UnsafeMutablePointer<UInt32>.allocate(capacity: 1)
+        posPointer.initialize(repeating: 0, count: 1)
+        defer {
+            posPointer.deinitialize(count: 1)
+            posPointer.deallocate()
+        }
+        let idPointer = UnsafeMutablePointer<UInt32>.allocate(capacity: 1)
+        idPointer.initialize(repeating: 0, count: 1)
+        defer {
+            idPointer.deinitialize(count: 1)
+            idPointer.deallocate()
+        }
+        
+        if mpd_recv_queue_change_brief(connection, posPointer, idPointer) {
+            return (posPointer.pointee, idPointer.pointee)
+        }
+        return nil
     }
     
     public func response_finish(_ connection: OpaquePointer!) -> Bool {

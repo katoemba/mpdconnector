@@ -77,8 +77,17 @@ public protocol MPDProtocol {
     func song_get_uri(_ song: OpaquePointer!) -> String
     func song_get_last_modified(_ song: OpaquePointer!) -> Date
     func song_get_audio_format(_ song: OpaquePointer!) -> (UInt32, UInt8, UInt8)?
+    func song_get_id(_ song: OpaquePointer!) -> UInt32
     func send_list_queue_range_meta(_ connection: OpaquePointer!, start: UInt32, end: UInt32) -> Bool
+    func send_list_queue_meta(_ connection: OpaquePointer!) -> Bool
+    func run_get_queue_song_pos(_ connection: OpaquePointer!, pos: UInt32) -> OpaquePointer!
+    func run_get_queue_song_id(_ connection: OpaquePointer!, id: UInt32) -> OpaquePointer!
+    func send_queue_changes_meta(_ connection: OpaquePointer!, version: UInt32) -> Bool
+    func send_queue_changes_meta_range(_ connection: OpaquePointer!, version: UInt32, start: UInt32, end: UInt32) -> Bool
     func recv_song(_ connection: OpaquePointer!) -> OpaquePointer!
+    func send_queue_changes_brief(_ connection: OpaquePointer!, version: UInt32) -> Bool
+    func send_queue_changes_brief_range(_ connection: OpaquePointer!, version: UInt32, start: UInt32, end: UInt32) -> Bool
+    func recv_queue_change_brief(_ connection: OpaquePointer!) -> (UInt32, UInt32)?
     func response_finish(_ connection: OpaquePointer!) -> Bool
     func run_save(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool
     func run_load(_ connection: OpaquePointer!, name: UnsafePointer<Int8>!) -> Bool

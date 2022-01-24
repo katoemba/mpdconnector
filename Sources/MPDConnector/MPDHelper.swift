@@ -320,6 +320,10 @@ public class MPDHelper {
         song.year = Int(String(song.date.prefix(4))) ?? 0
         song.performer = mpd.song_get_tag(mpdSong, MPD_TAG_PERFORMER, 0)
         song.comment = mpd.song_get_tag(mpdSong, MPD_TAG_COMMENT, 0)
+        let playqueueId = Int(mpd.song_get_id(mpdSong))
+        if playqueueId > 0 {
+            song.playqueueId = "\(playqueueId)"
+        }
         
         let trackComponents = mpd.song_get_tag(mpdSong, MPD_TAG_TRACK, 0).components(separatedBy: CharacterSet.decimalDigits.inverted)
         if trackComponents.count > 0 {
