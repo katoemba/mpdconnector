@@ -418,8 +418,6 @@ public class MPDPlayer: PlayerProtocol {
     }
     
     deinit {
-        mpdStatus.stop()
-        
         HelpMePlease.allocDown(name: "MPDPlayer")
     }
     
