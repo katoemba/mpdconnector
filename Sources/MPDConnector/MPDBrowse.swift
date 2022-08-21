@@ -1531,6 +1531,27 @@ public class MPDBrowse: BrowseProtocol {
             .catchAndReturn([])
     }
     
+    /// Complete data for a song
+    /// - Parameter song: a song for which data must be completed
+    /// - Returns: an observable song
+    public func complete(_ song: Song) -> Observable<Song> {
+        Observable.just(song)
+    }
+
+    /// Complete data for an album
+    /// - Parameter album: an album for which data must be completed
+    /// - Returns: an observable album
+    public func complete(_ album: Album) -> Observable<Album> {
+        Observable.just(album)
+    }
+
+    /// Complete data for an artist
+    /// - Parameter artist: an artist for which data must be completed
+    /// - Returns: an observable artist
+    public func complete(_ artist: Artist) -> Observable<Artist> {
+        Observable.just(artist)
+    }
+    
     func updateDB() {
         _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
             .observe(on: scheduler)
