@@ -399,6 +399,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         mpdNetServiceBrowser.stop()
         volumioNetServiceBrowser.stop()
         httpNetServiceBrowser.stop()
+        
+        MPDConnection.cleanup()
     }
     
     /// Manually create a player based on the connection properties

@@ -30,29 +30,25 @@ import libmpdclient
 import ConnectorProtocol
 import RxSwiftExt
 
+class Weak<T: MPDConnection> {
+  weak var value : T?
+  init (value: T) {
+    self.value = value
+  }
+}
+
 public class MPDConnection {
     public enum Priority: String {
         case low = "Low"
         case high = "High"
     }
+
     private static let maxConcurrentConnections = 4
     private static var highPrioConnectionCount = 0
     private static var lowPrioConnectionCount = 0
     private static let countSemaphoreMutex = DispatchSemaphore(value: 1)
     private static let playerSemaphoreMutex = DispatchSemaphore(value: 1)
-    private static var playerSemaphores = [String: DispatchSemaphore]()
-    private static func semaphoreForPlayer(host: String, port: Int, prio: Priority) -> DispatchSemaphore {
-        defer {
-            playerSemaphoreMutex.signal()
-        }
-        
-        playerSemaphoreMutex.wait()
-        let key = "\(prio.rawValue):\(host):\(port)"
-        if playerSemaphores[key] == nil {
-            playerSemaphores[key] = DispatchSemaphore(value: MPDConnection.maxConcurrentConnections)
-        }
-        return playerSemaphores[key]!
-    }
+    private static var connections = [UUID: Weak<MPDConnection>]()
     
     private var mpd: MPDProtocol
     private var _connection: OpaquePointer?
@@ -62,13 +58,12 @@ public class MPDConnection {
         }
     }
     
+    private var uniqueId = UUID()
     private var host: String
     private var port: Int
     private var prio: Priority
     
     init(mpd: MPDProtocol, host: String, port: Int, timeout: Int, prio: Priority = .high) {
-        MPDConnection.semaphoreForPlayer(host: host, port: port, prio: prio).wait()
-
         self.mpd = mpd
         self.host = host
         self.port = port
@@ -76,23 +71,37 @@ public class MPDConnection {
         _connection = mpd.connection_new(host, UInt32(port), UInt32(timeout))
         //MPDConnection.connected(prio: prio)
         
-        if _connection == nil {
-            MPDConnection.semaphoreForPlayer(host: host, port: port, prio: prio).signal()
-        }
+        Self.playerSemaphoreMutex.wait()
+        Self.connections[uniqueId] = Weak<MPDConnection>(value: self)
+        Self.playerSemaphoreMutex.signal()
     }
     
     deinit {
+        Self.playerSemaphoreMutex.wait()
+        Self.connections.removeValue(forKey: uniqueId)
+        Self.playerSemaphoreMutex.signal()
+
         disconnect()
     }
     
+    public static func cleanup() {
+        for weakConnection in connections.values {
+            if let connection = weakConnection.value {
+                connection.disconnect()
+            }
+        }
+        
+        connections.removeAll()
+    }
+    
     func disconnect() {
-        if let connection = connection {
+        Self.playerSemaphoreMutex.wait()
+        if let connection = _connection {
             mpd.connection_free(connection)
             _connection = nil
             //MPDConnection.released(prio: prio)
-
-            MPDConnection.semaphoreForPlayer(host: host, port: port, prio: prio).signal()
         }
+        Self.playerSemaphoreMutex.signal()
     }
     
     private static func connected(prio: Priority) {
