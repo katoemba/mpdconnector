@@ -573,4 +573,34 @@ public class MPDHelper {
         
         return .orderedSame
     }
+    
+    private static let volumeAdjustmentKey = "MPDControl.volumeAdjustmentKey"
+    public static func playerVolumeAdjustmentKey(_ playerName: String) -> String {
+        volumeAdjustmentKey + "." + playerName
+    }
+
+    public static func adjustedVolumeToPlayer(_ volume: Float, volumeAdjustment: Float?) -> Float {
+        guard let volumeAdjustment = volumeAdjustment else { return volume }
+        if volume < 0.5 {
+            return volume * volumeAdjustment * 2
+        }
+        else if volume > 0.5 {
+            return volumeAdjustment + ((volume - 0.5) * (1 - volumeAdjustment) * 2)
+        }
+        
+        return volumeAdjustment
+    }
+
+    public static func adjustedVolumeFromPlayer(_ volume: Float, volumeAdjustment: Float?) -> Float {
+        guard let volumeAdjustment = volumeAdjustment else { return volume }
+        
+        if volume < volumeAdjustment {
+            return (volume / volumeAdjustment) / 2.0
+        }
+        else if volume > volumeAdjustment {
+            return 0.5 + ((volume - volumeAdjustment) * 0.5 ) / (1 - volumeAdjustment)
+        }
+        
+        return volume
+    }
 }

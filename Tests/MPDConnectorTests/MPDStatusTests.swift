@@ -56,7 +56,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         
         // And then stop, start and stop again
@@ -96,7 +96,7 @@ class MPDStatusTests: XCTestCase {
         self.mpdWrapper.songIndex = 2
         
         // When creating a new MPDStatus object and starting it
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         
         // And changing the songIndex, stopping and changing the songIndex again
@@ -137,7 +137,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         status.start()
 
@@ -167,7 +167,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -275,7 +275,7 @@ class MPDStatusTests: XCTestCase {
         self.mpdWrapper.elapsedTime = 5
 
         // When creating a new MPDStatus object and starting it twice
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         
         // Then the statuses .online is reported once
@@ -313,7 +313,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -365,7 +365,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // When creating a new MPDStatus object and starting it twice
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         status.start()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -418,7 +418,7 @@ class MPDStatusTests: XCTestCase {
                             ["title": "t3", "album": "alb3", "artist": "art3"]]
 
         // When creating a new MPDStatus object and starting it twice
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         
         // Get a range of 3 songs
         let result = status.playqueueSongs(start: 2, end: 5)
@@ -446,7 +446,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.port.rawValue: 1000,
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         
         // Get an empty list of songs
         let result = status.playqueueSongs(start: 3, end: 3)
@@ -469,7 +469,7 @@ class MPDStatusTests: XCTestCase {
                                     ConnectionProperties.password.rawValue: ""] as [String: Any]
         
         // Get an invalid range of songs
-        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties)
+        let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
         
         let result = status.playqueueSongs(start: 5, end: 3)
             .toBlocking(timeout: 0.4)

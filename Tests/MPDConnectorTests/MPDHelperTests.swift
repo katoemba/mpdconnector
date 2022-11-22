@@ -238,4 +238,30 @@ class MPDHelperTests: XCTestCase {
         result = MPDHelper.compareVersion(leftVersion: "2.16.29", rightVersion: "2.16.28")
         XCTAssert(result == .orderedDescending, "Expected 2.16.29 and 2.16.28 to be descending")
     }
+    
+    func testVolumeAdjustment() {
+        XCTAssertEqual(MPDHelper.adjustedVolumeToPlayer(0.0, volumeAdjustment: nil), 0.0)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.2, volumeAdjustment: nil) - 0.2, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.4, volumeAdjustment: nil) - 0.4, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.5, volumeAdjustment: nil) - 0.5, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.6, volumeAdjustment: nil) - 0.6, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.8, volumeAdjustment: nil) - 0.8, 0.000001)
+        XCTAssertEqual(MPDHelper.adjustedVolumeToPlayer(1.0, volumeAdjustment: nil), 1.0)
+
+        XCTAssertEqual(MPDHelper.adjustedVolumeToPlayer(0.0, volumeAdjustment: 0.2), 0.0)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.2, volumeAdjustment: 0.2) - 0.08, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.4, volumeAdjustment: 0.2) - 0.16, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.5, volumeAdjustment: 0.2) - 0.2, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.6, volumeAdjustment: 0.2) - 0.36, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeToPlayer(0.8, volumeAdjustment: 0.2) - 0.68, 0.000001)
+        XCTAssertEqual(MPDHelper.adjustedVolumeToPlayer(1.0, volumeAdjustment: 0.2), 1.0)
+
+        XCTAssertEqual(MPDHelper.adjustedVolumeFromPlayer(0.0, volumeAdjustment: 0.2), 0.0)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeFromPlayer(0.08, volumeAdjustment: 0.2) - 0.2, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeFromPlayer(0.16, volumeAdjustment: 0.2) - 0.4, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeFromPlayer(0.2, volumeAdjustment: 0.2) - 0.5, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeFromPlayer(0.36, volumeAdjustment: 0.2) - 0.6, 0.000001)
+        XCTAssertLessThan(MPDHelper.adjustedVolumeFromPlayer(0.68, volumeAdjustment: 0.2) - 0.8, 0.000001)
+        XCTAssertEqual(MPDHelper.adjustedVolumeFromPlayer(1.0, volumeAdjustment: 0.2), 1.0)
+    }
 }

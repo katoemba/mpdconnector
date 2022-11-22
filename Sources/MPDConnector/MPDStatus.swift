@@ -31,10 +31,15 @@ import RxSwift
 import RxRelay
 
 public class MPDStatus: StatusProtocol {
+    private var playerVolumeAdjustmentKey: String {
+        MPDHelper.playerVolumeAdjustmentKey((connectionProperties[ConnectionProperties.name.rawValue] as? String) ?? "NoName")
+    }
+
     /// Connection to a MPD Player
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
+    private var userDefaults: UserDefaults
     
     /// ConectionStatus for the player
     private var _connectionStatus = BehaviorRelay<ConnectionStatus>(value: .unknown)
@@ -59,7 +64,7 @@ public class MPDStatus: StatusProtocol {
     
     private var lastKnownElapsedTime = 0
     private var lastKnownElapsedTimeRecorded = Date()
-    
+
     private var statusScheduler: SchedulerType
     private var elapsedTimeScheduler: SchedulerType
     private var bag = DisposeBag()
@@ -68,11 +73,13 @@ public class MPDStatus: StatusProtocol {
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
                 identification: String = "NoID",
-                scheduler: SchedulerType? = nil) {
+                scheduler: SchedulerType? = nil,
+                userDefaults: UserDefaults) {
         self.mpd = mpd ?? MPDWrapper()
         self.connectionProperties = connectionProperties
         self.identification = identification
         self.statusConnection = nil
+        self.userDefaults = userDefaults
         
         if scheduler == nil {
             self.statusScheduler = SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdconnector.status")
@@ -277,7 +284,13 @@ public class MPDStatus: StatusProtocol {
                     playerStatus.volumeEnabled = false
                 }
                 else {
-                    playerStatus.volume = Float(volume) / 100.0
+                    if let volumeAdjustment = userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float {
+                        print("Status.volumeAdjustment = \(volumeAdjustment)")
+                        playerStatus.volume = MPDHelper.adjustedVolumeFromPlayer(Float(volume) / 100.0, volumeAdjustment: volumeAdjustment)
+                    }
+                    else {
+                        playerStatus.volume = Float(volume) / 100.0
+                    }
                     playerStatus.volumeEnabled = true
                 }
                 playerStatus.time.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))

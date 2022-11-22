@@ -106,7 +106,7 @@ public class MPDPlayer: PlayerProtocol {
     
     private var commands: [String]
     public var supportedFunctions: [Functions] {
-        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums, .stream, .playlists] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : [])
+        return [.randomSongs, .randomAlbums, .composers, .performers, .quality, .recentlyAddedAlbums, .stream, .playlists, .volumeAdjustment] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : [])
     }
     
     /// Current status
@@ -225,7 +225,7 @@ public class MPDPlayer: PlayerProtocol {
     public var control: ControlProtocol {
         get {
             // Use serialScheduler to synchronize commands across multiple MPDControl instances.
-            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler)
+            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, userDefaults: userDefaults)
         }
     }
     /// Create a unique object for every request for a browse object
@@ -357,7 +357,8 @@ public class MPDPlayer: PlayerProtocol {
         
         self.mpdStatus = MPDStatus.init(mpd: mpd,
                                         connectionProperties: connectionProperties,
-                                        scheduler: scheduler)
+                                        scheduler: scheduler,
+                                        userDefaults: userDefaults)
         
         HelpMePlease.allocUp(name: "MPDPlayer")
     }

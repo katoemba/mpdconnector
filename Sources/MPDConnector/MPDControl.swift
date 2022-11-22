@@ -30,20 +30,39 @@ import libmpdclient
 import RxSwift
 
 public class MPDControl: ControlProtocol {
+    private var playerVolumeAdjustmentKey: String {
+        MPDHelper.playerVolumeAdjustmentKey((connectionProperties[ConnectionProperties.name.rawValue] as? String) ?? "NoName")
+    }
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
+    private let userDefaults: UserDefaults
     
     private let bag = DisposeBag()
     private var serialScheduler: SchedulerType
+    public var volumeAdjustment: Float? {
+        get {
+            userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float
+        }
+        set {
+            if let adjustment = newValue {
+                userDefaults.set(adjustment, forKey: playerVolumeAdjustmentKey)
+            }
+            else {
+                userDefaults.removeObject(forKey: playerVolumeAdjustmentKey)
+            }
+        }
+    }
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
                 identification: String = "NoID",
-                scheduler: SchedulerType? = nil) {
+                scheduler: SchedulerType? = nil,
+                userDefaults: UserDefaults) {
         self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
+        self.userDefaults = userDefaults
         
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdcontrol")
         
@@ -137,7 +156,7 @@ public class MPDControl: ControlProtocol {
     /// - Parameter from: The current random mode.
     public func toggleRandom() -> Observable<PlayerStatus> {
         return runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
             _ = self.mpd.run_random(connection, (playerStatus.playing.randomMode == .On) ? false : true)
@@ -178,7 +197,7 @@ public class MPDControl: ControlProtocol {
     /// - Parameter from: The current repeat mode.
     public func toggleRepeat() -> Observable<PlayerStatus> {
         return runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
             switch playerStatus.playing.repeatMode {
@@ -216,7 +235,7 @@ public class MPDControl: ControlProtocol {
     /// - Parameter from: The current consume mode.
     public func toggleConsume() {
         runCommand()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
             _ = self.mpd.run_consume(connection, (playerStatus.playing.consumeMode == .On) ? false : true)
@@ -233,7 +252,7 @@ public class MPDControl: ControlProtocol {
                 return
             }
 
-            _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
+            _ = self.mpd.run_set_volume(connection, UInt32(roundf(MPDHelper.adjustedVolumeToPlayer(volume, volumeAdjustment: self.volumeAdjustment) * 100.0)))
         }
     }
     
@@ -243,21 +262,21 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func adjustVolume(_ adjustment: Float) -> Observable<PlayerStatus> {
         runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
             let volume = adjustment < 0 ? max(playerStatus.volume + adjustment, 0.0) : min(playerStatus.volume + adjustment, 1.0)
-            _ = self.mpd.run_set_volume(connection, UInt32(roundf(volume * 100.0)))
+            _ = self.mpd.run_set_volume(connection, UInt32(roundf(MPDHelper.adjustedVolumeToPlayer(volume, volumeAdjustment: self.volumeAdjustment) * 100.0)))
         }
     }
-
+    
     /// Seek to a position in the current song
     ///
     /// - Parameter seconds: seconds in the current song, must be <= length of the song
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func setSeek(seconds: UInt32) -> Observable<PlayerStatus> {
         runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
             if seconds < playerStatus.currentSong.length {
@@ -272,7 +291,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func setSeek(percentage: Float) -> Observable<PlayerStatus> {
         runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
             let playerStatus = mpdStatus.fetchPlayerStatus(connection)
             let seconds = UInt32(percentage * Float(playerStatus.currentSong.length))
             if seconds < playerStatus.currentSong.length {
@@ -291,7 +310,7 @@ public class MPDControl: ControlProtocol {
         return runCommandWithStatus()  { connection in
                 var pos = UInt32(0)
             
-                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
                 let playerStatus = mpdStatus.fetchPlayerStatus(connection)
             
                 switch addDetails.addMode {
@@ -524,7 +543,7 @@ public class MPDControl: ControlProtocol {
         return runCommandWithStatus()  { connection in
                 var pos = UInt32(0)
 
-                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties)
+                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
                 let playerStatus = mpdStatus.fetchPlayerStatus(connection)
 
                 switch addDetails.addMode {
@@ -697,6 +716,7 @@ public class MPDControl: ControlProtocol {
     ///   - command: the block to execute
     private func runCommandWithStatus(command: @escaping (OpaquePointer) -> Void) -> Observable<PlayerStatus> {
         let mpd = self.mpd
+        let userDefaults = self.userDefaults
         let connectionProperties = self.connectionProperties
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
@@ -711,7 +731,7 @@ public class MPDControl: ControlProtocol {
             .flatMap { (mpdConnection) -> Observable<PlayerStatus> in
                 guard let connection = mpdConnection?.connection else { return Observable.empty() }
                 
-                return Observable.just(MPDStatus(mpd: mpd, connectionProperties: connectionProperties).fetchPlayerStatus(connection))
+                return Observable.just(MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults).fetchPlayerStatus(connection))
             }
             .observe(on: MainScheduler.instance)
     }
