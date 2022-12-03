@@ -85,6 +85,7 @@ public class MPDConnection {
     }
     
     public static func cleanup() {
+        print("\(connections.values.count) connections are freed")
         for weakConnection in connections.values {
             if let connection = weakConnection.value {
                 connection.disconnect()
@@ -97,8 +98,8 @@ public class MPDConnection {
     func disconnect() {
         Self.playerSemaphoreMutex.wait()
         if let connection = _connection {
-            mpd.connection_free(connection)
             _connection = nil
+            mpd.connection_free(connection)
             //MPDConnection.released(prio: prio)
         }
         Self.playerSemaphoreMutex.signal()

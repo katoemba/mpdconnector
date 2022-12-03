@@ -435,8 +435,11 @@ public class MPDStatus: StatusProtocol {
     }
     
     public func disconnectFromMPD() {
+        guard statusConnection != nil else { return }
         statusConnection?.disconnect()
         statusConnection = nil
+        
+        print("The connection is cleared")
     }
 
     /// Force a refresh of the status.
