@@ -25,6 +25,7 @@
 //
 
 import Foundation
+import UIKit
 import ConnectorProtocol
 import RxSwift
 import libmpdclient
@@ -400,7 +401,13 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         volumioNetServiceBrowser.stop()
         httpNetServiceBrowser.stop()
         
-        MPDConnection.cleanup()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            guard UIApplication.shared.applicationState != .active else {
+                return
+            }
+
+            MPDConnection.cleanup()
+        }
     }
     
     /// Manually create a player based on the connection properties

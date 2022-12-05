@@ -57,6 +57,7 @@ public class MPDConnection {
             return _connection
         }
     }
+    public var stopUsing = false
     
     private var uniqueId = UUID()
     private var host: String
@@ -84,25 +85,26 @@ public class MPDConnection {
         disconnect()
     }
     
-    public static func cleanup() {
-        print("\(connections.values.count) connections are freed")
+    public static func cleanup() {        
         for weakConnection in connections.values {
             if let connection = weakConnection.value {
                 connection.disconnect()
             }
         }
         
+        Self.playerSemaphoreMutex.wait()
         connections.removeAll()
+        Self.playerSemaphoreMutex.signal()
     }
     
     func disconnect() {
-        Self.playerSemaphoreMutex.wait()
         if let connection = _connection {
+            stopUsing = true
+        
             _connection = nil
             mpd.connection_free(connection)
             //MPDConnection.released(prio: prio)
         }
-        Self.playerSemaphoreMutex.signal()
     }
     
     private static func connected(prio: Priority) {

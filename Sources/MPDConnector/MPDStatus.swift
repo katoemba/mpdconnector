@@ -167,7 +167,7 @@ public class MPDStatus: StatusProtocol {
                 observer.onNext(weakSelf.fetchPlayerStatus(connection))
             }
                 
-            while true {
+            while (weakSelf.statusConnection?.stopUsing ?? true) == false {
                 if let connection = weakSelf.statusConnection?.connection {
                     if weakSelf.mpd.connection_get_error(connection) != MPD_ERROR_SUCCESS {
                         break
@@ -285,7 +285,6 @@ public class MPDStatus: StatusProtocol {
                 }
                 else {
                     if let volumeAdjustment = userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float {
-                        print("Status.volumeAdjustment = \(volumeAdjustment)")
                         playerStatus.volume = MPDHelper.adjustedVolumeFromPlayer(Float(volume) / 100.0, volumeAdjustment: volumeAdjustment)
                     }
                     else {
@@ -438,8 +437,6 @@ public class MPDStatus: StatusProtocol {
         guard statusConnection != nil else { return }
         statusConnection?.disconnect()
         statusConnection = nil
-        
-        print("The connection is cleared")
     }
 
     /// Force a refresh of the status.
