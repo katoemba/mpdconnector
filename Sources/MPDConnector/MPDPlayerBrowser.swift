@@ -418,7 +418,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType else { return Observable.just(nil) }
         
         let userDefaults = self.userDefaults
-        return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler)
+        return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler, forceCleanup: false)
             .flatMap({ (mpdConnection) -> Observable<PlayerProtocol?> in
                 guard mpdConnection != nil else { return Observable.just(nil) }
                 

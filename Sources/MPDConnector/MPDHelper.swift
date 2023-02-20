@@ -63,12 +63,14 @@ public class MPDConnection {
     private var host: String
     private var port: Int
     private var prio: Priority
+    private let forceCleanup: Bool
     
-    init(mpd: MPDProtocol, host: String, port: Int, timeout: Int, prio: Priority = .high) {
+    init(mpd: MPDProtocol, host: String, port: Int, timeout: Int, prio: Priority = .high, forceCleanup: Bool = false) {
         self.mpd = mpd
         self.host = host
         self.port = port
         self.prio = prio
+        self.forceCleanup = forceCleanup
         _connection = mpd.connection_new(host, UInt32(port), UInt32(timeout))
         //MPDConnection.connected(prio: prio)
         
@@ -85,9 +87,9 @@ public class MPDConnection {
         disconnect()
     }
     
-    public static func cleanup() {        
+    public static func cleanup() {
         for weakConnection in connections.values {
-            if let connection = weakConnection.value {
+            if let connection = weakConnection.value, connection.forceCleanup == true {
                 connection.disconnect()
             }
         }
@@ -158,12 +160,12 @@ public class MPDHelper {
     ///   - password: Password to use after connecting.
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> MPDConnection? {
+    public static func connect(mpd: MPDProtocol, host: String, port: Int, password: String, timeout: Int = 5000, prio: MPDConnection.Priority = .high, forceCleanup: Bool = false) -> MPDConnection? {
         if Thread.current.isMainThread {
             print("Warning: connecting to MPD on the main thread could cause blocking")
         }
         
-        let mpdConnection = MPDConnection(mpd: mpd, host: host, port: port, timeout: timeout, prio: prio)
+        let mpdConnection = MPDConnection(mpd: mpd, host: host, port: port, timeout: timeout, prio: prio, forceCleanup: forceCleanup)
         guard let connection = mpdConnection.connection else {
             return nil
         }
@@ -193,13 +195,14 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands.
     /// - Returns: A mpd_connection object, or nil if any kind of error was detected.
-    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> MPDConnection? {
+    public static func connect(mpd: MPDProtocol, connectionProperties: [String: Any], timeout: Int = 5000, prio: MPDConnection.Priority = .high, forceCleanup: Bool = false) -> MPDConnection? {
         return connect(mpd: mpd,
                        host: hostToUse(connectionProperties),
                        port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
                        password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                        timeout: timeout,
-                       prio: prio)
+                       prio: prio,
+                       forceCleanup: forceCleanup)
     }
     
     /// Reactive connection function
@@ -211,9 +214,9 @@ public class MPDHelper {
     ///   - password: Password to use after connecting, default = "".
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> Observable<MPDConnection?> {
+    public static func connectToMPD(mpd: MPDProtocol, host: String, port: Int, password: String = "", scheduler: SchedulerType, timeout: Int = 5000, prio: MPDConnection.Priority = .high, forceCleanup: Bool = false) -> Observable<MPDConnection?> {
         return Observable<MPDConnection?>.create { observer in
-            if let mpdConnection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout, prio: prio) {
+            if let mpdConnection = connect(mpd: mpd, host: host, port: port, password: password, timeout: timeout, prio: prio, forceCleanup: forceCleanup) {
                 var allIsWell = true
                 // Check if perhaps we need a password
                 if password == "" {
@@ -256,14 +259,15 @@ public class MPDHelper {
     ///   - connectionProperties: dictionary of connection properties (host, port, password)
     ///   - timeout: The timeout value for run any commands, default = 3000ms.
     /// - Returns: An observable for a new connection. Will raise an error if connecting is not successful.
-    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000, prio: MPDConnection.Priority = .high) -> Observable<MPDConnection?> {
+    public static func connectToMPD(mpd: MPDProtocol, connectionProperties: [String: Any], scheduler: SchedulerType, timeout: Int = 5000, prio: MPDConnection.Priority = .high, forceCleanup: Bool = false) -> Observable<MPDConnection?> {
         return connectToMPD(mpd: mpd,
                             host: hostToUse(connectionProperties),
                             port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
                             password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
                             scheduler: scheduler,
                             timeout: timeout,
-                            prio: prio)
+                            prio: prio,
+                            forceCleanup: forceCleanup)
     }
     
     /// Fill a generic Song object from an mpdSong

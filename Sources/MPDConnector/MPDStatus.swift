@@ -112,7 +112,7 @@ public class MPDStatus: StatusProtocol {
         }
         
         connecting = true
-        MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties, scheduler: statusScheduler)
+        MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties, scheduler: statusScheduler, forceCleanup: true)
             .subscribe(onNext: { [weak self] (mpdConnection) in
                 guard let mpdConnection = mpdConnection else {
                     self?._connectionStatus.accept(.offline)
@@ -147,7 +147,7 @@ public class MPDStatus: StatusProtocol {
             .flatMap({ [weak self] (_) -> Observable<PlayerStatus?> in
                 guard let weakSelf = self else { return Observable.empty() }
                 
-                return MPDHelper.connectToMPD(mpd: weakSelf.mpd, connectionProperties: weakSelf.connectionProperties, scheduler: weakSelf.elapsedTimeScheduler, timeout: 1000)
+                return MPDHelper.connectToMPD(mpd: weakSelf.mpd, connectionProperties: weakSelf.connectionProperties, scheduler: weakSelf.elapsedTimeScheduler, timeout: 1000, forceCleanup: false)
                     .map( { [weak self] (mpdConnection) -> PlayerStatus? in
                         guard let weakSelf = self, let connection = mpdConnection?.connection else {
                             return nil

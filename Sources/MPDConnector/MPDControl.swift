@@ -699,7 +699,7 @@ public class MPDControl: ControlProtocol {
         let mpd = self.mpd
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
-        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
+        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler, forceCleanup: false)
             .observe(on: serialScheduler)
             .subscribe(onNext: { (mpdConnection) in
                 guard let connection = mpdConnection?.connection else { return }
@@ -720,7 +720,7 @@ public class MPDControl: ControlProtocol {
         let connectionProperties = self.connectionProperties
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler)
+        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler, forceCleanup: false)
             .observe(on: serialScheduler)
             .do(onNext: { (mpdConnection) in
                 guard let connection = mpdConnection?.connection else { return }
