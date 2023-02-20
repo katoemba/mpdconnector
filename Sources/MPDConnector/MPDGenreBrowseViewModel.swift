@@ -110,7 +110,4 @@ public class MPDGenreBrowseViewModel: GenreBrowseViewModel {
             .bind(to: loadProgress)
             .disposed(by: bag)
     }
-    
-    public func extend() {
-    }
 }

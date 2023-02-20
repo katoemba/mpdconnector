@@ -104,9 +104,6 @@ public class MPDPlaylistBrowseViewModel: PlaylistBrowseViewModel {
             .disposed(by: bag)
     }
     
-    public func extend() {
-    }
-    
     public func renamePlaylist(_ playlist: Playlist, to: String) -> Playlist {
         var renamedPlaylist = playlist
         renamedPlaylist.id = to

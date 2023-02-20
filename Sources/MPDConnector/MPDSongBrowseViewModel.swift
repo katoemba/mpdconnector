@@ -169,9 +169,6 @@ public class MPDSongBrowseViewModel: SongBrowseViewModel {
 
     }
     
-    public func extend() {
-    }
-    
     public func removeSong(at: Int) {
         let localSongsSubject = songsSubject
         Observable.just(at)

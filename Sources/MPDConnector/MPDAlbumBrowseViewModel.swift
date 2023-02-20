@@ -30,17 +30,17 @@ import RxRelay
 import ConnectorProtocol
 
 public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
-    private var albumsSubject = PublishSubject<[Album]>()
+    private var albumsSubject = BehaviorSubject<[Album]>(value: [])
     private var numberOfItems = BehaviorRelay<Int>(value: 0)
     public var albumsObservable: Observable<[Album]> {
         get {
-            return albumsSubject.asObservable()
+            return albumsSubject.observe(on: MainScheduler.asyncInstance)
         }
     }
     private var loadProgress = BehaviorRelay<LoadProgress>(value: .notStarted)
     public var loadProgressObservable: Observable<LoadProgress> {
         get {
-            return loadProgress.asObservable()
+            return loadProgress.observe(on: MainScheduler.asyncInstance)
         }
     }
     
@@ -97,6 +97,8 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
                 reload(genre: genre, sort: sort)
             case let .artist(artist):
                 reload(artist: artist, sort: sort)
+            case let .related(album):
+                reload(album: album, sort: sort)
             case let .recent(numberOfAlbums):
                 reload(recent: numberOfAlbums, sort: sort)
             case let .random(count):
@@ -110,7 +112,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         }
     }
     
-    private func reload(genre: Genre? = nil, artist: Artist? = nil, recent: Int? = nil, random: Int? = nil, sort: SortType) {
+    private func reload(genre: Genre? = nil, artist: Artist? = nil, album: Album? = nil, recent: Int? = nil, random: Int? = nil, sort: SortType) {
         // Get rid of old disposables
         bag = DisposeBag()
         
@@ -126,13 +128,19 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         if let artist = artist {
             self.extendSize = 60
             albumsObservable = browse.albumsByArtist(artist, sort: sort)
-                .observe(on: MainScheduler.instance)
+                .share(replay: 1)
+        }
+        else if let album = album {
+            self.extendSize = 60
+            albumsObservable = browse.albumsByArtist(Artist(id: album.artist, source: album.source, name: album.artist), sort: sort)
+                .map {
+                    $0.filter { $0 != album }
+                }
                 .share(replay: 1)
         }
         else if let recent = recent {
             self.extendSize = 200
             albumsObservable = browse.fetchRecentAlbums(numberOfAlbums: recent)
-                .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }
         else if let random = random {
@@ -152,7 +160,6 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         else {
             self.extendSize = 60
             albumsObservable = browse.fetchAlbums(genre: genre, sort: sort)
-                .observe(on: MainScheduler.instance)
                 .share(replay: 1)
         }
         
@@ -172,7 +179,6 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             })
         
         albumsObservable
-            .observe(on: MainScheduler.instance)
             .map { (_) -> LoadProgress in
                 .loading
             }
@@ -187,10 +193,10 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             .scan([]) { inputAlbums, newAlbums in
                 inputAlbums + newAlbums
             }
-            .observe(on: MainScheduler.instance)
             .share(replay: 1)
             
         dataAvailableObservable
+            .distinctUntilChanged()
             .subscribe(onNext: { (albums) in
                 albumsSubject.onNext(albums)
             })
@@ -210,7 +216,6 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             }
         
         albumsObservable
-            .observe(on: MainScheduler.instance)
             .filter { (albums) -> Bool in
                 albums.count == 0
             }
@@ -221,7 +226,6 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
             .disposed(by: bag)
 
         Observable.combineLatest(dataAvailableObservable, endReachedObservable)
-            .observe(on: MainScheduler.instance)
             .filter { (_, end) -> Bool in
                 end
             }
@@ -246,7 +250,7 @@ public class MPDAlbumBrowseViewModel: AlbumBrowseViewModel {
         extendTriggerSubject.onNext(extendSize)
     }
 
-    public func extend(to: Int) {
+    public func prefetch(to: Int) {
         if to > numberOfItems.value {
             extendTriggerSubject.onNext(extendSize)
         }

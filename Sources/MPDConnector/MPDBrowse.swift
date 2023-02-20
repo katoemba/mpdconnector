@@ -983,6 +983,14 @@ public class MPDBrowse: BrowseProtocol {
         return MPDAlbumBrowseViewModel(browse: self, filters: [.artist(artist)])
     }
     
+    /// Return a view model for a list of albums related to the current album.
+    ///
+    /// - Parameter album: related album to filter on
+    /// - Returns: an AlbumBrowseViewModel instance
+    public func albumBrowseViewModel(_ album: Album) -> AlbumBrowseViewModel {
+        return MPDAlbumBrowseViewModel(browse: self, filters: [.related(album)])
+    }
+    
     /// Return a view model for a list of albums filtered by artist, which can return albums in batches.
     ///
     /// - Parameter genre: genre to filter on

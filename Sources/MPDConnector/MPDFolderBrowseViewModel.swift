@@ -112,7 +112,4 @@ public class MPDFolderBrowseViewModel: FolderBrowseViewModel {
             .bind(to: loadProgress)
             .disposed(by: bag)
     }
-    
-    public func extend() {
-    }
 }
