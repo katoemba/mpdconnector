@@ -234,35 +234,32 @@ public class MPDStatus: StatusProtocol {
     /// - Parameter status: a mpd status objects
     /// - Returns: a filled QualityStatus struct
     private func processQuality(_ status: OpaquePointer) -> QualityStatus {
-        var quality = QualityStatus()
-        
         let bitrate = self.mpd.status_get_kbit_rate(status)
-        quality.bitrate = bitrate > 0 ? "\(bitrate)kbps" : "-"
         if let audioFormat = self.mpd.status_get_audio_format(status) {
-            if audioFormat.0 > 0 {
-                quality.samplerate = "\(audioFormat.0/1000)kHz"
-            }
-            else {
-                quality.samplerate = "-"
-            }
-            
+            var encodingString = ""
             if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
-                quality.encoding = "FLOAT"
+                encodingString = "FLOAT"
             }
             else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
-                quality.encoding = "DSD"
+                encodingString = "DSD"
             }
             else if audioFormat.1 > 0 {
-                quality.encoding = "\(audioFormat.1)bit"
+                encodingString = "\(audioFormat.1)"
             }
-            else {
-                quality.encoding = "???"
-            }
-            
-            quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
+
+            return QualityStatus(rawBitrate: bitrate,
+                                 rawSamplerate: audioFormat.0,
+                                 rawChannels: UInt32(audioFormat.2),
+                                 encodingString: encodingString,
+                                 filetype: "")
         }
-        
-        return quality
+        else {
+            return QualityStatus(rawBitrate: bitrate,
+                                 rawSamplerate: nil,
+                                 rawChannels: nil,
+                                 encodingString: "",
+                                 filetype: "")
+        }
     }
     
     /// Get the current status of a controller

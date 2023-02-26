@@ -373,38 +373,41 @@ public class MPDHelper {
         song.sortAlbumArtist = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_ARTIST_SORT, 0)
         song.sortAlbum = mpd.song_get_tag(mpdSong, MPD_TAG_ALBUM_SORT, 0)
         song.lastModified = mpd.song_get_last_modified(mpdSong)
-        if let audioFormat = mpd.song_get_audio_format(mpdSong) {
-            if audioFormat.0 > 0 {
-                song.quality.samplerate = "\(audioFormat.0/1000)kHz"
-            }
-            else {
-                song.quality.samplerate = "-"
-            }
-            
-            if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
-                song.quality.encoding = "FLOAT"
-            }
-            else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
-                song.quality.encoding = "DSD"
-            }
-            else if audioFormat.1 > 0 {
-                song.quality.encoding = "\(audioFormat.1)bit"
-            }
-            else {
-                song.quality.encoding = "???"
-            }
-            
-            song.quality.channels = audioFormat.2 == 1 ? "Mono" : "Stereo"
-        }
-        
+        var filetype = ""
         let components = song.id.components(separatedBy: "/")
         if components.count >= 1 {
             let filename = components[components.count - 1]
             let filecomponents = filename.components(separatedBy: ".")
             if filecomponents.count >= 2 {
-                song.quality.filetype = filecomponents[filecomponents.count - 1]
+                filetype = filecomponents[filecomponents.count - 1]
             }
         }
+        if let audioFormat = mpd.song_get_audio_format(mpdSong) {
+            var encodingString = ""
+            if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
+                encodingString = "FLOAT"
+            }
+            else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
+                encodingString = "DSD"
+            }
+            else if audioFormat.1 > 0 {
+                encodingString = "\(audioFormat.1)"
+            }
+            
+            song.quality = QualityStatus(rawBitrate: nil,
+                                         rawSamplerate: audioFormat.0,
+                                         rawChannels: UInt32(audioFormat.2),
+                                         encodingString: encodingString,
+                                         filetype: filetype)
+        }
+        else {
+            song.quality = QualityStatus(rawBitrate: nil,
+                                         rawSamplerate: nil,
+                                         rawChannels: nil,
+                                         rawEncoding: nil,
+                                         filetype: filetype)
+        }
+        
         
         // Get a sensible coverURI
         guard song.source == .Local else { return song }
