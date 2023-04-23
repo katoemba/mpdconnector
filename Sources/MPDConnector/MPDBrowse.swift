@@ -39,6 +39,8 @@ extension Array where Element:Hashable {
 }
 
 public class MPDBrowse: BrowseProtocol {
+    public var name = "mpd"
+    
     private static var operationQueue: OperationQueue?
     /// Connection to a MPD Player
     private let mpd: MPDProtocol
