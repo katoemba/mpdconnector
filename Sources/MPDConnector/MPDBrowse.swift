@@ -354,6 +354,7 @@ public class MPDBrowse: BrowseProtocol {
         var album = Album(id: "\(artist):\(song.album)", source: song.source, location: "", title: song.album, artist: artist, year: song.year, genre: song.genre, length: 0, sortArtist: sortArtist)
         album.coverURI = song.coverURI
         album.lastModified = song.lastModified
+        album.quality = song.quality
     
         return album
     }
