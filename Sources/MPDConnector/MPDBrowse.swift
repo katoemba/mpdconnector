@@ -1254,7 +1254,8 @@ public class MPDBrowse: BrowseProtocol {
         if self.mpd.send_list_playlist_meta(connection, name: playlist) == true {
             var mpdSong = mpd.recv_song(connection)
             while mpdSong != nil {
-                if let song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
+                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
+                    song.playqueueId = UUID().uuidString
                     songs.append(song)
                 }
                 self.mpd.song_free(mpdSong)
