@@ -31,6 +31,7 @@ import RxSwift
 import libmpdclient
 import SWXMLHash
 import RxNetService
+import MPDConnector
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
@@ -248,7 +249,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                                 (data, response, error) -> Void in
                                 if error == nil {
                                     if let data = data {
-                                        let xml = SWXMLHash.parse(data)
+                                        let xml = XMLHash.parse(data)
                                         let browserConfig = xml["browserconfig"]
                                         if browserConfig.children.count > 0 {
                                             let abbreviatedName = connectionData.name.replacingOccurrences(of: "moOde audio player: ", with: "")

@@ -125,7 +125,7 @@ public class MPDPlayer: PlayerProtocol {
         return uniqueIDForPlayer(host: player.host, port: player.port)
     }
     
-    static func uniqueIDForPlayer(host: String, port: Int) -> String {
+    public static func uniqueIDForPlayer(host: String, port: Int) -> String {
         return "\(host):\(port)"
     }
     
