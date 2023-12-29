@@ -1,61 +1,59 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "ConnectorProtocol",
-        "repositoryURL": "https://github.com/katoemba/connectorprotocol.git",
-        "state": {
-          "branch": null,
-          "revision": "5434ec62ea6bb1e68f8e7137e3968be6e58aaf46",
-          "version": "1.8.7"
-        }
-      },
-      {
-        "package": "libmpdclient",
-        "repositoryURL": "https://github.com/katoemba/libmpdclient-swift.git",
-        "state": {
-          "branch": null,
-          "revision": "e11a5ab3090b5cd1071dfa6b004e7de29c9c184d",
-          "version": "2.19.0"
-        }
-      },
-      {
-        "package": "RxNetService",
-        "repositoryURL": "https://github.com/katoemba/rxnetservice.git",
-        "state": {
-          "branch": null,
-          "revision": "1c9298e859ef0a79d6304bed3ca8a195e6a53dd0",
-          "version": "0.2.4"
-        }
-      },
-      {
-        "package": "RxSwift",
-        "repositoryURL": "https://github.com/ReactiveX/RxSwift.git",
-        "state": {
-          "branch": null,
-          "revision": "7c17a6ccca06b5c107cfa4284e634562ddaf5951",
-          "version": "6.2.0"
-        }
-      },
-      {
-        "package": "RxSwiftExt",
-        "repositoryURL": "https://github.com/RxSwiftCommunity/RxSwiftExt.git",
-        "state": {
-          "branch": null,
-          "revision": "a42af9caeab63f2dbde318f1f3dc424f05871a37",
-          "version": "6.1.0"
-        }
-      },
-      {
-        "package": "SWXMLHash",
-        "repositoryURL": "https://github.com/drmohundro/SWXMLHash.git",
-        "state": {
-          "branch": null,
-          "revision": "9183170d20857753d4f331b0ca63f73c60764bf3",
-          "version": "5.0.2"
-        }
+  "pins" : [
+    {
+      "identity" : "connectorprotocol",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/katoemba/connectorprotocol.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "627b3d3ff0a8411b0b9909bd7d89f5a2bed02415"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "libmpdclient-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/katoemba/libmpdclient-swift.git",
+      "state" : {
+        "revision" : "e11a5ab3090b5cd1071dfa6b004e7de29c9c184d",
+        "version" : "2.19.0"
+      }
+    },
+    {
+      "identity" : "rxnetservice",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/katoemba/rxnetservice.git",
+      "state" : {
+        "revision" : "1c9298e859ef0a79d6304bed3ca8a195e6a53dd0",
+        "version" : "0.2.4"
+      }
+    },
+    {
+      "identity" : "rxswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ReactiveX/RxSwift.git",
+      "state" : {
+        "revision" : "7c17a6ccca06b5c107cfa4284e634562ddaf5951",
+        "version" : "6.2.0"
+      }
+    },
+    {
+      "identity" : "rxswiftext",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RxSwiftCommunity/RxSwiftExt.git",
+      "state" : {
+        "revision" : "a42af9caeab63f2dbde318f1f3dc424f05871a37",
+        "version" : "6.1.0"
+      }
+    },
+    {
+      "identity" : "swxmlhash",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/drmohundro/SWXMLHash.git",
+      "state" : {
+        "revision" : "a853604c9e9a83ad9954c7e3d2a565273982471f",
+        "version" : "7.0.2"
+      }
+    }
+  ],
+  "version" : 2
 }

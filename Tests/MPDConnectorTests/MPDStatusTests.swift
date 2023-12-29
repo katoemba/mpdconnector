@@ -213,9 +213,9 @@ class MPDStatusTests: XCTestCase {
             XCTAssert(playerStatus.currentSong.title == "Creature Comfort", "Expected Creature Comfort, got \(playerStatus.currentSong.title)")
             XCTAssert(playerStatus.currentSong.artist == "Arcade Fire", "Expected Arcade Fire, got \(playerStatus.currentSong.artist)")
             XCTAssert(playerStatus.currentSong.album == "Everything Now", "Expected Everything Now, got \(playerStatus.currentSong.album)")
-            XCTAssert(playerStatus.quality.samplerate == "192kHz", "Expected bitrate 192kHz, got \(playerStatus.quality.samplerate)")
-            XCTAssert(playerStatus.quality.encoding == "24bit", "Expected encoding 24bit, got \(playerStatus.quality.encoding)")
-            XCTAssert(playerStatus.quality.channels == "Mono", "Expected channels Mono, got \(playerStatus.quality.channels)")
+            XCTAssert(playerStatus.quality.samplerate == "192 kHz", "Expected bitrate 192 kHz, got \(playerStatus.quality.samplerate)")
+            XCTAssert(playerStatus.quality.encoding == "24 bits", "Expected encoding 24 bits, got \(playerStatus.quality.encoding)")
+            XCTAssert(playerStatus.quality.channels == "1", "Expected channels 1, got \(playerStatus.quality.channels)")
             XCTAssert(playerStatus.outputs.count == 2, "Expected 2 outputs, got \(playerStatus.outputs.count)")
             if playerStatus.outputs.count == 2 {
                 XCTAssert(playerStatus.outputs[0].id == "1", "Expected output id 1, got \(playerStatus.outputs[0].id)")
@@ -350,7 +350,7 @@ class MPDStatusTests: XCTestCase {
             XCTAssert(playerStatus.volume == 0.5, "Expected volume 0.5, got \(playerStatus.volume)")
             XCTAssert(playerStatus.volumeEnabled == false, "Expected volumeEnabled false, got \(playerStatus.volumeEnabled)")
             XCTAssert(playerStatus.quality.encoding == "DSD", "Expected encoding DSD, got \(playerStatus.quality.encoding)")
-            XCTAssert(playerStatus.quality.channels == "Stereo", "Expected channels Stereo, got \(playerStatus.quality.channels)")
+            XCTAssert(playerStatus.quality.channels == "2", "Expected channels 2, got \(playerStatus.quality.channels)")
             
         default:
             print("Default")
