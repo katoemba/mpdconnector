@@ -354,6 +354,18 @@ public class MPDStatus: StatusProtocol {
         return playerStatus
     }
     
+    /// Get the current status from the player
+    public func getStatus() -> Observable<PlayerStatus> {
+        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: elapsedTimeScheduler, timeout: 1000, forceCleanup: false)
+            .map( { [weak self] (mpdConnection) -> PlayerStatus in
+                guard let self, let connection = mpdConnection?.connection else {
+                    return PlayerStatus()
+                }
+
+                return self.fetchPlayerStatus(connection)
+        })
+    }
+
     /// Get an array of songs from the playqueue.
     ///
     /// - Parameters

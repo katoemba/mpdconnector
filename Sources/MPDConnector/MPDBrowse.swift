@@ -492,7 +492,12 @@ public class MPDBrowse: BrowseProtocol {
             .catchAndReturn([])
             .observe(on: MainScheduler.instance)
     }
-
+    
+    public func recentAlbums() async -> [Album] {
+        guard let albums = try? await fetchRecentAlbums(numberOfAlbums: 20).first().value else { return [] }
+        
+        return albums.count <= 10 ? albums : Array<Album>(albums[0..<10])
+    }
 
     func fetchAlbums(genre: Genre?, sort: SortType) -> Observable<[Album]> {
         let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
