@@ -191,6 +191,10 @@ public class MPDWrapper: MPDProtocol {
             return ((0, 0, 0))
         }
     }
+    
+    public func status_get_raw_audio_format(_ status: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_status_get_raw_audio_format(status))
+    }
 
     public func status_get_update_id(_ status: OpaquePointer!) -> UInt32 {
         return mpd_status_get_update_id(status)
@@ -219,7 +223,11 @@ public class MPDWrapper: MPDProtocol {
         
         return nil
     }
-    
+
+    public func song_get_raw_audio_format(_ song: OpaquePointer!) -> String {
+        return stringFromMPDString(mpd_song_get_raw_audio_format(song))
+    }
+
     public func song_get_id(_ song: OpaquePointer!) -> UInt32 {
         return mpd_song_get_id(song)
     }

@@ -188,6 +188,7 @@ class MPDStatusTests: XCTestCase {
             self.mpdWrapper.encoding = 24
             self.mpdWrapper.channels = 1
             self.mpdWrapper.outputs = [(1, "out1", true), (2, "out2", false)]
+            self.mpdWrapper.audioformat = "192000:24:1"
             
             self.mpdWrapper.statusChanged()
         }
@@ -273,6 +274,7 @@ class MPDStatusTests: XCTestCase {
         self.mpdWrapper.encoding = 24
         self.mpdWrapper.channels = 1
         self.mpdWrapper.elapsedTime = 5
+        self.mpdWrapper.audioformat = "192000:24:1"
 
         // When creating a new MPDStatus object and starting it twice
         let status = MPDStatus.init(mpd: mpdWrapper, connectionProperties: connectionProperties, userDefaults: UserDefaults.standard)
@@ -333,6 +335,7 @@ class MPDStatusTests: XCTestCase {
             self.mpdWrapper.samplerate = 192000
             self.mpdWrapper.encoding = UInt8(MPD_SAMPLE_FORMAT_DSD)
             self.mpdWrapper.channels = 2
+            self.mpdWrapper.audioformat = "dsd256:2"
             
             self.mpdWrapper.statusChanged()
         }
@@ -349,7 +352,7 @@ class MPDStatusTests: XCTestCase {
             
             XCTAssert(playerStatus.volume == 0.5, "Expected volume 0.5, got \(playerStatus.volume)")
             XCTAssert(playerStatus.volumeEnabled == false, "Expected volumeEnabled false, got \(playerStatus.volumeEnabled)")
-            XCTAssert(playerStatus.quality.encoding == "DSD", "Expected encoding DSD, got \(playerStatus.quality.encoding)")
+            XCTAssert(playerStatus.quality.encoding == "DSD256", "Expected encoding DSD, got \(playerStatus.quality.encoding)")
             XCTAssert(playerStatus.quality.channels == "2", "Expected channels 2, got \(playerStatus.quality.channels)")
             
         default:
@@ -385,6 +388,7 @@ class MPDStatusTests: XCTestCase {
             self.mpdWrapper.samplerate = 192000
             self.mpdWrapper.encoding = UInt8(MPD_SAMPLE_FORMAT_FLOAT)
             self.mpdWrapper.channels = 2
+            self.mpdWrapper.audioformat = "192000:f:2"
             
             self.mpdWrapper.statusChanged()
         }
@@ -399,7 +403,7 @@ class MPDStatusTests: XCTestCase {
         case .failed(let playerStatusArray, _):
             let playerStatus = playerStatusArray.last!
             
-            XCTAssert(playerStatus.quality.encoding == "FLOAT", "Expected encoding FLOAT, got \(playerStatus.quality.encoding)")
+            XCTAssert(playerStatus.quality.encoding == "Float", "Expected encoding FLOAT, got \(playerStatus.quality.encoding)")
             
         default:
             print("Default")

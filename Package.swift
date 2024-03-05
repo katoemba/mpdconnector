@@ -14,7 +14,8 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "master"),
-        .package(url: "https://github.com/katoemba/libmpdclient-swift.git", .upToNextMajor(from: "2.19.0")),
+        .package(url: "https://github.com/katoemba/SwiftMPD.git", branch: "main"),
+        .package(url: "https://github.com/katoemba/libmpdclient-swift.git", branch: "master"),
         .package(url: "https://github.com/katoemba/rxnetservice.git", .upToNextMajor(from: "0.2.3")),
         .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "6.6.0")),
         .package(url: "https://github.com/RxSwiftCommunity/RxSwiftExt.git", .upToNextMajor(from: "6.0.0")),
@@ -29,7 +30,8 @@ let package = Package(
                            .product(name: "RxRelay", package: "rxswift"),
                            .product(name: "RxSwift", package: "rxswift"),
                            .product(name: "RxSwiftExt", package: "rxswiftext"),
-                           .product(name: "libmpdclient", package: "libmpdclient-swift")]),
+                           .product(name: "libmpdclient", package: "libmpdclient-swift"),
+                           .product(name: "SwiftMPD", package: "swiftmpd")]),
         .target(
             name: "MPDConnectorWithBrowser",
             dependencies: ["MPDConnector",

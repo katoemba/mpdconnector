@@ -28,6 +28,7 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
+import SwiftMPD
 
 public class MPDControl: ControlProtocol {
     private var playerVolumeAdjustmentKey: String {
@@ -37,6 +38,7 @@ public class MPDControl: ControlProtocol {
     private var identification = ""
     private var connectionProperties: [String: Any]
     private let userDefaults: UserDefaults
+    private let mpdConnector: SwiftMPD.MPDConnector
     
     private let bag = DisposeBag()
     private var serialScheduler: SchedulerType
@@ -58,11 +60,13 @@ public class MPDControl: ControlProtocol {
                 connectionProperties: [String: Any],
                 identification: String = "NoID",
                 scheduler: SchedulerType? = nil,
-                userDefaults: UserDefaults) {
+                userDefaults: UserDefaults,
+                mpdConnector: SwiftMPD.MPDConnector) {
         self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
         self.userDefaults = userDefaults
+        self.mpdConnector = mpdConnector
         
         self.serialScheduler = scheduler ?? SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdcontrol")
         
@@ -130,9 +134,9 @@ public class MPDControl: ControlProtocol {
     
     /// Skip to the next track.
     public func skip() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_next(connection)
-            }
+        runAsyncCommand {
+            _ = try? await $0.playback.next()
+        }
     }
     
     /// Go back to the previous track.
@@ -247,12 +251,8 @@ public class MPDControl: ControlProtocol {
     /// - Parameter volume: The volume to set. Must be a value between 0.0 and 1.0, values outside this range will be ignored.
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func setVolume(_ volume: Float) -> Observable<PlayerStatus> {
-        runCommandWithStatus()  { connection in
-            guard volume >= 0.0, volume <= 1.0 else {
-                return
-            }
-
-            _ = self.mpd.run_set_volume(connection, UInt32(roundf(MPDHelper.adjustedVolumeToPlayer(volume, volumeAdjustment: self.volumeAdjustment) * 100.0)))
+        runAsyncCommand {
+            _ = try? await $0.playback.setVolume(Int32(roundf(MPDHelper.adjustedVolumeToPlayer(volume, volumeAdjustment: self.volumeAdjustment) * 100.0)))
         }
     }
     
@@ -402,7 +402,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of album and addResponse.
     public func add(_ album: Album, addDetails: AddDetails) -> Observable<(Album, AddResponse)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsOnAlbum(album)
             .flatMap({ (songs) -> Observable<(Album, AddResponse)> in
                 self.add(songs, addDetails: addDetails)
@@ -420,7 +420,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of album and playlist.
     public func addToPlaylist(_ album: Album, playlist: Playlist) -> Observable<(Album, Playlist)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsOnAlbum(album)
             .flatMap({ (songs) -> Observable<(Album, Playlist)> in
                     return self.runCommandWithStatus()  { connection in
@@ -443,7 +443,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of artist and addResponse.
     public func add(_ artist: Artist, addDetails: AddDetails) -> Observable<(Artist, AddResponse)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsByArtist(artist)
             .flatMap({ (songs) -> Observable<(Artist, AddResponse)> in
                 self.add(songs, addDetails: addDetails)
@@ -514,7 +514,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of folder and addResponse.
     public func add(_ folder: Folder, addDetails: AddDetails) -> Observable<(Folder, AddResponse)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties)
+        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.fetchFolderContents(parentFolder: folder)
             .map({ (folderContents) -> [Song] in
                 var songs = [Song]()
@@ -734,5 +734,41 @@ public class MPDControl: ControlProtocol {
                 return Observable.just(MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults).fetchPlayerStatus(connection))
             }
             .observe(on: MainScheduler.instance)
+    }
+    
+    private func runAsyncCommand(command: @escaping (SwiftMPD.MPDConnector) async -> Void) -> Observable<PlayerStatus> {
+        let mpdConnector = self.mpdConnector
+        let connectionProperties = self.connectionProperties
+
+        return Observable<PlayerStatus>.fromAsync {
+            await command(mpdConnector)
+            let status = try await mpdConnector.status.getStatus()
+            let currentSong = try await mpdConnector.status.getCurrentSong()
+            let playerStatus = PlayerStatus(from: status, currentSong: currentSong, connectionProperties: connectionProperties)
+            
+            return playerStatus
+        }
+        // For now not a very clean handling
+        .catchErrorJustComplete()
+        .observe(on: MainScheduler.instance)
+    }
+}
+
+extension Observable {
+    static func fromAsync<T>(_ fn: @escaping () async throws -> T) -> Observable<T> {
+        .create { observer in
+            let task = Task {
+                do {
+                    let result: T = try await fn()
+                    
+                    observer.onNext(result)
+                    observer.onCompleted()
+                }
+                catch {
+                    observer.onError(error)
+                }
+            }
+            return Disposables.create { task.cancel() }
+        }
     }
 }

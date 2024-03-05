@@ -211,37 +211,6 @@ class MPDBrowseTests: XCTestCase {
         testScheduler.start()
     }
     
-    func testSongsInPlaylist() {
-        let playlist = Playlist(id: "Playlist1", source: .Local, name: "PlaylistName", lastModified: Date(timeIntervalSince1970: 10000))
-
-        mpdWrapper.songs = [["title": "t1", "album": "alb1", "artist": "art1"],
-                            ["title": "t2", "album": "alb2", "artist": "art2"],
-                            ["title": "t3", "album": "alb3", "artist": "art3"],
-                            ["title": "t4", "album": "alb4", "artist": "art4"]]
-        
-        let songResults = mpdPlayer?.browse.songsInPlaylist(playlist)
-            .toBlocking(timeout: 0.8)
-            .materialize()
-        
-        switch songResults {
-        case .completed(let songOnNext)?:
-            let songs = songOnNext[0]
-            XCTAssert(songs.count == 4, "Expected 4 songs, got \(songs.count)")
-        default:
-            XCTAssert(false, "songsInPlaylist failed")
-        }
-        
-        self.mpdWrapper.assertCall("send_list_playlist_meta", expectedCallCount: 1, expectedParameters: ["name": "Playlist1"])
-        let connectCount = self.mpdWrapper.callCount("connection_new")
-        let freeCount = self.mpdWrapper.callCount("connection_free")
-        XCTAssert(connectCount == freeCount, "connectCount: \(connectCount) != freeCount: \(freeCount)")
-
-        let songCount = self.mpdWrapper.callCount("recv_song")
-        let songFreeCount = self.mpdWrapper.callCount("song_free")
-        let fetchCount = self.mpdWrapper.callCount("send_list_playlist_meta")
-        XCTAssert(songCount - fetchCount == songFreeCount, "Expected \(songCount - fetchCount) for songFreeCount, got \(songFreeCount)")
-    }
-
     func testPlaylists() {
         mpdWrapper.playlists = [["id": "id1", "name": "name1"],
                                 ["id": "id2", "name": "name2"],

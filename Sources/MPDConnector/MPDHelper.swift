@@ -382,32 +382,11 @@ public class MPDHelper {
                 filetype = filecomponents[filecomponents.count - 1]
             }
         }
-        if let audioFormat = mpd.song_get_audio_format(mpdSong) {
-            var encodingString = ""
-            if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
-                encodingString = "FLOAT"
-            }
-            else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
-                encodingString = "DSD"
-            }
-            else if audioFormat.1 > 0 {
-                encodingString = "\(audioFormat.1)"
-            }
-            
-            song.quality = QualityStatus(rawBitrate: nil,
-                                         rawSamplerate: audioFormat.0,
-                                         rawChannels: UInt32(audioFormat.2),
-                                         encodingString: encodingString,
-                                         filetype: filetype)
-        }
-        else {
-            song.quality = QualityStatus(rawBitrate: nil,
-                                         rawSamplerate: nil,
-                                         rawChannels: nil,
-                                         rawEncoding: nil,
-                                         filetype: filetype)
-        }
         
+        let audioFormat = mpd.song_get_raw_audio_format(mpdSong)
+        var quality = QualityStatus(audioFormat: audioFormat)
+        quality.filetype = filetype        
+        song.quality = quality
         
         // Get a sensible coverURI
         guard song.source == .Local else { return song }

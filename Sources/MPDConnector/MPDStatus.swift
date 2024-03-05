@@ -29,6 +29,7 @@ import ConnectorProtocol
 import libmpdclient
 import RxSwift
 import RxRelay
+import SwiftMPD
 
 public class MPDStatus: StatusProtocol {
     private var playerVolumeAdjustmentKey: String {
@@ -235,31 +236,11 @@ public class MPDStatus: StatusProtocol {
     /// - Returns: a filled QualityStatus struct
     private func processQuality(_ status: OpaquePointer) -> QualityStatus {
         let bitrate = self.mpd.status_get_kbit_rate(status)
-        if let audioFormat = self.mpd.status_get_audio_format(status) {
-            var encodingString = ""
-            if audioFormat.1 == MPD_SAMPLE_FORMAT_FLOAT {
-                encodingString = "FLOAT"
-            }
-            else if audioFormat.1 == MPD_SAMPLE_FORMAT_DSD {
-                encodingString = "DSD"
-            }
-            else if audioFormat.1 > 0 {
-                encodingString = "\(audioFormat.1)"
-            }
+        let audioFormat = self.mpd.status_get_raw_audio_format(status)
 
-            return QualityStatus(rawBitrate: bitrate,
-                                 rawSamplerate: audioFormat.0,
-                                 rawChannels: UInt32(audioFormat.2),
-                                 encodingString: encodingString,
-                                 filetype: "")
-        }
-        else {
-            return QualityStatus(rawBitrate: bitrate,
-                                 rawSamplerate: nil,
-                                 rawChannels: nil,
-                                 encodingString: "",
-                                 filetype: "")
-        }
+        var quality = QualityStatus(audioFormat: audioFormat)
+        quality.rawBitrate = bitrate * 1000
+        return quality
     }
     
     /// Get the current status of a controller
@@ -456,4 +437,191 @@ public class MPDStatus: StatusProtocol {
     public func testSetPlayerStatus(playerStatus: PlayerStatus) {
         _playerStatus.accept(playerStatus)
     }
+}
+
+extension PlayerStatus {
+    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong, connectionProperties: [String: Any]) {
+        self.init()
+        
+        self.currentSong = Song(mpdSong: currentSong, connectionProperties: connectionProperties)
+        lastUpdateTime = Date()
+        time.elapsedTime = Int(from.elapsed ?? 0)
+        time.trackTime = Int(from.duration ?? 0)
+        volume = Float(from.volume) / Float(100.0)
+        volumeEnabled = from.volume >= 0
+        switch from.state {
+        case .pause:
+            playing.playPauseMode = .Paused
+        case .play:
+            playing.playPauseMode = .Playing
+        case .stop:
+            playing.playPauseMode = .Stopped
+        }
+    }
+}
+
+extension QualityStatus {
+    public init(audioFormat: String) {
+        self.init(audioFormat: AudioFormat(audioFormat))
+    }
+    
+    public init(audioFormat: AudioFormat) {
+        self.init()
+        
+        rawBitrate = nil
+        if let channels = audioFormat.channels {
+            rawChannels = UInt32(channels)
+        }
+        if let samplerate = audioFormat.samplerate {
+            rawSamplerate = UInt32(samplerate)
+        }
+        if let bits = audioFormat.bits {
+            switch bits {
+            case .eight:
+                rawEncoding = .bits(8)
+            case .sixteen:
+                rawEncoding = .bits(16)
+            case .twentyfour:
+                rawEncoding = .bits(24)
+            case .thirtytwo:
+                rawEncoding = .bits(32)
+            case .dsd:
+                rawEncoding = .text("DSD")
+            case .dsd64:
+                rawEncoding = .text("DSD64")
+            case .dsd128:
+                rawEncoding = .text("DSD128")
+            case .dsd256:
+                rawEncoding = .text("DSD256")
+            case .dsd512:
+                rawEncoding = .text("DSD512")
+            case .dsd1024:
+                rawEncoding = .text("DSD1024")
+            case .floatingpoint:
+                rawEncoding = .text("Float")
+            }
+        }
+    }
+}
+
+extension Song {
+    public init(mpdSong: SwiftMPD.MPDSong, connectionProperties: [String: Any]) {
+        self.init()
+        
+        id = mpdSong.file
+        if id.starts(with: "spotify:") {
+            source = .Spotify
+        }
+        else if id.starts(with: "tunein:") {
+            source = .TuneIn
+        }
+        else if id.starts(with: "podcast+") {
+            source = .Podcast
+        }
+        else {
+            source = .Local
+        }
+        title = mpdSong.title ?? ""
+        // Some mpd versions (on Bryston) don't pick up the title correctly for wav files.
+        // In such case, get it from the file path.
+        if title == "", source == .Local {
+            let components = id.components(separatedBy: "/")
+            if components.count >= 1 {
+                let filename = components[components.count - 1]
+                let filecomponents = filename.components(separatedBy: ".")
+                if filecomponents.count >= 1 {
+                    title = filecomponents[0]
+                }
+            }
+        }
+        album = mpdSong.album ?? ""
+        // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
+        // In such case, get it from the file path.
+        if album == "", source == .Local {
+            let components = id.components(separatedBy: "/")
+            if components.count >= 2 {
+                album = components[components.count - 2]
+            }
+        }
+        artist = mpdSong.artist ?? ""
+        // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
+        // In such case, get it from the file path.
+        if artist == "", source == .Local {
+            let components = id.components(separatedBy: "/")
+            if components.count >= 3 {
+                artist = components[components.count - 3]
+            }
+        }
+        albumartist = mpdSong.albumartist ?? ""
+        composer = mpdSong.composer ?? ""
+        genre = mpdSong.genre == nil ? [] : [mpdSong.genre!]
+        length = Int(mpdSong.duration)
+        name = mpdSong.name ?? ""
+        date = mpdSong.date ?? ""
+        year = Int(String(date.prefix(4))) ?? 0
+        performer = mpdSong.performer ?? ""
+        comment = mpdSong.comment ?? ""
+        
+        track = Int(mpdSong.track ?? 0)
+        disc = Int(mpdSong.disc ?? "") ?? 0
+        musicbrainzArtistId = mpdSong.musicbrainz_artistid ?? ""
+        musicbrainzAlbumId = mpdSong.musicbrainz_albumid ?? ""
+        musicbrainzAlbumArtistId = mpdSong.musicbrainz_albumartistid ?? ""
+        musicbrainzTrackId = mpdSong.musicbrainz_trackid ?? ""
+        musicbrainzReleaseId = mpdSong.musicbrainz_releasetrackid ?? ""
+        originalDate = mpdSong.originaldate ?? ""
+        sortArtist = mpdSong.artistsort ?? ""
+        sortAlbumArtist = mpdSong.albumartistsort ?? ""
+        sortAlbum = mpdSong.albumsort ?? ""
+        lastModified = mpdSong.lastmodified ?? Date()
+        
+        var filetype = ""
+        let components = id.components(separatedBy: "/")
+        if components.count >= 1 {
+            let filename = components[components.count - 1]
+            let filecomponents = filename.components(separatedBy: ".")
+            if filecomponents.count >= 2 {
+                filetype = filecomponents[filecomponents.count - 1]
+            }
+        }
+        
+        quality = QualityStatus(audioFormat: mpdSong.audioFormat)
+        quality.filetype = filetype
+                
+        // Get a sensible coverURI
+        guard source == .Local else { return }
+        
+        let pathSections = id.split(separator: "/")
+        var newPath = ""
+        if pathSections.count > 0 {
+            for index in 0..<(pathSections.count - 1) {
+                newPath.append(contentsOf: pathSections[index])
+                newPath.append(contentsOf: "/")
+            }
+        }
+        
+        let coverString = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        var coverHost = connectionProperties[MPDConnectionProperties.alternativeCoverHost.rawValue] as? String ?? ""
+        if coverHost == "" {
+            coverHost = connectionProperties[ConnectionProperties.host.rawValue] as? String ?? ""
+        }
+        let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
+        let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"
+        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as? String ?? ""
+        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as? String ?? ""
+        let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as? String ?? ""
+
+        if postfix == "" && alternativePostfix == "" {
+            coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)")
+        }
+        else if postfix == "<track>" {
+            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(id)", newPath, ["cover.jpg"])
+        }
+        else if alternativePostfix == "" {
+            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, CoverURI.embeddedPrefix + id])
+        }
+        else {
+            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, alternativePostfix, CoverURI.embeddedPrefix + id])
+        }
+     }
 }

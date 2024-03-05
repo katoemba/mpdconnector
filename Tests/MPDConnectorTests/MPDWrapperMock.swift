@@ -81,6 +81,7 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     var tagTypes = [String]()
     var pairs = [(String,String)]()
     var queueChanges = [(UInt32,UInt32)]()
+    var audioformat = ""
 
     func stringFromMPDString(_ mpdString: UnsafePointer<Int8>?) -> String {
         if let string = mpdString {
@@ -311,6 +312,16 @@ class MPDWrapperMock: MockBase, MPDProtocol {
     func status_get_audio_format(_ status: OpaquePointer!) -> (UInt32, UInt8, UInt8)? {
         registerCall("status_get_audio_format", ["status": "\(status!)"])
         return (samplerate, encoding, channels)
+    }
+    
+    func status_get_raw_audio_format(_ status: OpaquePointer!) -> String {
+        registerCall("status_get_raw_audio_format", ["status": "\(status!)"])
+        return audioformat
+    }
+    
+    func song_get_raw_audio_format(_ song: OpaquePointer!) -> String {
+        registerCall("song_get_raw_audio_format", ["song": "\(song!)"])
+        return audioformat
     }
 
     func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String {

@@ -28,6 +28,7 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
+import SwiftMPD
 
 extension Array where Element:Hashable {
     var orderedSet: Array {
@@ -46,16 +47,19 @@ public class MPDBrowse: BrowseProtocol {
     private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
-    
+    private let mpdConnector: SwiftMPD.MPDConnector
+
     private var scheduler: SchedulerType
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
                 identification: String = "NoID",
-                scheduler: SchedulerType? = nil) {
+                scheduler: SchedulerType? = nil,
+                mpdConnector: SwiftMPD.MPDConnector) {
         self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
+        self.mpdConnector = mpdConnector
 
         self.scheduler = scheduler ?? ConcurrentDispatchQueueScheduler(qos: .background)
         HelpMePlease.allocUp(name: "MPDBrowse")
@@ -1221,17 +1225,15 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter playlist: the playlst to get the songs for
     /// - Returns: an observable array of Song objects
     public func songsInPlaylist(_ playlist: Playlist) -> Observable<[Song]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Song]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+        let mpdConnector = self.mpdConnector
+        let connectionProperties = self.connectionProperties
 
-                let songs = self.songsForPlaylist(connection: connection, playlist: playlist.id)
-                
-                return Observable.just(songs)
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+        return Observable<[Song]>.fromAsync {
+            try await mpdConnector.playlist.listplaylistinfo(name: playlist.name)
+                .map {
+                    Song(mpdSong: $0, connectionProperties: connectionProperties)
+                }
+        }
     }
     
     /// Return a view model for a list of songs in an album, which can return songs in batches.
@@ -1615,7 +1617,10 @@ public class MPDBrowse: BrowseProtocol {
     
     public func imageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
         guard coverURI.path != "" else { return Observable.just(nil) }
-        return readBinary(command: "albumart", uri: coverURI.path)
+        return Observable<[Data?]>.fromAsync {
+            try? await self.mpdConnector.database.setBinarylimit(limit: 200000)
+            return try? await self.mpdConnector.database.getAlbumart(path: coverURI.path)
+        }
     }
 
     public func embeddedImageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {

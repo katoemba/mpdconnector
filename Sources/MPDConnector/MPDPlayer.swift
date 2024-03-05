@@ -28,6 +28,7 @@ import Foundation
 import ConnectorProtocol
 import libmpdclient
 import RxSwift
+import SwiftMPD
 
 enum ConnectionError: Error {
     case internalError
@@ -99,6 +100,8 @@ public class MPDPlayer: PlayerProtocol {
     public private(set) var version: String
     
     public private(set) var connectionWarning: String?
+    
+    private let mpdConnector: SwiftMPD.MPDConnector
     
     public var description: String {
         return type.description + " " + version
@@ -225,13 +228,13 @@ public class MPDPlayer: PlayerProtocol {
     public var control: ControlProtocol {
         get {
             // Use serialScheduler to synchronize commands across multiple MPDControl instances.
-            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, userDefaults: userDefaults)
+            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, userDefaults: userDefaults, mpdConnector: mpdConnector)
         }
     }
     /// Create a unique object for every request for a browse object
     public var browse: BrowseProtocol {
         get {
-            return MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: scheduler)
+            return MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: scheduler, mpdConnector: mpdConnector)
         }
     }
     
@@ -283,7 +286,7 @@ public class MPDPlayer: PlayerProtocol {
         self.version = version
         self.discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
-        
+                
         userDefaults.set(ipAddress, forKey: MPDConnectionProperties.ipAddress.rawValue + "." + initialUniqueID)
         if password != nil {
             userDefaults.set(password, forKey: ConnectionProperties.password.rawValue + "." + initialUniqueID)
@@ -360,6 +363,8 @@ public class MPDPlayer: PlayerProtocol {
                                         scheduler: scheduler,
                                         userDefaults: userDefaults)
         
+        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
+
         HelpMePlease.allocUp(name: "MPDPlayer")
     }
     
