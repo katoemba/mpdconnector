@@ -433,7 +433,6 @@ public class MPDBrowse: BrowseProtocol {
                             let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
                             let albumID = "\(albumartist):\(song.album)"
                             count += 1
-                            print("albumID: \(albumID), count: \(count), requested: \(numberOfAlbums * 12)")
                             if albumIDs[albumID] == nil {
                                 albumIDs[albumID] = 1
                                 albums.append(self.createAlbumFromSong(song))
