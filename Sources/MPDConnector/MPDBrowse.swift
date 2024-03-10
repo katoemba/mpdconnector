@@ -423,14 +423,17 @@ public class MPDBrowse: BrowseProtocol {
                     try self.mpd.search_db_songs(connection, exact: true)
                     try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSince1970: TimeInterval(0)))
                     try self.mpd.search_add_sort_name(connection, name: "Last-Modified", descending: true)
-                    try self.mpd.search_add_window(connection, start: 0, end: UInt32(numberOfAlbums * 12))
+                    try self.mpd.search_add_window(connection, start: 0, end: UInt32(numberOfAlbums * 24))
                     try self.mpd.search_commit(connection)
                     
+                    var count = 0
                     var albumIDs = [String: Int]()
                     while let mpdSong = self.mpd.recv_song(connection) {
                         if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
                             let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
                             let albumID = "\(albumartist):\(song.album)"
+                            count += 1
+                            print("albumID: \(albumID), count: \(count), requested: \(numberOfAlbums * 12)")
                             if albumIDs[albumID] == nil {
                                 albumIDs[albumID] = 1
                                 albums.append(self.createAlbumFromSong(song))
@@ -1618,7 +1621,6 @@ public class MPDBrowse: BrowseProtocol {
     public func imageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
         guard coverURI.path != "" else { return Observable.just(nil) }
         return Observable<[Data?]>.fromAsync {
-            try? await self.mpdConnector.database.setBinarylimit(limit: 200000)
             return try? await self.mpdConnector.database.getAlbumart(path: coverURI.path)
         }
     }
