@@ -102,7 +102,8 @@ public class MPDPlayer: PlayerProtocol {
     public private(set) var connectionWarning: String?
     
     private let mpdConnector: SwiftMPD.MPDConnector
-    
+    private let mpdIdleConnector: SwiftMPD.MPDConnector
+
     public var description: String {
         return type.description + " " + version
     }
@@ -358,13 +359,15 @@ public class MPDPlayer: PlayerProtocol {
                                     MPDConnectionProperties.outputHost.rawValue: outputHost,
                                     MPDConnectionProperties.outputPort.rawValue: outputPort] as [String : Any]
         
+        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
+        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
         self.mpdStatus = MPDStatus.init(mpd: mpd,
                                         connectionProperties: connectionProperties,
                                         scheduler: scheduler,
-                                        userDefaults: userDefaults)
+                                        userDefaults: userDefaults,
+                                        mpdConnector: mpdConnector,
+                                        mpdIdleConnector: mpdIdleConnector)
         
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
-
         HelpMePlease.allocUp(name: "MPDPlayer")
     }
     

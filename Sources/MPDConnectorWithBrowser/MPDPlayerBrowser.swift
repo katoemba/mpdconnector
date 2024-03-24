@@ -287,7 +287,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .observe(on: backgroundScheduler)
             .map({ (player) -> PlayerProtocol in
                 let mpd = MPDWrapper()
-                let mpdConnection = MPDHelper.connect(mpd: mpd, connectionProperties: player.connectionProperties)
+                let connectionProperties = player.connectionProperties
+                let mpdConnection = MPDHelper.connect(mpd: mpd, connectionProperties: connectionProperties)
                 if let connection = mpdConnection?.connection {
                     var connectionWarning = nil as String?
                     let version = mpd.connection_get_server_version(connection)

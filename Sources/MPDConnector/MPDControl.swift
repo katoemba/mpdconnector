@@ -80,10 +80,9 @@ public class MPDControl: ControlProtocol {
     
     /// Start playback.
     public func play() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-            _ = self.mpd.run_play(connection)
-            }
-            .observe(on: MainScheduler.instance)
+        runAsyncCommand {
+            _ = try? await $0.playback.play()
+        }
     }
     
     /// Start playback of a specific track.
@@ -94,42 +93,36 @@ public class MPDControl: ControlProtocol {
             return Observable.empty()
         }
         
-        return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_play_pos(connection, UInt32(index))
-            }
+        return runAsyncCommand {
+            _ = try? await $0.playback.play(index)
+        }
     }
     
     /// Pause playback.
     public func pause() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_pause(connection, true)
-            }
+        runAsyncCommand {
+            _ = try? await $0.playback.pause()
+        }
     }
     
     /// Stop playback.
     public func stop() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_seek(connection, pos: 0, t: 0)
-                _ = self.mpd.run_stop(connection)
-            }
+        runAsyncCommand {
+            _ = try? await $0.playback.seek(songpos: 0, time: 0.0)
+            _ = try? await $0.playback.stop()
+        }
     }
     
     /// Toggle between play and pause: when paused -> start to play, when playing -> pause.
     public func togglePlayPause() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-                var playingStatus = MPD_STATE_UNKNOWN
-                if let status = self.mpd.run_status(connection) {
-                    playingStatus = self.mpd.status_get_state(status)
-                    self.mpd.status_free(status)
-                }
-            
-                if playingStatus == MPD_STATE_STOP {
-                    _ = self.mpd.run_play(connection)
-                }
-                else {
-                    _ = self.mpd.run_toggle_pause(connection)
-                }
+        runAsyncCommand { connector, playerStatus in
+            if playerStatus.playing.playPauseMode == .Playing {
+                _ = try? await connector.playback.pause()
             }
+            else {
+                _ = try? await connector.playback.play()
+            }
+        }
     }
     
     /// Skip to the next track.
@@ -141,17 +134,17 @@ public class MPDControl: ControlProtocol {
     
     /// Go back to the previous track.
     public func back() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_previous(connection)
-            }
+        runAsyncCommand {
+            _ = try? await $0.playback.previous()
+        }
     }
     
     /// Set the random mode of the player.
     ///
     /// - Parameter randomMode: The random mode to use.
     public func setRandom(_ randomMode: RandomMode) -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-            _ = self.mpd.run_random(connection, (randomMode == .On) ? true : false)
+        runAsyncCommand {
+            _ = try? await $0.playback.setRandom((randomMode == .On) ? .on : .off)
         }
     }
     
@@ -159,16 +152,14 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter from: The current random mode.
     public func toggleRandom() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-
-            _ = self.mpd.run_random(connection, (playerStatus.playing.randomMode == .On) ? false : true)
+        runAsyncCommand() { mpdConnector, playerStatus in
+            _ = try? await mpdConnector.playback.setRandom(playerStatus.playing.randomMode == .On ? .off : .on)
         }
     }
     
     /// Shuffle the current playqueue
     public func shufflePlayqueue() -> Observable<PlayerStatus> {
+        
         return runCommandWithStatus()  { connection in
             _ = self.mpd.run_shuffle(connection)
         }
@@ -178,21 +169,23 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter repeatMode: The repeat mode to use.
     public func setRepeat(_ repeatMode: RepeatMode) -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
+        runAsyncCommand {
+            var repeatState: OnOffState
+            var singleState: OnOffOneShotState
             switch repeatMode {
-                case .Off:
-                    _ = self.mpd.run_single(connection, false)
-                    _ = self.mpd.run_repeat(connection, false)
-                case .All:
-                    _ = self.mpd.run_repeat(connection, true)
-                    _ = self.mpd.run_single(connection, false)
-                case .Single:
-                    _ = self.mpd.run_single(connection, true)
-                    _ = self.mpd.run_repeat(connection, true)
-                case .Album:
-                    _ = self.mpd.run_repeat(connection, true)
-                    _ = self.mpd.run_single(connection, false)
+            case .Off:
+                repeatState = .off
+                singleState = .off
+            case .All, .Album:
+                repeatState = .on
+                singleState = .off
+            case .Single:
+                repeatState = .on
+                singleState = .on
             }
+            
+            _ = try? await $0.playback.setRepeat(repeatState)
+            _ = try? await $0.playback.setSingle(singleState)
         }
     }
     
@@ -200,28 +193,26 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter from: The current repeat mode.
     public func toggleRepeat() -> Observable<PlayerStatus> {
-        return runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-
+        runAsyncCommand { mpdConnector, playerStatus in
+            var repeatState: OnOffState
+            var singleState: OnOffOneShotState
             switch playerStatus.playing.repeatMode {
             case .Off:
                 // Switch to All
-                _ = self.mpd.run_repeat(connection, true)
-                _ = self.mpd.run_single(connection, false)
-            case .All:
+                repeatState = .on
+                singleState = .off
+            case .All, .Album:
                 // Switch to Single
-                _ = self.mpd.run_single(connection, true)
-                _ = self.mpd.run_repeat(connection, true)
+                repeatState = .on
+                singleState = .on
             case .Single:
                 // Switch to Off
-                _ = self.mpd.run_single(connection, false)
-                _ = self.mpd.run_repeat(connection, false)
-            case .Album:
-                // Switch to Off
-                _ = self.mpd.run_repeat(connection, false)
-                _ = self.mpd.run_single(connection, false)
+                repeatState = .off
+                singleState = .off
             }
+            
+            _ = try? await mpdConnector.playback.setRepeat(repeatState)
+            _ = try? await mpdConnector.playback.setSingle(singleState)
         }
     }
     
@@ -229,8 +220,8 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter consumeMode: The consume mode to use.
     public func setConsume(_ consumeMode: ConsumeMode) {
-        runCommand()  { connection in
-            _ = self.mpd.run_consume(connection, (consumeMode == .On) ? true : false)
+        _ = runAsyncCommand() {
+            _ = try? await $0.playback.setConsume(consumeMode == .On ? .on : .off)
         }
     }
     
@@ -238,11 +229,8 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter from: The current consume mode.
     public func toggleConsume() {
-        runCommand()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-
-            _ = self.mpd.run_consume(connection, (playerStatus.playing.consumeMode == .On) ? false : true)
+        _ = runAsyncCommand() { mpdConnector, playerStatus in
+            _ = try? await mpdConnector.playback.setConsume(playerStatus.playing.consumeMode == .On ? .off : .on)
         }
     }
     
@@ -261,12 +249,9 @@ public class MPDControl: ControlProtocol {
     /// - Parameter adjustment: The adjustment to be made. Negative values will decrease the volume, positive values will increase the volume.
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func adjustVolume(_ adjustment: Float) -> Observable<PlayerStatus> {
-        runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-
+        runAsyncCommand { connector, playerStatus in
             let volume = adjustment < 0 ? max(playerStatus.volume + adjustment, 0.0) : min(playerStatus.volume + adjustment, 1.0)
-            _ = self.mpd.run_set_volume(connection, UInt32(roundf(MPDHelper.adjustedVolumeToPlayer(volume, volumeAdjustment: self.volumeAdjustment) * 100.0)))
+            _ = try? await connector.playback.setVolume(Int32(roundf(MPDHelper.adjustedVolumeToPlayer(volume, volumeAdjustment: self.volumeAdjustment) * 100.0)))
         }
     }
     
@@ -275,12 +260,9 @@ public class MPDControl: ControlProtocol {
     /// - Parameter seconds: seconds in the current song, must be <= length of the song
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func setSeek(seconds: UInt32) -> Observable<PlayerStatus> {
-        runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-
+        runAsyncCommand { connector, playerStatus in
             if seconds < playerStatus.currentSong.length {
-                _ = self.mpd.run_seek(connection, pos: UInt32(playerStatus.currentSong.position), t: seconds)
+                _ = try? await connector.playback.seekcur(time: Float(seconds))
             }
         }
     }
@@ -290,12 +272,10 @@ public class MPDControl: ControlProtocol {
     /// - Parameter percentage: relative position in the current song, must be between 0.0 and 1.0
     /// - Returns: an observable for the up-to-date playerStatus after the action is completed.
     public func setSeek(percentage: Float) -> Observable<PlayerStatus> {
-        runCommandWithStatus()  { connection in
-            let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-            let playerStatus = mpdStatus.fetchPlayerStatus(connection)
+        runAsyncCommand { connector, playerStatus in
             let seconds = UInt32(percentage * Float(playerStatus.currentSong.length))
             if seconds < playerStatus.currentSong.length {
-                _ = self.mpd.run_seek(connection, pos: UInt32(playerStatus.currentSong.position), t: seconds)
+                _ = try? await connector.playback.seekcur(time: Float(seconds))
             }
         }
     }
@@ -307,65 +287,39 @@ public class MPDControl: ControlProtocol {
     ///   - addDetails: how to add the song to the playqueue
     /// - Returns: an observable tuple consisting of songs and addResponse.
     public func add(_ songs: [Song], addDetails: AddDetails) -> Observable<([Song], AddResponse)> {
-        return runCommandWithStatus()  { connection in
-                var pos = UInt32(0)
+        runAsyncCommand { mpdConnector, playerStatus in
+            var pos = 0
             
-                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-                let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-            
-                switch addDetails.addMode {
-                case .replace:
-                    _ = self.mpd.run_clear(connection)
-                case .addNext:
-                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
-                case .addNextAndPlay:
-                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
-                case .addAtEnd:
-                    pos = UInt32(playerStatus.playqueue.length)
-                }
-            
-                let songsToAdd = addDetails.shuffle ? songs.shuffled() : songs
-            
-                let batchSize = UInt32(40)
-                // Smaller sizes are added directly, trying to work around an occasional crash in mpd_command_list_end.
-                if songsToAdd.count <= batchSize {
-                    for song in songsToAdd {
-                        _ = self.mpd.run_add_id_to(connection, uri: song.id, to: pos)
-                        pos = pos + 1
-                    }
-                }
-                else {
-                    // Add songs in a command list, as this can be a longer list.
-                    var index = UInt32(0)
-                    while index < songsToAdd.count {
-                        _ = self.mpd.command_list_begin(connection, discrete_ok: false)
-                        let last = min(index + batchSize, UInt32(songsToAdd.count))
-                        while index < last {
-                            let song = songsToAdd[Int(index)]
-                            _ = self.mpd.send_add_id_to(connection, uri: song.id, to: pos)
-                            pos = pos + 1
-                            index = index + 1
-                        }
-                        
-                        if self.mpd.connection_get_error(connection) == MPD_ERROR_SUCCESS {
-                            _ = self.mpd.command_list_end(connection)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    }
-                }
-
-                if addDetails.addMode == .replace {
-                    _ = self.mpd.run_play_pos(connection, addDetails.startWithSong)
-                }
-                else if addDetails.addMode == .addNextAndPlay {
-                    _ = self.mpd.run_play_pos(connection, UInt32(playerStatus.playqueue.songIndex + 1))
-                }
+            var executors = [any CommandExecutor]()
+            switch addDetails.addMode {
+            case .replace:
+                executors.append(mpdConnector.queue.clearExecutor())
+            case .addNext, .addNextAndPlay:
+                pos = playerStatus.playqueue.songIndex + 1
+            case .addAtEnd:
+                pos = playerStatus.playqueue.length
             }
-            .map({ (playerStatus) -> ([Song], AddResponse) in
-                return (songs, AddResponse(addDetails, playerStatus))
-            })
-    }
+            
+            let songsToAdd = addDetails.shuffle ? songs.shuffled() : songs
 
+            for song in songsToAdd {
+                executors.append(mpdConnector.queue.addidExecutor(song.id, position: pos))
+                pos = pos + 1
+            }
+
+            if addDetails.addMode == .replace {
+                executors.append(mpdConnector.playback.playExecutor(Int(addDetails.startWithSong)))
+            }
+            else if addDetails.addMode == .addNextAndPlay {
+                executors.append(mpdConnector.playback.playExecutor(Int(playerStatus.playqueue.songIndex + 1)))
+            }
+            _ = try? await mpdConnector.batchCommand(executors)
+        }
+        .map({ (_) -> ([Song], AddResponse) in
+            return (songs, AddResponse(addDetails, nil))
+        })
+    }
+    
     /// Add a song to the play queue
     ///
     /// - Parameters:
@@ -387,11 +341,11 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of song and playlist.
     public func addToPlaylist(_ song: Song, playlist: Playlist) -> Observable<(Song, Playlist)> {
         return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
-            }
-            .map({ (_) -> (Song, Playlist) in
-                (song, playlist)
-            })
+            _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
+        }
+        .map({ (_) -> (Song, Playlist) in
+            (song, playlist)
+        })
     }
     
     /// Add an album to the play queue
@@ -423,16 +377,16 @@ public class MPDControl: ControlProtocol {
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsOnAlbum(album)
             .flatMap({ (songs) -> Observable<(Album, Playlist)> in
-                    return self.runCommandWithStatus()  { connection in
-                        for song in songs {
-                            _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
-                        }
+                return self.runCommandWithStatus()  { connection in
+                    for song in songs {
+                        _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
                     }
-                    .map({ (_) -> (Album, Playlist) in
-                        (album, playlist)
-                    })
+                }
+                .map({ (_) -> (Album, Playlist) in
+                    (album, playlist)
+                })
             })
-
+        
     }
     
     /// Add an artist to the play queue
@@ -450,7 +404,7 @@ public class MPDControl: ControlProtocol {
                     .map({ (songs, addResponse) -> (Artist, AddResponse) in
                         (artist, addResponse)
                     })
-        })
+            })
     }
     
     /// Add a playlist to the play queue
@@ -461,49 +415,49 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of playlist and addResponse.
     public func add(_ playlist: Playlist, addDetails: AddDetails) -> Observable<(Playlist, AddResponse)> {
         return runCommandWithStatus()  { connection in
-                _ = self.mpd.run_clear(connection)
-                _ = self.mpd.run_load(connection, name: playlist.id)
-                if addDetails.shuffle {
-                    _ = self.mpd.run_shuffle(connection)
-                }
-            
-                _ = self.mpd.run_play_pos(connection, addDetails.startWithSong)
+            _ = self.mpd.run_clear(connection)
+            _ = self.mpd.run_load(connection, name: playlist.id)
+            if addDetails.shuffle {
+                _ = self.mpd.run_shuffle(connection)
             }
-            .map({ (playerStatus) -> (Playlist, AddResponse) in
-                (playlist, AddResponse(addDetails, playerStatus))
-            })
+            
+            _ = self.mpd.run_play_pos(connection, addDetails.startWithSong)
+        }
+        .map({ (playerStatus) -> (Playlist, AddResponse) in
+            (playlist, AddResponse(addDetails, playerStatus))
+        })
     }
-
+    
     /// Add a genre to the play queue
     ///
     /// - Parameters:
     ///   - genre: the genre to add
     ///   - addDetails: how to add the folder to the playqueue
     public func add(_ genre: Genre, addDetails: AddDetails) -> Observable<(Genre, AddResponse)> {
-        return runCommandWithStatus()  { connection in
-                do {
-                    _ = self.mpd.run_clear(connection)
-
-                    try self.mpd.search_add_db_songs(connection, exact: true)
-                    try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                    try self.mpd.search_commit(connection)
-                    
-                    _ = self.mpd.response_finish(connection)
-
-                    if addDetails.shuffle {
-                        _ = self.mpd.run_shuffle(connection)
-                    }
-                    
-                    _ = self.mpd.run_play_pos(connection, 0)
+        runCommandWithStatus()  { connection in
+            do {
+                _ = self.mpd.run_clear(connection)
+                
+                try self.mpd.search_add_db_songs(connection, exact: true)
+                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
+                try self.mpd.search_commit(connection)
+                
+                _ = self.mpd.response_finish(connection)
+                
+                if addDetails.shuffle {
+                    _ = self.mpd.run_shuffle(connection)
                 }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                }
+                
+                _ = self.mpd.run_play_pos(connection, 0)
             }
-            .map({ (playerStatus) -> (Genre, AddResponse) in
-                (genre, AddResponse(addDetails, playerStatus))
-            })
+            catch {
+                print(self.mpd.connection_get_error_message(connection))
+                _ = self.mpd.connection_clear_error(connection)
+            }
+        }
+        .map({ (playerStatus) -> (Genre, AddResponse) in
+            (genre, AddResponse(addDetails, playerStatus))
+        })
     }
     
     /// Add a folder to the play queue
@@ -540,51 +494,48 @@ public class MPDControl: ControlProtocol {
     ///   - addDetails: how to add the folder to the playqueue
     /// - Returns: an observable tuple consisting of folder and addResponse.
     public func addRecursive(_ folder: Folder, addDetails: AddDetails) -> Observable<(Folder, AddResponse)> {
-        return runCommandWithStatus()  { connection in
-                var pos = UInt32(0)
-
-                let mpdStatus = MPDStatus(mpd: self.mpd, connectionProperties: self.connectionProperties, userDefaults: self.userDefaults)
-                let playerStatus = mpdStatus.fetchPlayerStatus(connection)
-
-                switch addDetails.addMode {
-                case .replace:
-                    _ = self.mpd.run_clear(connection)
-                case .addNext:
-                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
-                case .addNextAndPlay:
-                    pos = UInt32(playerStatus.playqueue.songIndex + 1)
-                case .addAtEnd:
-                    pos = UInt32(playerStatus.playqueue.length)
-                }
+        runAsyncCommand { mpdConnector, playerStatus in
+            var pos = 0
             
-                _ = self.mpd.run_add(connection, uri: folder.path)
-                if addDetails.addMode == .replace {
-                    if addDetails.shuffle == true {
-                        _ = self.mpd.run_shuffle(connection)
-                    }
-                    _ = self.mpd.run_play_pos(connection, 0)
-                }
-                else if addDetails.addMode == .addNext || addDetails.addMode == .addNextAndPlay {
-                    var end = UInt32(0)
-                    if let status = self.mpd.run_status(connection) {
-                        defer {
-                            self.mpd.status_free(status)
-                        }
-                        end = self.mpd.status_get_queue_length(status)
-                    }
-                    _ = self.mpd.run_move_range(connection, start: UInt32(playerStatus.playqueue.length), end: end, to: pos)
+            var executors = [any CommandExecutor]()
+            switch addDetails.addMode {
+            case .replace:
+                executors.append(mpdConnector.queue.clearExecutor())
+            case .addNext, .addNextAndPlay:
+                pos = playerStatus.playqueue.songIndex + 1
+            case .addAtEnd:
+                pos = playerStatus.playqueue.length
+            }
+            
+            executors.append(mpdConnector.queue.addExecutor(folder.path))
 
-                    if addDetails.addMode == .addNextAndPlay {
-                        _ = self.mpd.run_play_pos(connection, pos)
-                    }
-                    
+            if addDetails.addMode == .replace {
+                if addDetails.shuffle == true {
+                    executors.append(mpdConnector.queue.shuffleExecutor())
+                }
+                executors.append(mpdConnector.playback.playExecutor(Int(addDetails.startWithSong)))
+            }
+            else if addDetails.addMode == .addNext || addDetails.addMode == .addNextAndPlay {
+                let statusExecutor = mpdConnector.status.statusExecutor()
+                executors.append(statusExecutor)
+                _ = try? await mpdConnector.batchCommand(executors)
+
+                executors.removeAll()
+                if let end = try? statusExecutor.processResults().playlistlength {
+                    executors.append(mpdConnector.queue.moveExecutor(range: playerStatus.playqueue.length...end, topos: pos))
+                }
+                
+                if addDetails.addMode == .addNextAndPlay {
+                    executors.append(mpdConnector.playback.playExecutor(pos))
                 }
             }
-            .map({ (playerStatus) -> (Folder, AddResponse) in
-                (folder, AddResponse(addDetails, playerStatus))
-            })
+            _ = try? await mpdConnector.batchCommand(executors)
+        }
+        .map({ (playerStatus) -> (Folder, AddResponse) in
+            (folder, AddResponse(addDetails, playerStatus))
+        })
     }
-
+    
     
     /// Move a song in the playqueue to a different position
     ///
@@ -690,7 +641,7 @@ public class MPDControl: ControlProtocol {
             }
         }
     }
-
+    
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///
     /// - Parameters:
@@ -703,13 +654,13 @@ public class MPDControl: ControlProtocol {
             .observe(on: serialScheduler)
             .subscribe(onNext: { (mpdConnection) in
                 guard let connection = mpdConnection?.connection else { return }
-
+                
                 command(connection)
             }, onError: { (error) in
             })
             .disposed(by: bag)
     }
-
+    
     /// Run a command on a background thread, then optionally trigger an update to the player status
     ///
     /// - Parameters:
@@ -718,6 +669,7 @@ public class MPDControl: ControlProtocol {
         let mpd = self.mpd
         let userDefaults = self.userDefaults
         let connectionProperties = self.connectionProperties
+        let mpdConnector = self.mpdConnector
         
         // Connect and run the command on the serial scheduler to prevent any blocking.
         return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler, forceCleanup: false)
@@ -731,26 +683,30 @@ public class MPDControl: ControlProtocol {
             .flatMap { (mpdConnection) -> Observable<PlayerStatus> in
                 guard let connection = mpdConnection?.connection else { return Observable.empty() }
                 
-                return Observable.just(MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults).fetchPlayerStatus(connection))
+                return MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector).getStatus()
             }
             .observe(on: MainScheduler.instance)
     }
     
+    private func runAsyncCommand(command: @escaping (SwiftMPD.MPDConnector, PlayerStatus) async -> Void) -> Observable<PlayerStatus> {
+        let mpdConnector = self.mpdConnector
+        let mpdStatus = MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector)
+        
+        Task {
+            await command(mpdConnector, await mpdStatus.fetchPlayerStatus())
+        }
+        
+        return Observable.empty()
+    }
+    
     private func runAsyncCommand(command: @escaping (SwiftMPD.MPDConnector) async -> Void) -> Observable<PlayerStatus> {
         let mpdConnector = self.mpdConnector
-        let connectionProperties = self.connectionProperties
 
-        return Observable<PlayerStatus>.fromAsync {
+        Task {
             await command(mpdConnector)
-            let status = try await mpdConnector.status.getStatus()
-            let currentSong = try await mpdConnector.status.getCurrentSong()
-            let playerStatus = PlayerStatus(from: status, currentSong: currentSong, connectionProperties: connectionProperties)
-            
-            return playerStatus
         }
-        // For now not a very clean handling
-        .catchErrorJustComplete()
-        .observe(on: MainScheduler.instance)
+        
+        return Observable.empty()
     }
 }
 

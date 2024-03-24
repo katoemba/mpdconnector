@@ -1231,10 +1231,13 @@ public class MPDBrowse: BrowseProtocol {
         let connectionProperties = self.connectionProperties
 
         return Observable<[Song]>.fromAsync {
-            try await mpdConnector.playlist.listplaylistinfo(name: playlist.name)
-                .map {
-                    Song(mpdSong: $0, connectionProperties: connectionProperties)
-                }
+            if let songs = try await mpdConnector.playlist.listplaylistinfo(name: playlist.name) {
+                return songs
+                    .map {
+                        Song(mpdSong: $0, connectionProperties: connectionProperties)
+                    }
+            }
+            return []
         }
     }
     

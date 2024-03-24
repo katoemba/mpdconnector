@@ -43,6 +43,8 @@ public class MPDStatus: StatusProtocol {
     private var userDefaults: UserDefaults
     
     /// ConectionStatus for the player
+    private var mpdIdleConnector: SwiftMPD.MPDConnector?
+    private var mpdConnector: SwiftMPD.MPDConnector
     private var _connectionStatus = BehaviorRelay<ConnectionStatus>(value: .unknown)
     private var _connectionStatusObservable : Observable<ConnectionStatus>
     public var connectionStatusObservable : Observable<ConnectionStatus> {
@@ -50,8 +52,6 @@ public class MPDStatus: StatusProtocol {
             return _connectionStatusObservable
         }
     }
-    private var connecting = false
-    private var statusConnection: MPDConnection?
 
     /// PlayerStatus object for the player
     private var _playerStatus = BehaviorRelay<PlayerStatus>(value: PlayerStatus())
@@ -70,17 +70,21 @@ public class MPDStatus: StatusProtocol {
     private var elapsedTimeScheduler: SchedulerType
     private var bag = DisposeBag()
     private var monitoringBag: DisposeBag? = nil
+    private var elapsedTask: Task<Void, Never>?
     
     public init(mpd: MPDProtocol? = nil,
                 connectionProperties: [String: Any],
                 identification: String = "NoID",
                 scheduler: SchedulerType? = nil,
-                userDefaults: UserDefaults) {
+                userDefaults: UserDefaults,
+                mpdConnector: SwiftMPD.MPDConnector,
+                mpdIdleConnector: SwiftMPD.MPDConnector? = nil) {
         self.mpd = mpd ?? MPDWrapper()
         self.connectionProperties = connectionProperties
         self.identification = identification
-        self.statusConnection = nil
         self.userDefaults = userDefaults
+        self.mpdConnector = mpdConnector
+        self.mpdIdleConnector = mpdIdleConnector
         
         if scheduler == nil {
             self.statusScheduler = SerialDispatchQueueScheduler.init(qos: .background, internalSerialQueueName: "com.katoemba.mpdconnector.status")
@@ -107,114 +111,50 @@ public class MPDStatus: StatusProtocol {
     /// Start monitoring status changes on a player
     public func start() {
         assert(Thread.isMainThread, "MPDStatus.start can only be called from the main thread")
-        guard _connectionStatus.value != .online,
-                connecting == false else {
+        guard _connectionStatus.value != .online, let mpdIdleConnector else {
             return
         }
         
-        connecting = true
-        MPDHelper.connectToMPD(mpd: self.mpd, connectionProperties: connectionProperties, scheduler: statusScheduler, forceCleanup: true)
-            .subscribe(onNext: { [weak self] (mpdConnection) in
-                guard let mpdConnection = mpdConnection else {
-                    self?._connectionStatus.accept(.offline)
-                    self?.connecting = false
-                    return
-                }
-                self?.statusConnection = mpdConnection
-                self?._connectionStatus.accept(.online)
-                self?.connecting = false
-                self?.startMonitoring()
-            })
-            .disposed(by: bag)
-    }
-    
-    private func startMonitoring() {
-        let timerObservable = Observable<Int>
-            .timer(RxTimeInterval.milliseconds(300), period: RxTimeInterval.milliseconds(300), scheduler: elapsedTimeScheduler)
-            .map({ [weak self] (_) -> PlayerStatus? in
-                if let weakSelf = self {
-                    if weakSelf._playerStatus.value.playing.playPauseMode == .Playing {
-                        var newPlayerStatus = PlayerStatus.init(weakSelf._playerStatus.value)
-                        newPlayerStatus.time.elapsedTime = weakSelf.lastKnownElapsedTime + Int(Date().timeIntervalSince(weakSelf.lastKnownElapsedTimeRecorded))
-                        return newPlayerStatus
-                    }
-                }
+        _connectionStatus.accept(.online)
+        Task {
+            while (true) {
+                let playerStatus = await fetchPlayerStatus()
+                _playerStatus.accept(playerStatus)
+                lastKnownElapsedTimeRecorded = Date()
+                lastKnownElapsedTime = playerStatus.time.elapsedTime
 
-                return nil
-            })
-
-        let forceReloadObservable = Observable<Int>
-            .timer(RxTimeInterval.seconds(1), period: RxTimeInterval.seconds(5), scheduler: elapsedTimeScheduler)
-            .flatMap({ [weak self] (_) -> Observable<PlayerStatus?> in
-                guard let weakSelf = self else { return Observable.empty() }
-                
-                return MPDHelper.connectToMPD(mpd: weakSelf.mpd, connectionProperties: weakSelf.connectionProperties, scheduler: weakSelf.elapsedTimeScheduler, timeout: 1000, forceCleanup: false)
-                    .map( { [weak self] (mpdConnection) -> PlayerStatus? in
-                        guard let weakSelf = self, let connection = mpdConnection?.connection else {
-                            return nil
-                        }
-
-                        return weakSelf.fetchPlayerStatus(connection)
-                })
-            })
-
-        let changeStatusUpdateStream = Observable<PlayerStatus?>.create { [weak self] observer in
-            guard let weakSelf = self else {
-                observer.on(.completed)
-                return Disposables.create()
-            }
-            
-            if let connection = weakSelf.statusConnection?.connection {
-                observer.onNext(weakSelf.fetchPlayerStatus(connection))
-            }
-                
-            while (weakSelf.statusConnection?.stopUsing ?? true) == false {
-                if let connection = weakSelf.statusConnection?.connection {
-                    if weakSelf.mpd.connection_get_error(connection) != MPD_ERROR_SUCCESS {
-                        break
-                    }
-
-                    let mask = weakSelf.mpd.run_idle_mask(connection, mask: mpd_idle(rawValue: mpd_idle.RawValue(UInt8(MPD_IDLE_QUEUE.rawValue) | UInt8(MPD_IDLE_PLAYER.rawValue) | UInt8(MPD_IDLE_MIXER.rawValue) | UInt8(MPD_IDLE_OPTIONS.rawValue) | UInt8(MPD_IDLE_OUTPUT.rawValue))))
-                    if mask.rawValue == 0 {
-                        break
-                    }
-                    
-                    observer.onNext(weakSelf.fetchPlayerStatus(connection))
-                }
-                else {
+                guard let changes = try? await mpdIdleConnector.status.idle([.player, .playlist, .mixer, .output, .options]), changes.count > 0 else {
                     break
                 }
             }
-            
-            weakSelf.disconnectFromMPD()
-            observer.on(.completed)
-
-            weakSelf._connectionStatus.accept(.offline)
-            
-            return Disposables.create()
         }
-        .subscribe(on: statusScheduler)
         
-        monitoringBag = DisposeBag()
-        Observable.merge(timerObservable, forceReloadObservable, changeStatusUpdateStream)
-            .subscribe(onNext: { [weak self] playerStatus in
-                guard let weakSelf = self, let playerStatus = playerStatus else {
-                    return
+        elapsedTask = Task { [weak self] in
+            guard let self else { return }
+            
+            while (Task.isCancelled == false) {
+                if self._playerStatus.value.playing.playPauseMode == .Playing {
+                    var newPlayerStatus = PlayerStatus.init(self._playerStatus.value)
+                    newPlayerStatus.time.elapsedTime = self.lastKnownElapsedTime + Int(Date().timeIntervalSince(self.lastKnownElapsedTimeRecorded))
+
+                    _playerStatus.accept(newPlayerStatus)
                 }
 
-                weakSelf._playerStatus.accept(playerStatus)
-            })
-            .disposed(by: monitoringBag!)
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            }
+        }
+        
     }
     
     /// Stop monitoring status changes on a player, and close the active connection
     public func stop() {
-        if let connection = statusConnection?.connection {
-            _ = mpd.send_noidle(connection)
+        Task {
+            elapsedTask?.cancel()
+            _connectionStatus.accept(.offline)
+            try? await mpdIdleConnector?.status.noidle()
         }
-        monitoringBag = nil
     }
-    
+            
     /// Validate if the current connection is valid.
     ///
     /// - Returns: true if the connection is active and has no error, false otherwise.
@@ -247,104 +187,31 @@ public class MPDStatus: StatusProtocol {
     ///
     /// - Parameter connection: an active connection to a mpd player
     /// - Returns: a filled PlayerStatus struct
-    public func fetchPlayerStatus(_ connection: OpaquePointer) -> PlayerStatus {
-        var playerStatus = PlayerStatus()
-        
-        if validateConnection(connection) {
-            if let status = self.mpd.run_status(connection) {
-                defer {
-                    self.mpd.status_free(status)
-                }
-                
-                let volume = self.mpd.status_get_volume(status)
-                if volume < 0 {
-                    playerStatus.volume = 0.5
-                    playerStatus.volumeEnabled = false
-                }
-                else {
-                    if let volumeAdjustment = userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float {
-                        playerStatus.volume = MPDHelper.adjustedVolumeFromPlayer(Float(volume) / 100.0, volumeAdjustment: volumeAdjustment)
-                    }
-                    else {
-                        playerStatus.volume = Float(volume) / 100.0
-                    }
-                    playerStatus.volumeEnabled = true
-                }
-                playerStatus.time.elapsedTime = Int(self.mpd.status_get_elapsed_time(status))
-                playerStatus.time.trackTime = Int(self.mpd.status_get_total_time(status))
-                self.lastKnownElapsedTime = playerStatus.time.elapsedTime
-                self.lastKnownElapsedTimeRecorded = Date()
-                
-                playerStatus.playing.playPauseMode = (self.mpd.status_get_state(status) == MPD_STATE_PLAY) ? .Playing : .Paused
-                playerStatus.playing.randomMode = (self.mpd.status_get_random(status) == true) ? .On : .Off
-                let repeatStatus = self.mpd.status_get_repeat(status)
-                let singleStatus = self.mpd.status_get_single(status)
-                playerStatus.playing.repeatMode = (repeatStatus == true && singleStatus == true) ? .Single : ((repeatStatus == true) ? .All : .Off)
-                playerStatus.playing.consumeMode = (self.mpd.status_get_consume(status) == true) ? .On : .Off
-                
-                playerStatus.playqueue.length = Int(self.mpd.status_get_queue_length(status))
-                playerStatus.playqueue.version = Int(self.mpd.status_get_queue_version(status))
-                playerStatus.playqueue.songIndex = Int(self.mpd.status_get_song_pos(status))
-                
-                playerStatus.quality = processQuality(status)
-            }
+    public func fetchPlayerStatus() async -> PlayerStatus {
+        do {
+            let statusExecutor = mpdConnector.status.statusExecutor()
+            let outputsExecutor = mpdConnector.output.outputsExecutor()
+            let currentsongExecutor = mpdConnector.status.currentsongExecutor()
+
+            try await mpdConnector.batchCommand([statusExecutor, outputsExecutor, currentsongExecutor])
             
-            var song = self.mpd.run_current_song(connection)
-            if song == nil {
-                if mpd.send_list_queue_range_meta(connection, start: UInt32(0), end: UInt32(1)) == true {
-                    song = mpd.recv_song(connection)
-                }
-                _ = mpd.response_finish(connection)
-            }
-            if let mpdSong = song {
-                defer {
-                    self.mpd.song_free(mpdSong)
-                }
-                
-                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
-                    song.position = playerStatus.playqueue.songIndex
-                    playerStatus.quality.filetype = song.quality.filetype
-                    
-                    if song.id.starts(with: "http://") {
-                        song.location = song.id
-                        song.id = song.id + song.title
-                        song.source = .Shoutcast
-                        song.artist = song.name
-                        song.album = ""
-                    }
-                    
-                    playerStatus.currentSong = song
-                }
-            }
+            let status = try statusExecutor.processResults()
+            let outputs = try outputsExecutor.processResults()
+            let currentSong = try currentsongExecutor.processResults()
             
-            var outputs = [Output]()
-            if mpd.send_outputs(connection) == true {
-                while let mpdOutput = mpd.recv_output(connection) {
-                    if let output = MPDHelper.outputFromMPDOutput(mpd: mpd, mpdOutput: mpdOutput) {
-                        outputs.append(output)
-                    }
-                    mpd.output_free(mpdOutput)
-                }
-                _ = mpd.response_finish(connection)
-            }
-            playerStatus.outputs = outputs
-            
-            playerStatus.lastUpdateTime = Date()
+            return PlayerStatus(from: status, currentSong: currentSong, outputs: outputs, connectionProperties: connectionProperties, userDefaults: userDefaults)
         }
-        
-        return playerStatus
+        catch {
+            // just return the empty PlayerStatus
+            return PlayerStatus()
+        }
     }
     
     /// Get the current status from the player
     public func getStatus() -> Observable<PlayerStatus> {
-        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: elapsedTimeScheduler, timeout: 1000, forceCleanup: false)
-            .map( { [weak self] (mpdConnection) -> PlayerStatus in
-                guard let self, let connection = mpdConnection?.connection else {
-                    return PlayerStatus()
-                }
-
-                return self.fetchPlayerStatus(connection)
-        })
+        Observable<PlayerStatus>.fromAsync {
+            await self.fetchPlayerStatus()
+        }
     }
 
     /// Get an array of songs from the playqueue.
@@ -424,9 +291,6 @@ public class MPDStatus: StatusProtocol {
     }
     
     public func disconnectFromMPD() {
-        guard statusConnection != nil else { return }
-        statusConnection?.disconnect()
-        statusConnection = nil
     }
 
     /// Force a refresh of the status.
@@ -440,15 +304,29 @@ public class MPDStatus: StatusProtocol {
 }
 
 extension PlayerStatus {
-    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong, connectionProperties: [String: Any]) {
+    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong, outputs: [SwiftMPD.MPDOutput.Output], connectionProperties: [String: Any], userDefaults: UserDefaults) {
         self.init()
         
         self.currentSong = Song(mpdSong: currentSong, connectionProperties: connectionProperties)
         lastUpdateTime = Date()
         time.elapsedTime = Int(from.elapsed ?? 0)
         time.trackTime = Int(from.duration ?? 0)
-        volume = Float(from.volume) / Float(100.0)
-        volumeEnabled = from.volume >= 0
+        
+        if from.volume < 0 {
+            volume = 0.5
+            volumeEnabled = false
+        }
+        else {
+            let playerVolumeAdjustmentKey = MPDHelper.playerVolumeAdjustmentKey((connectionProperties[ConnectionProperties.name.rawValue] as? String) ?? "NoName")
+            if let volumeAdjustment = userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float {
+                volume = MPDHelper.adjustedVolumeFromPlayer(Float(from.volume) / 100.0, volumeAdjustment: volumeAdjustment)
+            }
+            else {
+                volume = Float(from.volume) / 100.0
+            }
+            volumeEnabled = true
+        }
+
         switch from.state {
         case .pause:
             playing.playPauseMode = .Paused
@@ -457,6 +335,46 @@ extension PlayerStatus {
         case .stop:
             playing.playPauseMode = .Stopped
         }
+        switch from.consume {
+        case .off:
+            playing.consumeMode = .Off
+        case .on:
+            playing.consumeMode = .On
+        case .oneshot:
+            playing.consumeMode = .On
+        }
+        playing.randomMode = (from.random == .on) ? .On : .Off
+        switch from.repeat {
+        case .off:
+            playing.repeatMode = .Off
+        case .on:
+            if from.single == .off {
+                playing.repeatMode = .All
+            }
+            else {
+                playing.repeatMode = .Single
+            }
+        }
+        
+        self.playqueue.songIndex = from.song ?? -1
+        self.playqueue.length = from.playlistlength ?? 0
+        self.playqueue.version = (from.playlist == nil) ? -1 : Int(from.playlist!)
+        
+        self.quality = QualityStatus(audioFormat: from.audioFormat)
+        
+        self.outputs = outputs.map { Output($0) }
+        
+        self.lastUpdateTime = Date()
+    }
+}
+
+extension Output {
+    public init(_ from: MPDOutput.Output) {
+        self.init()
+        
+        id = "\(from.id)"
+        name = from.name
+        enabled = from.enabled
     }
 }
 
