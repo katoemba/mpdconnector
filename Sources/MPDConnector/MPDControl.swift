@@ -681,8 +681,6 @@ public class MPDControl: ControlProtocol {
             }, onError: { (error) in
             })
             .flatMap { (mpdConnection) -> Observable<PlayerStatus> in
-                guard let connection = mpdConnection?.connection else { return Observable.empty() }
-                
                 return MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector).getStatus()
             }
             .observe(on: MainScheduler.instance)
@@ -693,7 +691,8 @@ public class MPDControl: ControlProtocol {
         let mpdStatus = MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector)
         
         Task {
-            await command(mpdConnector, await mpdStatus.fetchPlayerStatus())
+            guard let playerStatus = try? await mpdStatus.fetchPlayerStatus(mpdConnector) else { return }
+            await command(mpdConnector, playerStatus)
         }
         
         return Observable.empty()

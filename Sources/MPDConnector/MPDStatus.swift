@@ -118,11 +118,12 @@ public class MPDStatus: StatusProtocol {
         _connectionStatus.accept(.online)
         Task {
             while (true) {
-                let playerStatus = await fetchPlayerStatus()
-                _playerStatus.accept(playerStatus)
-                lastKnownElapsedTimeRecorded = Date()
-                lastKnownElapsedTime = playerStatus.time.elapsedTime
-
+                if let playerStatus = try? await fetchPlayerStatus(mpdIdleConnector) {
+                    _playerStatus.accept(playerStatus)
+                    lastKnownElapsedTimeRecorded = Date()
+                    lastKnownElapsedTime = playerStatus.time.elapsedTime
+                }
+                
                 guard let changes = try? await mpdIdleConnector.status.idle([.player, .playlist, .mixer, .output, .options]), changes.count > 0 else {
                     break
                 }
@@ -132,6 +133,7 @@ public class MPDStatus: StatusProtocol {
         elapsedTask = Task { [weak self] in
             guard let self else { return }
             
+            var counter = 0
             while (Task.isCancelled == false) {
                 if self._playerStatus.value.playing.playPauseMode == .Playing {
                     var newPlayerStatus = PlayerStatus.init(self._playerStatus.value)
@@ -140,6 +142,16 @@ public class MPDStatus: StatusProtocol {
                     _playerStatus.accept(newPlayerStatus)
                 }
 
+                counter += 1
+                if counter > 4 * 5 {
+                    counter = 0
+                    if let playerStatus = try? await fetchPlayerStatus(mpdConnector) {
+                        _playerStatus.accept(playerStatus)
+                        lastKnownElapsedTimeRecorded = Date()
+                        lastKnownElapsedTime = playerStatus.time.elapsedTime
+                    }
+                }
+                
                 try? await Task.sleep(nanoseconds: 250_000_000)
             }
         }
@@ -187,30 +199,24 @@ public class MPDStatus: StatusProtocol {
     ///
     /// - Parameter connection: an active connection to a mpd player
     /// - Returns: a filled PlayerStatus struct
-    public func fetchPlayerStatus() async -> PlayerStatus {
-        do {
-            let statusExecutor = mpdConnector.status.statusExecutor()
-            let outputsExecutor = mpdConnector.output.outputsExecutor()
-            let currentsongExecutor = mpdConnector.status.currentsongExecutor()
+    public func fetchPlayerStatus(_ connector: MPDConnector) async throws -> PlayerStatus {
+        let statusExecutor = connector.status.statusExecutor()
+        let outputsExecutor = connector.output.outputsExecutor()
+        let currentsongExecutor = connector.status.currentsongExecutor()
 
-            try await mpdConnector.batchCommand([statusExecutor, outputsExecutor, currentsongExecutor])
-            
-            let status = try statusExecutor.processResults()
-            let outputs = try outputsExecutor.processResults()
-            let currentSong = try currentsongExecutor.processResults()
-            
-            return PlayerStatus(from: status, currentSong: currentSong, outputs: outputs, connectionProperties: connectionProperties, userDefaults: userDefaults)
-        }
-        catch {
-            // just return the empty PlayerStatus
-            return PlayerStatus()
-        }
+        try await connector.batchCommand([statusExecutor, outputsExecutor, currentsongExecutor])
+        
+        let status = try statusExecutor.processResults()
+        let outputs = try outputsExecutor.processResults()
+        let currentSong = try currentsongExecutor.processResults()
+        
+        return PlayerStatus(from: status, currentSong: currentSong, outputs: outputs, connectionProperties: connectionProperties, userDefaults: userDefaults)
     }
     
     /// Get the current status from the player
     public func getStatus() -> Observable<PlayerStatus> {
         Observable<PlayerStatus>.fromAsync {
-            await self.fetchPlayerStatus()
+            try await self.fetchPlayerStatus(self.mpdConnector)
         }
     }
 
@@ -361,6 +367,12 @@ extension PlayerStatus {
         self.playqueue.version = (from.playlist == nil) ? -1 : Int(from.playlist!)
         
         self.quality = QualityStatus(audioFormat: from.audioFormat)
+        if let bitrate = from.bitrate {
+            self.quality.rawBitrate = UInt32(bitrate * 1000)
+        }
+        if let fileExtension = currentSong.file.split(separator: ".").last {
+            self.quality.filetype = String(fileExtension)
+        }
         
         self.outputs = outputs.map { Output($0) }
         
