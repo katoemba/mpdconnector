@@ -208,7 +208,7 @@ public class MPDStatus: StatusProtocol {
         
         let status = try statusExecutor.processResults()
         let outputs = try outputsExecutor.processResults()
-        let currentSong = try currentsongExecutor.processResults()
+        let currentSong = try? currentsongExecutor.processResults()
         
         return PlayerStatus(from: status, currentSong: currentSong, outputs: outputs, connectionProperties: connectionProperties, userDefaults: userDefaults)
     }
@@ -310,10 +310,15 @@ public class MPDStatus: StatusProtocol {
 }
 
 extension PlayerStatus {
-    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong, outputs: [SwiftMPD.MPDOutput.Output], connectionProperties: [String: Any], userDefaults: UserDefaults) {
+    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong?, outputs: [SwiftMPD.MPDOutput.Output], connectionProperties: [String: Any], userDefaults: UserDefaults) {
         self.init()
         
-        self.currentSong = Song(mpdSong: currentSong, connectionProperties: connectionProperties)
+        if let currentSong {
+            self.currentSong = Song(mpdSong: currentSong, connectionProperties: connectionProperties)
+        }
+        else {
+            self.currentSong = Song()
+        }
         lastUpdateTime = Date()
         time.elapsedTime = Int(from.elapsed ?? 0)
         time.trackTime = Int(from.duration ?? 0)
@@ -370,7 +375,7 @@ extension PlayerStatus {
         if let bitrate = from.bitrate {
             self.quality.rawBitrate = UInt32(bitrate * 1000)
         }
-        if let fileExtension = currentSong.file.split(separator: ".").last {
+        if let fileExtension = currentSong?.file.split(separator: ".").last {
             self.quality.filetype = String(fileExtension)
         }
         

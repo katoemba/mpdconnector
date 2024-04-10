@@ -44,33 +44,12 @@ public protocol MPDProtocol {
     func run_play(_ connection: OpaquePointer!) -> Bool
     func run_stop(_ connection: OpaquePointer!) -> Bool
     func run_play_pos(_ connection: OpaquePointer!, _ song_pos: UInt32) -> Bool
-    func run_pause(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
-    func run_toggle_pause(_ connection: OpaquePointer!) -> Bool
-    func run_next(_ connection: OpaquePointer!) -> Bool
-    func run_previous(_ connection: OpaquePointer!) -> Bool
-    func run_random(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
     func run_shuffle(_ connection: OpaquePointer!) -> Bool
-    func run_repeat(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
-    func run_single(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
-    func run_consume(_ connection: OpaquePointer!, _ mode: Bool) -> Bool
-    func run_set_volume(_ connection: OpaquePointer!, _ volume: UInt32) -> Bool
     func run_status(_ connection: OpaquePointer!) -> OpaquePointer!
     func status_free(_ status: OpaquePointer!)
     func run_current_song(_ connection: OpaquePointer!) -> OpaquePointer!
     func song_free(_ song: OpaquePointer!)
-    func status_get_volume(_ status: OpaquePointer!) -> Int32
-    func status_get_repeat(_ status: OpaquePointer!) -> Bool
-    func status_get_single(_ status: OpaquePointer!) -> Bool
-    func status_get_random(_ status: OpaquePointer!) -> Bool
-    func status_get_consume(_ status: OpaquePointer!) -> Bool
-    func status_get_state(_ status: OpaquePointer!) -> mpd_state
-    func status_get_song_pos(_ status: OpaquePointer!) -> Int32
-    func status_get_elapsed_time(_ status: OpaquePointer!) -> UInt32
-    func status_get_total_time(_ status: OpaquePointer!) -> UInt32
-    func status_get_queue_length(_ status: OpaquePointer!) -> UInt32
-    func status_get_queue_version(_ status: OpaquePointer!) -> UInt32
     func status_get_kbit_rate(_ status: OpaquePointer!) -> UInt32
-    func status_get_audio_format(_ status: OpaquePointer!) -> (UInt32, UInt8, UInt8)?
     func status_get_raw_audio_format(_ status: OpaquePointer!) -> String
     func status_get_update_id(_ status: OpaquePointer!) -> UInt32
     func song_get_tag(_ song: OpaquePointer!, _ type: mpd_tag_type, _ idx: UInt32) -> String
@@ -129,13 +108,7 @@ public protocol MPDProtocol {
     func run_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Int32
     func send_add(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!) -> Bool
     func send_add_id_to(_ connection: OpaquePointer!, uri: UnsafePointer<Int8>!, to: UInt32) -> Bool
-    func run_seek(_ connection: OpaquePointer!, pos: UInt32, t: UInt32) -> Bool
     func run_clear(_ connection: OpaquePointer!) -> Bool
-    func run_idle_mask(_ connection: OpaquePointer!, mask: mpd_idle) -> mpd_idle
-    func send_noidle(_ connection: OpaquePointer!) -> Bool
-    func run_move(_ connection: OpaquePointer!, from: UInt32, to: UInt32) -> Bool
-    func run_move_range(_ connection: OpaquePointer!, start: UInt32, end: UInt32, to: UInt32) -> Bool
-    func run_delete(_ connection: OpaquePointer!, pos: UInt32) -> Bool
     func send_list_playlists(_ connection: OpaquePointer!) -> Bool
     func recv_playlist(_ connection: OpaquePointer!) -> OpaquePointer!
     func playlist_free(_ playlist: OpaquePointer!)
@@ -154,11 +127,6 @@ public protocol MPDProtocol {
     func stats_free(_ stats: OpaquePointer!)
     func stats_get_db_update_time(_ stats: OpaquePointer!) -> Date
     func connection_get_server_version(_ connection: OpaquePointer!) -> String
-    func run_enable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool
-    func run_disable_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool
-    func run_toggle_output(_ connection: OpaquePointer!, output_id: UInt32) -> Bool
-    func send_outputs(_ connection: OpaquePointer!) -> Bool
-    func recv_output(_ connection: OpaquePointer!) -> OpaquePointer!
     func output_get_id(_ output: OpaquePointer!) -> UInt32
     func output_get_name(_ output: OpaquePointer!) -> String
     func output_get_enabled(_ output: OpaquePointer!) -> Bool

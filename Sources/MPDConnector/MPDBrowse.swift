@@ -71,27 +71,61 @@ public class MPDBrowse: BrowseProtocol {
     }
 
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) -> Observable<SearchResult> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<SearchResult> in
-                guard let connection = mpdConnection?.connection else { return Observable.just(SearchResult()) }
-
-                let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
-                let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
-                let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
-                let performerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_PERFORMER, filter: filter)
-                let composerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_COMPOSER, filter: filter)
-
-                var searchResult = SearchResult()
-                searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
-                searchResult.albums = (albumSearchResult.albums + artistSearchResult.albums + songSearchResult.albums).orderedSet
-                searchResult.songs = (songSearchResult.songs + artistSearchResult.songs + albumSearchResult.songs).orderedSet
-                searchResult.performers = performerSearchResult.performers.orderedSet
-                searchResult.composers = composerSearchResult.composers.orderedSet
-
-                return Observable.just(searchResult)
-            })
-            .catchAndReturn(SearchResult())
+        Observable<SearchResult>.fromAsync {
+            var searchResult = SearchResult()
+            guard let version = try? await self.mpdConnector.getVersion() else {
+                return searchResult
+            }
+            
+            let songs = try await self.mpdConnector.database.search(filter: .tagContains(tag: .title, value: search), version: version).map {
+                Song(mpdSong: $0, connectionProperties: self.connectionProperties)
+            }
+            searchResult.songs = Array<Song>(songs.prefix(limit))
+            
+            let albumSongs = try await self.mpdConnector.database.search(filter: .tagContains(tag: .album, value: search), version: version).map {
+                Song(mpdSong: $0, connectionProperties: self.connectionProperties)
+            }
+            var albums = Set<Album>()
+            for song in albumSongs {
+                albums.insert(self.createAlbumFromSong(song))
+            }
+            searchResult.albums = Array<Album>(albums.prefix(limit))
+            
+            let artistSongs = try await self.mpdConnector.database.search(filter: .tagContains(tag: .artist, value: search), version: version).map {
+                Song(mpdSong: $0, connectionProperties: self.connectionProperties)
+            }
+            var artists = Set<Artist>()
+            for song in artistSongs {
+                artists.insert(self.createArtistFromSong(song))
+            }
+            searchResult.artists = Array<Artist>(artists.prefix(limit))
+            
+            return searchResult
+        }
+        .catchAndReturn(SearchResult())
+        
+//
+//        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
+//            .observe(on: scheduler)
+//            .flatMap({ (mpdConnection) -> Observable<SearchResult> in
+//                guard let connection = mpdConnection?.connection else { return Observable.just(SearchResult()) }
+//
+//                let artistSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ARTIST, filter: filter)
+//                let albumSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_ALBUM, filter: filter)
+//                let songSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_TITLE, filter: filter)
+//                let performerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_PERFORMER, filter: filter)
+//                let composerSearchResult = self.searchType(search, connection: connection, tagType: MPD_TAG_COMPOSER, filter: filter)
+//
+//                var searchResult = SearchResult()
+//                searchResult.artists = (artistSearchResult.artists + albumSearchResult.artists + songSearchResult.artists).orderedSet
+//                searchResult.albums = (albumSearchResult.albums + artistSearchResult.albums + songSearchResult.albums).orderedSet
+//                searchResult.songs = (songSearchResult.songs + artistSearchResult.songs + albumSearchResult.songs).orderedSet
+//                searchResult.performers = performerSearchResult.performers.orderedSet
+//                searchResult.composers = composerSearchResult.composers.orderedSet
+//
+//                return Observable.just(searchResult)
+//            })
+//            .catchAndReturn(SearchResult())
     }
     
     private func searchType(_ search: String, connection: OpaquePointer, tagType: mpd_tag_type, filter: [SourceType] = []) -> SearchResult {
@@ -299,33 +333,22 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     public func randomSongs(count: Int) -> Observable<[Song]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Song]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+        Observable<[Song]>.fromAsync {
+            let uris = try await self.mpdConnector.database.listall(path: "/")
+            var songs = [Song]()
+            
+            while uris.count > 0, songs.count < 100 {
+                let item = uris.randomElement()
                 
-                var songIds = [String]()
-                _ = self.mpd.send_list_all(connection, path: "")
-                
-                while let pair = self.mpd.recv_pair(connection) {
-                    if pair.0 == "file" {
-                        songIds.append(pair.1)
-                    }
+                if case let .file(path) = item {
+                    var song = Song()
+                    song.id = path
+                    songs.append(song)
                 }
-                _ = self.mpd.response_finish(connection)
-
-                var randomSongs = [Song]()
-                for _ in 0..<count {
-                    if let songId = songIds.randomElement() {
-                        var song = Song()
-                        song.id = songId
-                        randomSongs.append(song)
-                    }
-                }
-                return Observable.just(randomSongs)
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+            }
+            
+            return songs
+        }
     }
     
     private func createArtistFromSong(_ song: Song) -> Artist {
@@ -372,23 +395,7 @@ public class MPDBrowse: BrowseProtocol {
             }
         }
         
-        return albums.sorted(by: { (lhs, rhs) -> Bool in
-            if sort == .year || sort == .yearReverse {
-                if lhs.year < rhs.year {
-                    return sort == .year
-                }
-                else if lhs.year > rhs.year {
-                    return sort == .yearReverse
-                }
-            }
-            
-            let albumCompare = lhs.title.caseInsensitiveCompare(rhs.title)
-            if albumCompare == .orderedAscending {
-                return true
-            }
-            
-            return false
-        })
+        return albums.sorted(sort: sort)
     }
     
     /// - Parameters:
@@ -520,340 +527,69 @@ public class MPDBrowse: BrowseProtocol {
     
     // This is the old-fashioned way of getting data, using a double group by.
     func fetchAlbums_below_20_22(genre: Genre?, sort: SortType) -> Observable<[Album]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Album]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+        Observable<[Album]>.fromAsync {
+            let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
+            let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist, .date])
+            var albums = Set<Album>()
+            
+            for group in artists {
+                guard case let .group(artist) = group, let artistValue = artist.value else { continue }
+                for group in artist.children {
+                    guard case let .group(year) = group, let yearValue = year.value else { continue }
+                    for value in year.children {
+                        guard case let .value(album) = value, album != "" && artistValue != "" else { continue }
+                        albums.insert(Album(id: "\(artistValue):\(album)", source: .Local, location: "", title: album, artist: artistValue, year: Int(String(yearValue.prefix(4))) ?? 0, genre: [], length: 0))
+                    }
+                }
+            }
 
-                do {
-                    var foundEmptyAlbum = false
-                    var albums = [Album]()
-                    
-                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
-                    if let genre = genre, genre.id != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                    }
-                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
-                    if sort == .year || sort == .yearReverse {
-                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_DATE)
-                    }
-                    try self.mpd.search_commit(connection)
-                    
-                    var albumIDs = [String: Int]()
-                    while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ALBUM) {
-                        let title = result.1
-                        if title != "" {
-                            let albumArtist = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)?.1 ?? "Unknown"
-                            var year = 0
-                            if sort == .year || sort == .yearReverse {
-                                let yearString = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_DATE)?.1 ?? "0"
-                                year = Int(String(yearString.prefix(4))) ?? 0
-                            }
-                            
-                            let albumID = "\(albumArtist):\(title)"
-                            // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
-                            if albumIDs[albumID] == nil {
-                                albumIDs[albumID] = 1
-                                let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0)
-                                albums.append(album)
-                            }
-                        }
-                            //else if genre != nil {
-                        else {
-                            foundEmptyAlbum = true
-                        }
-                    }
-                    _ = self.mpd.response_finish(connection)
-                    
-                    // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
-                    // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
-                    if foundEmptyAlbum {
-                        try self.mpd.search_db_songs(connection, exact: true)
-                        if let genre = genre, genre.id != "" {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                        }
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
-                        try self.mpd.search_commit(connection)
-                        
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                                let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
-                                if albumartist != "" {
-                                    let albumID = "\(albumartist):\(song.album)"
-                                    if albumIDs[albumID] == nil {
-                                        albumIDs[albumID] = 1
-                                        albums.append(self.createAlbumFromSong(song))
-                                    }
-                                }
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    }
-                    
-                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
-                        if sort == .year || sort == .yearReverse {
-                            if lhs.year < rhs.year {
-                                return sort == .year
-                            }
-                            else if lhs.year > rhs.year {
-                                return sort == .yearReverse
-                            }
-                        }
-                        
-                        if sort == .artist {
-                            let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
-                            if artistCompare == .orderedSame {
-                                return (lhs.year == rhs.year) ? (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending) : (lhs.year < rhs.year)
-                            }
-                                                    
-                            return (artistCompare == .orderedAscending)
-                        }
-                        
-                        return (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending)
-                    }))
-                }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+            return Array<Album>(albums).sorted(sort: sort)
+        }
     }
     
     // The grouping was changed in 0.20.22 and above. It works more consistently it seems,
     // but because of mpd bug https://github.com/MusicPlayerDaemon/MPD/issues/408 multiple group-by's are not possible
     func fetchAlbums_20_22_and_above(genre: Genre?, sort: SortType) -> Observable<[Album]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Album]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                do {
-                    var foundEmptyAlbum = false
-                    var albums = [Album]()
-                    
-                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
-                    if let genre = genre, genre.id != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                    }
-                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
-                    try self.mpd.search_commit(connection)
-                    
-                    var albumIDs = [String: Int]()
-                    
-                    var albumArtist = ""
-                    let year = 0
-                    while let result = self.mpd.recv_pair(connection) {
-                        let tagName = result.0
-                        let value = result.1
-                        let tag = self.mpd.tag_name_parse(tagName)
-                        
-                        if value != "" {
-                            if tag == MPD_TAG_ALBUM_ARTIST {
-                                albumArtist = value
-                            }
-                            else if tag == MPD_TAG_ALBUM {
-                                let title = value
-                                let albumID = "\(albumArtist):\(title)"
-                                // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
-                                if albumIDs[albumID] == nil {
-                                    albumIDs[albumID] = 1
-                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0)
-                                    albums.append(album)
-                                }
-                            }
-                            else {
-                                print("Unknown tagName \(tagName) tag \(tag)")
-                            }
-                        }
-                        else {
-                            foundEmptyAlbum = true
-                        }
-                    }
-
-                    _ = self.mpd.response_finish(connection)
-
-                    // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
-                    // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
-                    if foundEmptyAlbum {
-                        try self.mpd.search_db_songs(connection, exact: true)
-                        if let genre = genre, genre.id != "" {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                        }
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
-                        try self.mpd.search_commit(connection)
-                        
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                                let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
-                                if albumartist != "" {
-                                    let albumID = "\(albumartist):\(song.album)"
-                                    if albumIDs[albumID] == nil {
-                                        albumIDs[albumID] = 1
-                                        albums.append(self.createAlbumFromSong(song))
-                                    }
-                                }
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    }
-                    
-                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
-                        if sort == .year || sort == .yearReverse {
-                            if lhs.year < rhs.year {
-                                return sort == .year
-                            }
-                            else if lhs.year > rhs.year {
-                                return sort == .yearReverse
-                            }
-                        }
-
-                        if sort == .artist {
-                            let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
-                            if artistCompare == .orderedSame {
-                                return (lhs.year == rhs.year) ? (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending) : (lhs.year < rhs.year)
-                            }
-                                                    
-                            return (artistCompare == .orderedAscending)
-                        }
-                        
-                        return (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending)
-                    }))
+        Observable<[Album]>.fromAsync {
+            let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
+            let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist])
+            var albums = Set<Album>()
+            
+            for group in artists {
+                guard case let .group(artist) = group, let artistValue = artist.value else { continue }
+                for value in artist.children {
+                    guard case let .value(album) = value, album != "" && artistValue != "" else { continue }
+                    albums.insert(Album(id: "\(artistValue):\(album)", source: .Local, location: "", title: album, artist: artistValue, year: 0, genre: [], length: 0))
                 }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+            }
+
+            return Array<Album>(albums).sorted(sort: sort)
+        }
     }
     
     // Multiple grouping returns in 0.21.11 and now works consistently.
     func fetchAlbums_21_11_and_above(genre: Genre?, sort: SortType) -> Observable<[Album]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Album]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-                
-                do {
-                    var foundEmptyAlbum = false
-                    var albums = [Album]()
-                    
-                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM)
-                    if let genre = genre, genre.id != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                    }
-                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST)
-                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
-                    try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_DATE)
-                    try self.mpd.search_commit(connection)
-                    
-                    var albumIDs = [String: Int]()
-                    
-                    var albumArtist = ""
-                    var albumArtistSort = ""
-                    var year = 0
-                    while let result = self.mpd.recv_pair(connection) {
-                        let tagName = result.0
-                        let value = result.1
-                        let tag = self.mpd.tag_name_parse(tagName)
-
-                        if value != "" {
-                            if tag == MPD_TAG_DATE {
-                                year = Int(String(value.prefix(4))) ?? 0
-                            }
-                            else if tag == MPD_TAG_ALBUM_ARTIST {
-                                albumArtist = value
-                            }
-                            else if tag == MPD_TAG_ALBUM_ARTIST_SORT {
-                                albumArtistSort = value
-                            }
-                            else if tag == MPD_TAG_ALBUM {
-                                let title = value
-                                let albumID = "\(albumArtist):\(title)"
-                                // Ensure that every album only gets added once. When grouping on year it might appear multiple times.
-                                if albumIDs[albumID] == nil {
-                                    albumIDs[albumID] = 1
-                                    let album = Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0, sortArtist: albumArtistSort)
-                                    albums.append(album)
-                                }
-                            }
-                            else {
-                                print("Unknown tagName \(tagName) tag \(tag)")
-                            }
-                        }
-                        else {
-                            foundEmptyAlbum = true
+        Observable<[Album]>.fromAsync {
+            let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
+            let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist, .albumArtistSort, .date])
+            var albums = Set<Album>()
+            
+            for group in artists {
+                guard case let .group(artist) = group, let artistValue = artist.value else { continue }
+                for group in artist.children {
+                    guard case let .group(sortArtist) = group, let sortArtistValue = sortArtist.value else { continue }
+                    for group in sortArtist.children {
+                        guard case let .group(year) = group, let yearValue = year.value else { continue }
+                        for value in year.children {
+                            guard case let .value(album) = value, album != "" && artistValue != "" else { continue }
+                            albums.insert(Album(id: "\(artistValue):\(album)", source: .Local, location: "", title: album, artist: artistValue, year: Int(String(yearValue.prefix(4))) ?? 0, genre: [], length: 0, sortArtist: sortArtistValue))
                         }
                     }
-                    
-                    _ = self.mpd.response_finish(connection)
-                    
-                    // Some mpd versions (on Bryston) don't pick up the album correctly for wav files.
-                    // If an empty album is found, do an additional search empty albums within the genre, and get the album via the song.
-                    if foundEmptyAlbum {
-                        try self.mpd.search_db_songs(connection, exact: true)
-                        if let genre = genre, genre.id != "" {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                        }
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: "")
-                        try self.mpd.search_commit(connection)
-                        
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                                let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
-                                if albumartist != "" {
-                                    let albumID = "\(albumartist):\(song.album)"
-                                    if albumIDs[albumID] == nil {
-                                        albumIDs[albumID] = 1
-                                        albums.append(self.createAlbumFromSong(song))
-                                    }
-                                }
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    }
-                    
-                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
-                        if sort == .year || sort == .yearReverse {
-                            if lhs.year < rhs.year {
-                                return sort == .year
-                            }
-                            else if lhs.year > rhs.year {
-                                return sort == .yearReverse
-                            }
-                        }
-                        
-                        if sort == .artist {
-                            let artistCompare = lhs.sortArtist.caseInsensitiveCompare(rhs.sortArtist)
-                            if artistCompare == .orderedSame {
-                                return (lhs.year == rhs.year) ? (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending) : (lhs.year < rhs.year)
-                            }
-                                                    
-                            return (artistCompare == .orderedAscending)
-                        }
-                        
-                        return (lhs.title.caseInsensitiveCompare(rhs.title) == .orderedAscending)
-                    }))
                 }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+            }
+            
+            return Array<Album>(albums).sorted(sort: sort)
+        }
     }
 
     fileprivate func completeCoverURI(_ connection: OpaquePointer, _ coverURI: CoverURI) -> CoverURI {
@@ -891,88 +627,63 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     public func completeAlbums(_ albums: [Album]) -> Observable<[Album]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Album]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+        Observable<[Album]>.fromAsync {
+            guard let version = try? await self.mpdConnector.getVersion() else {
+                return albums
+            }
 
-                var completeAlbums = [Album]()
-                for album in albums {
-                    var song : Song?
-
-                    do {
-                        try self.mpd.search_db_songs(connection, exact: true)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album.title)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: album.artist)
-                        try self.mpd.search_commit(connection)
-                        
-                        if let mpdSong = self.mpd.recv_song(connection) {
-                            song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong)
-                            self.mpd.song_free(mpdSong)
-                        }
-                    }
-                    catch {
-                        print(self.mpd.connection_get_error_message(connection))
-                        _ = self.mpd.connection_clear_error(connection)
-                    }
-                    
-                    // Cleanup
-                    _ = self.mpd.response_finish(connection)
-                    
-                    if song != nil {
-                        completeAlbums.append(self.createAlbumFromSong(song!))
-                    }
-                    else {
-                        completeAlbums.append(album)
-                    }
+            var originalAlbums = albums
+            var results = [Album]()
+            
+            var commands = [any CommandExecutor]()
+            for album in albums {
+                let expression = MPDDatabase.Expression.and(.tagEquals(tag: .album, value: album.title), .tagEquals(tag: .albumArtist, value: album.artist))
+                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0..<1, version: version))
+            }
+            try await self.mpdConnector.batchCommand(commands)
+            
+            for command in commands {
+                guard let songs = try command.processResults() as? [MPDSong], songs.count > 0 else {
+                    results.append(originalAlbums.removeFirst())
+                    continue
                 }
                 
-                return Observable.just(completeAlbums)
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+                let song = Song(mpdSong: songs[0], connectionProperties: self.connectionProperties)
+                results.append(self.createAlbumFromSong(song))
+                originalAlbums.removeFirst()
+            }
+            return results
+        }
     }
 
     public func completeArtists(_ artists: [Artist]) -> Observable<[Artist]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Artist]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-                
-                var completeArtists = [Artist]()
-                for artist in artists {
-                    var song : Song?
-                    
-                    do {
-                        try self.mpd.search_db_songs(connection, exact: true)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist.name)
-                        try self.mpd.search_commit(connection)
-                        
-                        if let mpdSong = self.mpd.recv_song(connection) {
-                            song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong)
-                            self.mpd.song_free(mpdSong)
-                        }
-                    }
-                    catch {
-                        print(self.mpd.connection_get_error_message(connection))
-                        _ = self.mpd.connection_clear_error(connection)
-                    }
-                    
-                    // Cleanup
-                    _ = self.mpd.response_finish(connection)
-                    
-                    if song != nil {
-                        completeArtists.append(self.createArtistFromSong(song!))
-                    }
-                    else {
-                        completeArtists.append(artist)
-                    }
+        Observable<[Artist]>.fromAsync {
+            guard let version = try? await self.mpdConnector.getVersion() else {
+                return artists
+            }
+
+            var originalArtist = artists
+            var results = [Artist]()
+            
+            var commands = [any CommandExecutor]()
+            for artist in artists {
+                let expression = MPDDatabase.Expression.tagEquals(tag: .albumArtist, value: artist.name)
+                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0..<1, version: version))
+            }
+            try await self.mpdConnector.batchCommand(commands)
+            
+            for command in commands {
+                guard let songs = try command.processResults() as? [MPDSong], songs.count > 0 else {
+                    results.append(originalArtist.removeFirst())
+                    continue
                 }
                 
-                return Observable.just(completeArtists)
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+                let song = Song(mpdSong: songs[0], connectionProperties: self.connectionProperties)
+                results.append(self.createArtistFromSong(song))
+                originalArtist.removeFirst()
+            }
+            return results
+        }
     }
     
     /// Return a view model for a sectioned list of albums.

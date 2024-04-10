@@ -159,9 +159,8 @@ public class MPDControl: ControlProtocol {
     
     /// Shuffle the current playqueue
     public func shufflePlayqueue() -> Observable<PlayerStatus> {
-        
-        return runCommandWithStatus()  { connection in
-            _ = self.mpd.run_shuffle(connection)
+        runAsyncCommand() {
+            _ = try? await $0.queue.shuffle()
         }
     }
     
@@ -543,8 +542,8 @@ public class MPDControl: ControlProtocol {
     ///   - from: the position of the song to change
     ///   - to: the position to move the song to
     public func moveSong(from: Int, to: Int) {
-        runCommand()  { connection in
-            _ = self.mpd.run_move(connection, from: UInt32(from), to: UInt32(to))
+        _ = runAsyncCommand {
+            _ = try? await $0.queue.move(frompos: from, topos: to)
         }
     }
     
@@ -552,8 +551,8 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter at: the position of the song to remove
     public func deleteSong(_ at: Int) {
-        runCommand()  { connection in
-            _ = self.mpd.run_delete(connection, pos: UInt32(at))
+        _ = runAsyncCommand {
+            _ = try? await $0.queue.delete(at)
         }
     }
     
@@ -591,8 +590,8 @@ public class MPDControl: ControlProtocol {
     
     /// Clear the active playqueue
     public func clearPlayqueue() {
-        runCommand()  { connection in
-            _ = self.mpd.run_clear(connection)
+        _ = runAsyncCommand {
+            _ = try? await $0.queue.clear()
         }
     }
     
@@ -619,13 +618,13 @@ public class MPDControl: ControlProtocol {
     ///   - output: the output to set
     ///   - enabled: true to enable the output, false to disable it
     public func setOutput(_ output: Output, enabled: Bool) {
-        runCommand()  { connection in
-            if let output_id = UInt32(output.id) {
+        _ = runAsyncCommand {
+            if let output_id = Int(output.id) {
                 if enabled {
-                    _ = self.mpd.run_enable_output(connection, output_id: output_id)
+                    _ = try? await $0.output.enableoutput(output_id)
                 }
                 else {
-                    _ = self.mpd.run_disable_output(connection, output_id: output_id)
+                    _ = try? await $0.output.disableoutput(output_id)
                 }
             }
         }
@@ -635,9 +634,9 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter output: the output to toggle
     public func toggleOutput(_ output: Output) {
-        runCommand()  { connection in
-            if let output_id = UInt32(output.id) {
-                _ = self.mpd.run_toggle_output(connection, output_id: output_id)
+        _ = runAsyncCommand {
+            if let output_id = Int(output.id) {
+                _ = try? await $0.output.toggleoutput(output_id)
             }
         }
     }
