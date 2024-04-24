@@ -6,7 +6,7 @@
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
         "branch" : "master",
-        "revision" : "627b3d3ff0a8411b0b9909bd7d89f5a2bed02415"
+        "revision" : "3f58bac0823c001644c74f39e6b552067e722aac"
       }
     },
     {
@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ReactiveX/RxSwift.git",
       "state" : {
-        "revision" : "9dcaa4b333db437b0fbfaf453fad29069044a8b4",
-        "version" : "6.6.0"
+        "revision" : "5949cbd3d4f3f97968bb40b6cd232f8315c6341c",
+        "version" : "6.7.0"
       }
     },
     {
@@ -41,8 +41,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RxSwiftCommunity/RxSwiftExt.git",
       "state" : {
-        "revision" : "a42af9caeab63f2dbde318f1f3dc424f05871a37",
-        "version" : "6.1.0"
+        "revision" : "eb4adf9f00a21b3efc3869a5218a6d7517e95222",
+        "version" : "6.2.1"
       }
     },
     {
@@ -68,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "635b2589494c97e48c62514bc8b37ced762e0a62",
-        "version" : "2.63.0"
+        "revision" : "359c461e5561d22c6334828806cc25d759ca7aa6",
+        "version" : "2.65.0"
       }
     },
     {
@@ -87,7 +87,7 @@
       "location" : "https://github.com/katoemba/SwiftMPD.git",
       "state" : {
         "branch" : "main",
-        "revision" : "623be9af0e40426796f65155b73bad39309f620a"
+        "revision" : "d6dc83d79384317eb548bc52fefd76b122812c70"
       }
     },
     {

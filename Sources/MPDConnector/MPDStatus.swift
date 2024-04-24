@@ -37,7 +37,6 @@ public class MPDStatus: StatusProtocol {
     }
 
     /// Connection to a MPD Player
-    private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
     private var userDefaults: UserDefaults
@@ -72,14 +71,12 @@ public class MPDStatus: StatusProtocol {
     private var monitoringBag: DisposeBag? = nil
     private var elapsedTask: Task<Void, Never>?
     
-    public init(mpd: MPDProtocol? = nil,
-                connectionProperties: [String: Any],
+    public init(connectionProperties: [String: Any],
                 identification: String = "NoID",
                 scheduler: SchedulerType? = nil,
                 userDefaults: UserDefaults,
                 mpdConnector: SwiftMPD.MPDConnector,
                 mpdIdleConnector: SwiftMPD.MPDConnector? = nil) {
-        self.mpd = mpd ?? MPDWrapper()
         self.connectionProperties = connectionProperties
         self.identification = identification
         self.userDefaults = userDefaults
@@ -167,34 +164,6 @@ public class MPDStatus: StatusProtocol {
         }
     }
             
-    /// Validate if the current connection is valid.
-    ///
-    /// - Returns: true if the connection is active and has no error, false otherwise.
-    private func validateConnection(_ connection: OpaquePointer) -> Bool {
-        let error = self.mpd.connection_get_error(connection)
-        if [MPD_ERROR_TIMEOUT, MPD_ERROR_SYSTEM, MPD_ERROR_RESOLVER, MPD_ERROR_MALFORMED, MPD_ERROR_CLOSED].contains(error) {
-            return false
-        }
-        else if error != MPD_ERROR_SUCCESS {
-            print("Error when validating connection: \(self.mpd.connection_get_error_message(connection))")
-        }
-        
-        return true
-    }
-    
-    /// Put quality data from status into the proper format
-    ///
-    /// - Parameter status: a mpd status objects
-    /// - Returns: a filled QualityStatus struct
-    private func processQuality(_ status: OpaquePointer) -> QualityStatus {
-        let bitrate = self.mpd.status_get_kbit_rate(status)
-        let audioFormat = self.mpd.status_get_raw_audio_format(status)
-
-        var quality = QualityStatus(audioFormat: audioFormat)
-        quality.rawBitrate = bitrate * 1000
-        return quality
-    }
-    
     /// Get the current status of a controller
     ///
     /// - Parameter connection: an active connection to a mpd player
@@ -231,35 +200,21 @@ public class MPDStatus: StatusProtocol {
             return Observable.just([])
         }
         
-        let mpdConnection = MPDHelper.connect(mpd: mpd,
-                                              host: MPDHelper.hostToUse(connectionProperties),
-                                              port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
-                                              password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
-                                              timeout: 1000)
-        guard let connection = mpdConnection?.connection else {
-            return Observable.just([])
-        }
-        
-        var songs = [Song]()
-        if mpd.send_list_queue_range_meta(connection, start: UInt32(start), end: UInt32(end)) == true {
-            var mpdSong = mpd.recv_song(connection)
+        let mpdConnector = self.mpdConnector
+        let connectionProperties = self.connectionProperties
+        return Observable<[Song]>.fromAsync {
+            let mpdSongs = try await mpdConnector.queue.playlistinfo(range: start..<end)
+
             var position = start
-            while mpdSong != nil {
-                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
-                    song.position = position
-                    songs.append(song)
-                    
-                    position += 1
-                }
+            let songs = mpdSongs.map {
+                var song = Song(mpdSong: $0, connectionProperties: connectionProperties)
+                song.position = position
                 
-                mpd.song_free(mpdSong)
-                mpdSong = mpd.recv_song(connection)
+                position += 1
+                return song
             }
-            
-            _ = mpd.response_finish(connection)
+            return songs
         }
-        
-        return Observable.just(songs)
     }
     
     /// Get a block of song id's from the playqueue
@@ -268,32 +223,23 @@ public class MPDStatus: StatusProtocol {
     ///   - start: the start position of the requested block
     ///   - end: the end position of the requested block
     /// - Returns: Array of tuples of playqueue position and track id, not guaranteed to have the same number of songs as requested.
-    public func playqueueSongIds(start: Int, end: Int) -> Observable<[(Int, Int)]> {
+    public func playqueueSongIds(start: Int, end: Int) -> Observable<[(Int, String)]> {
         guard start >= 0, start < end else {
             return Observable.just([])
         }
         
-        let mpdConnection = MPDHelper.connect(mpd: mpd,
-                                              host: MPDHelper.hostToUse(connectionProperties),
-                                              port: connectionProperties[ConnectionProperties.port.rawValue] as! Int,
-                                              password: connectionProperties[ConnectionProperties.password.rawValue] as! String,
-                                              timeout: 1000)
-        guard let connection = mpdConnection?.connection else {
-            return Observable.just([])
+        let mpdConnector = self.mpdConnector
+        return Observable<[(Int, Int)]>.fromAsync {
+            let posids = try await mpdConnector.queue.plchangesposid(version: 0)
+
+            return posids
+                .filter {
+                    $0.cpos >= start && $0.cpos < end
+                }
+                .map {
+                    ($0.cpos, "\($0.id)")
+                }
         }
-        
-        var positions = [(Int, Int)]()
-        if mpd.send_queue_changes_brief(connection, version: 0) == true {
-            var mpdPositionId = mpd.recv_queue_change_brief(connection)
-            while let currentMpdPositionId = mpdPositionId {
-                positions.append((Int(currentMpdPositionId.0), Int(currentMpdPositionId.1)))
-                mpdPositionId = mpd.recv_queue_change_brief(connection)
-            }
-            
-            _ = mpd.response_finish(connection)
-        }
-        
-        return Observable.just(positions)
     }
     
     public func disconnectFromMPD() {
@@ -509,6 +455,7 @@ extension Song {
         sortAlbumArtist = mpdSong.albumartistsort ?? ""
         sortAlbum = mpdSong.albumsort ?? ""
         lastModified = mpdSong.lastmodified ?? Date()
+        playqueueId = (mpdSong.id == nil) ? UUID().uuidString : "\(mpdSong.id!)"
         
         var filetype = ""
         let components = id.components(separatedBy: "/")

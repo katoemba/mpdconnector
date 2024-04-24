@@ -433,29 +433,18 @@ public class MPDControl: ControlProtocol {
     ///   - genre: the genre to add
     ///   - addDetails: how to add the folder to the playqueue
     public func add(_ genre: Genre, addDetails: AddDetails) -> Observable<(Genre, AddResponse)> {
-        runCommandWithStatus()  { connection in
-            do {
-                _ = self.mpd.run_clear(connection)
-                
-                try self.mpd.search_add_db_songs(connection, exact: true)
-                try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                try self.mpd.search_commit(connection)
-                
-                _ = self.mpd.response_finish(connection)
-                
-                if addDetails.shuffle {
-                    _ = self.mpd.run_shuffle(connection)
-                }
-                
-                _ = self.mpd.run_play_pos(connection, 0)
+        runAsyncCommand { mpdConnector, playerStatus in
+            var executors = [any CommandExecutor]()
+            executors.append(mpdConnector.queue.clearExecutor())
+            executors.append(mpdConnector.database.findaddExecutor(filter: .tagEquals(tag: .genre, value: genre.id)))
+            if addDetails.shuffle {
+                executors.append(mpdConnector.queue.shuffleExecutor())
             }
-            catch {
-                print(self.mpd.connection_get_error_message(connection))
-                _ = self.mpd.connection_clear_error(connection)
-            }
+            executors.append(mpdConnector.playback.playExecutor(0))
+            _ = try? await mpdConnector.batchCommand(executors)
         }
-        .map({ (playerStatus) -> (Genre, AddResponse) in
-            (genre, AddResponse(addDetails, playerStatus))
+        .map({ (_) -> (Genre, AddResponse) in
+            (genre, AddResponse(addDetails, nil))
         })
     }
     
@@ -680,14 +669,14 @@ public class MPDControl: ControlProtocol {
             }, onError: { (error) in
             })
             .flatMap { (mpdConnection) -> Observable<PlayerStatus> in
-                return MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector).getStatus()
+                return MPDStatus(connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector).getStatus()
             }
             .observe(on: MainScheduler.instance)
     }
     
     private func runAsyncCommand(command: @escaping (SwiftMPD.MPDConnector, PlayerStatus) async -> Void) -> Observable<PlayerStatus> {
         let mpdConnector = self.mpdConnector
-        let mpdStatus = MPDStatus(mpd: mpd, connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector)
+        let mpdStatus = MPDStatus(connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector)
         
         Task {
             guard let playerStatus = try? await mpdStatus.fetchPlayerStatus(mpdConnector) else { return }

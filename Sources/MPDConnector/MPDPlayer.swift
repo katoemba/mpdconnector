@@ -361,8 +361,7 @@ public class MPDPlayer: PlayerProtocol {
         
         self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
         self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
-        self.mpdStatus = MPDStatus.init(mpd: mpd,
-                                        connectionProperties: connectionProperties,
+        self.mpdStatus = MPDStatus.init(connectionProperties: connectionProperties,
                                         scheduler: scheduler,
                                         userDefaults: userDefaults,
                                         mpdConnector: mpdConnector,
