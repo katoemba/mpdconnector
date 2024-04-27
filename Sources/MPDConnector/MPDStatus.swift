@@ -26,7 +26,6 @@
 
 import Foundation
 import ConnectorProtocol
-import libmpdclient
 import RxSwift
 import RxRelay
 import SwiftMPD

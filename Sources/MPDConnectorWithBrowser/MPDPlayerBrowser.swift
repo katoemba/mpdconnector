@@ -34,6 +34,7 @@ import libmpdclient
 import SWXMLHash
 import RxNetService
 import MPDConnector
+import SwiftMPD
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 public class MPDPlayerBrowser: PlayerBrowserProtocol {
@@ -421,16 +422,18 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// - Parameter connectionProperties: dictionary of connection properties
     /// - Returns: An observable on which a created Player can published.
     public func playerForConnectionProperties(_ connectionProperties: [String: Any]) -> Observable<PlayerProtocol?> {
-        guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType else { return Observable.just(nil) }
-        
+        guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType,
+              MPDHelper.hostToUse(connectionProperties) != "",
+              let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else { return Observable.just(nil) }
+
         let userDefaults = self.userDefaults
-        return MPDHelper.connectToMPD(mpd: MPDWrapper(), connectionProperties: connectionProperties, scheduler: backgroundScheduler, forceCleanup: false)
-            .flatMap({ (mpdConnection) -> Observable<PlayerProtocol?> in
-                guard mpdConnection != nil else { return Observable.just(nil) }
-                
-                return Observable.just(MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults))
-            })
-            .observe(on: MainScheduler.instance)
+        return Observable<PlayerProtocol?>.fromAsync {
+            let _ = try await SwiftMPD.MPDConnector(.init(ipAddress: MPDHelper.hostToUse(connectionProperties), port: port, connectTimeout: 3)).getVersion()
+            
+            return MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults)
+        }
+        .catchAndReturn(nil)
+        .observe(on: MainScheduler.instance)
     }
     
     public func persistPlayer(_ connectionProperties: [String: Any]) {

@@ -697,7 +697,7 @@ public class MPDControl: ControlProtocol {
     }
 }
 
-extension Observable {
+public extension Observable {
     static func fromAsync<T>(_ fn: @escaping () async throws -> T) -> Observable<T> {
         .create { observer in
             let task = Task {
