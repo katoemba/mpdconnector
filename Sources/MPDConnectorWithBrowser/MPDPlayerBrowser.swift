@@ -428,7 +428,8 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
 
         let userDefaults = self.userDefaults
         return Observable<PlayerProtocol?>.fromAsync {
-            let _ = try await SwiftMPD.MPDConnector(.init(ipAddress: MPDHelper.hostToUse(connectionProperties), port: port, connectTimeout: 3)).getVersion()
+            let hostToUse = MPDHelper.hostToUse(connectionProperties)
+            let _ = try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3)).getVersion()
             
             return MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults)
         }

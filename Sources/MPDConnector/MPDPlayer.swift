@@ -359,8 +359,9 @@ public class MPDPlayer: PlayerProtocol {
                                     MPDConnectionProperties.outputHost.rawValue: outputHost,
                                     MPDConnectionProperties.outputPort.rawValue: outputPort] as [String : Any]
         
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
-        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: host, port: port, password: password, connectTimeout: 3))
+        let hostToUse = MPDHelper.hostToUse(connectionProperties)
+        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3))
+        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3))
         self.mpdStatus = MPDStatus.init(connectionProperties: connectionProperties,
                                         scheduler: scheduler,
                                         userDefaults: userDefaults,

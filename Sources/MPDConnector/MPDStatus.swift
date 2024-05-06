@@ -436,6 +436,9 @@ extension Song {
         composer = mpdSong.composer ?? ""
         genre = mpdSong.genre == nil ? [] : [mpdSong.genre!]
         length = Int(mpdSong.duration)
+        if length == 0, let time = mpdSong.time {
+            length = Int(time)
+        }
         name = mpdSong.name ?? ""
         date = mpdSong.date ?? ""
         year = Int(String(date.prefix(4))) ?? 0
@@ -443,7 +446,9 @@ extension Song {
         comment = mpdSong.comment ?? ""
         
         track = Int(mpdSong.track ?? 0)
-        disc = Int(mpdSong.disc ?? "") ?? 0
+        if let components = mpdSong.disc?.components(separatedBy: .decimalDigits.inverted), components.count > 0 {
+            disc = Int(components[0]) ?? 0
+        }
         musicbrainzArtistId = mpdSong.musicbrainz_artistid ?? ""
         musicbrainzAlbumId = mpdSong.musicbrainz_albumid ?? ""
         musicbrainzAlbumArtistId = mpdSong.musicbrainz_albumartistid ?? ""

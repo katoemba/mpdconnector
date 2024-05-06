@@ -353,22 +353,45 @@ public class MPDBrowse: BrowseProtocol {
             return fetchAlbums_20_22_and_above(genre: genre, sort: sort)
         }
     }
-    
+
     // This is the old-fashioned way of getting data, using a double group by.
-    func fetchAlbums_below_20_22(genre: Genre?, sort: SortType) -> Observable<[Album]> {
+    func fetchAlbums_below_20_22(genre: Genre? = nil, sort: SortType) -> Observable<[Album]> {
         Observable<[Album]>.fromAsync {
-            let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
-            let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist, .date])
+            let filter: MPDDatabase.Expression? = (genre == nil) ? nil : MPDDatabase.Expression.tagEquals(tag: .genre, value: genre!.id)
+            let keyValuePairs: [KeyValuePair] = try await self.mpdConnector.database.list(type: .album, filter: filter, groupBy: [.albumArtist, .date], raw: true).compactMap {
+                switch $0 {
+                case let .raw(keyValuePair):
+                    return keyValuePair
+                default:
+                    return nil
+                }
+            }
             var albums = Set<Album>()
-            
-            for group in artists {
-                guard case let .group(artist) = group, let artistValue = artist.value else { continue }
-                for group in artist.children {
-                    guard case let .group(year) = group, let yearValue = year.value else { continue }
-                    for value in year.children {
-                        guard case let .value(album) = value, album != "" && artistValue != "" else { continue }
-                        albums.insert(Album(id: "\(artistValue):\(album)", source: .Local, location: "", title: album, artist: artistValue, year: Int(String(yearValue.prefix(4))) ?? 0, genre: [], length: 0))
+         
+            var idx = 0
+            while idx < keyValuePairs.count {
+                while idx < keyValuePairs.count, keyValuePairs[idx].key != "album" {
+                    idx += 1
+                }
+                guard idx < keyValuePairs.count else { break }
+                let title = keyValuePairs[idx].value
+                
+                idx += 1
+                if title != "" {
+                    var albumArtist = "Unknown"
+                    if idx < keyValuePairs.count, keyValuePairs[idx].key == "albumartist" {
+                        albumArtist = keyValuePairs[idx].value
+                        idx += 1
                     }
+                    var year = 0
+                    if idx < keyValuePairs.count, keyValuePairs[idx].key == "date" {
+                        let yearString = keyValuePairs[idx].value
+                        year = Int(String(yearString.prefix(4))) ?? 0
+                        idx += 1
+                    }
+                    
+                    let albumID = "\(albumArtist):\(title)"
+                    albums.insert(Album(id: albumID, source: .Local, location: "", title: title, artist: albumArtist, year: year, genre: [], length: 0))
                 }
             }
 
