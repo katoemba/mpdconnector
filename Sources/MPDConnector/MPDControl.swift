@@ -26,7 +26,6 @@
 
 import Foundation
 import ConnectorProtocol
-import libmpdclient
 import RxSwift
 import SwiftMPD
 
@@ -339,12 +338,11 @@ public class MPDControl: ControlProtocol {
     ///   - playlist: the playlist to add the song to
     /// - Returns: an observable tuple consisting of song and playlist.
     public func addToPlaylist(_ song: Song, playlist: Playlist) -> Observable<(Song, Playlist)> {
-        return runCommandWithStatus()  { connection in
-            _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
+        Observable<(Song, Playlist)>.fromAsync {
+            try? await self.mpdConnector.playlist.playlistadd(name: playlist.id, uri: song.id)
+            return (song, playlist)
         }
-        .map({ (_) -> (Song, Playlist) in
-            (song, playlist)
-        })
+        .observe(on: MainScheduler.instance)
     }
     
     /// Add an album to the play queue
@@ -373,19 +371,20 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of album and playlist.
     public func addToPlaylist(_ album: Album, playlist: Playlist) -> Observable<(Album, Playlist)> {
         // First we need to get all the songs on an album, then add them one by one
+        let mpdConnector = self.mpdConnector
         let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsOnAlbum(album)
             .flatMap({ (songs) -> Observable<(Album, Playlist)> in
-                return self.runCommandWithStatus()  { connection in
+                Observable<(Album, Playlist)>.fromAsync {
+                    var executors = [any CommandExecutor]()
                     for song in songs {
-                        _ = self.mpd.run_playlist_add(connection, name: playlist.id, path: song.id)
+                        executors.append(mpdConnector.playlist.playlistaddExecutor(name: playlist.id, uri: song.id))
                     }
+                    _ = try? await mpdConnector.batchCommand(executors)
+                    return (album, playlist)
                 }
-                .map({ (_) -> (Album, Playlist) in
-                    (album, playlist)
-                })
             })
-        
+            .observe(on: MainScheduler.instance)
     }
     
     /// Add an artist to the play queue
@@ -413,18 +412,21 @@ public class MPDControl: ControlProtocol {
     ///   - addDetails: how to add the playlist to the playqueue
     /// - Returns: an observable tuple consisting of playlist and addResponse.
     public func add(_ playlist: Playlist, addDetails: AddDetails) -> Observable<(Playlist, AddResponse)> {
-        return runCommandWithStatus()  { connection in
-            _ = self.mpd.run_clear(connection)
-            _ = self.mpd.run_load(connection, name: playlist.id)
+        let mpdConnector = self.mpdConnector
+        return Observable<(Playlist, AddResponse)>.fromAsync {
+            var executors = [any CommandExecutor]()
+            executors.append(mpdConnector.queue.clearExecutor())
+            executors.append(mpdConnector.playlist.loadExecutor(playlist: playlist.id))
             if addDetails.shuffle {
-                _ = self.mpd.run_shuffle(connection)
+                executors.append(mpdConnector.queue.shuffleExecutor())
             }
-            
-            _ = self.mpd.run_play_pos(connection, addDetails.startWithSong)
+            executors.append(mpdConnector.playback.playExecutor(Int(addDetails.startWithSong)))
+
+            try await mpdConnector.batchCommand(executors)
+
+            return (playlist, AddResponse(addDetails, nil))
         }
-        .map({ (playerStatus) -> (Playlist, AddResponse) in
-            (playlist, AddResponse(addDetails, playerStatus))
-        })
+        .observe(on: MainScheduler.instance)
     }
     
     /// Add a genre to the play queue
@@ -510,7 +512,7 @@ public class MPDControl: ControlProtocol {
 
                 executors.removeAll()
                 if let end = try? statusExecutor.processResults().playlistlength {
-                    executors.append(mpdConnector.queue.moveExecutor(range: playerStatus.playqueue.length...end, topos: pos))
+                    executors.append(mpdConnector.queue.moveExecutor(range: UInt(playerStatus.playqueue.length)...UInt(end), topos: .absolute(UInt(pos))))
                 }
                 
                 if addDetails.addMode == .addNextAndPlay {
@@ -532,7 +534,7 @@ public class MPDControl: ControlProtocol {
     ///   - to: the position to move the song to
     public func moveSong(from: Int, to: Int) {
         _ = runAsyncCommand {
-            _ = try? await $0.queue.move(frompos: from, topos: to)
+            _ = try? await $0.queue.move(frompos: from, topos: .absolute(UInt(to)))
         }
     }
     
@@ -552,8 +554,8 @@ public class MPDControl: ControlProtocol {
     ///   - from: the position of the song to change
     ///   - to: the position to move the song to
     public func moveSong(playlist: Playlist, from: Int, to: Int) {
-        runCommand()  { connection in
-            _ = self.mpd.run_playlist_move(connection, name: playlist.id, from: UInt32(from), to: UInt32(to))
+        _ = runAsyncCommand {
+            try? await $0.playlist.playlistmove(name: playlist.id, from: UInt(from), to: UInt(to))
         }
     }
     
@@ -563,8 +565,8 @@ public class MPDControl: ControlProtocol {
     ///   - playlist: the playlist from which to remove the song
     ///   - at: the position of the song to remove
     public func deleteSong(playlist: Playlist, at: Int) {
-        runCommand()  { connection in
-            _ = self.mpd.run_playlist_delete(connection, name: playlist.id, pos: UInt32(at))
+        _ = runAsyncCommand {
+            try? await $0.playlist.playlistdelete(name: playlist.id, songpos: UInt(at))
         }
     }
     
@@ -572,15 +574,15 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter name: name for the playlist
     public func savePlaylist(_ name: String) {
-        runCommand()  { connection in
-            _ = self.mpd.run_save(connection, name: name)
+        _ = runAsyncCommand {
+            try? await $0.playlist.save(name: name)
         }
     }
     
     /// Clear the active playqueue
     public func clearPlayqueue() {
         _ = runAsyncCommand {
-            _ = try? await $0.queue.clear()
+            try? await $0.queue.clear()
         }
     }
     
@@ -588,16 +590,19 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter station: the station that has to be played
     public func playStation(_ station: Station) {
-        runCommand()  { connection in
-            _ = self.mpd.run_stop(connection)
-            _ = self.mpd.run_clear(connection)
+        _ = runAsyncCommand { mpdConnector in
+            var executors = [any CommandExecutor]()
+            executors.append(mpdConnector.playback.stopExecutor())
+            executors.append(mpdConnector.queue.clearExecutor())
             if station.url.hasSuffix(".m3u") || station.url.hasSuffix(".pls") || station.url.contains(".pls?") || station.url.contains(".m3u?") {
-                _ = self.mpd.run_load(connection, name: station.url)
+                executors.append(mpdConnector.playlist.loadExecutor(playlist: station.url))
             }
             else {
-                _ = self.mpd.run_add(connection, uri: station.url)
+                executors.append(mpdConnector.queue.addExecutor(station.url))
             }
-            _ = self.mpd.run_play(connection)
+            executors.append(mpdConnector.playback.playExecutor())
+            
+            try? await mpdConnector.batchCommand(executors)
         }
     }
     
@@ -629,71 +634,29 @@ public class MPDControl: ControlProtocol {
             }
         }
     }
-    
-    /// Run a command on a background thread, then optionally trigger an update to the player status
-    ///
-    /// - Parameters:
-    ///   - command: the block to execute
-    private func runCommand(command: @escaping (OpaquePointer) -> Void) {
-        let mpd = self.mpd
         
-        // Connect and run the command on the serial scheduler to prevent any blocking.
-        MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler, forceCleanup: false)
-            .observe(on: serialScheduler)
-            .subscribe(onNext: { (mpdConnection) in
-                guard let connection = mpdConnection?.connection else { return }
-                
-                command(connection)
-            }, onError: { (error) in
-            })
-            .disposed(by: bag)
-    }
-    
-    /// Run a command on a background thread, then optionally trigger an update to the player status
-    ///
-    /// - Parameters:
-    ///   - command: the block to execute
-    private func runCommandWithStatus(command: @escaping (OpaquePointer) -> Void) -> Observable<PlayerStatus> {
-        let mpd = self.mpd
-        let userDefaults = self.userDefaults
-        let connectionProperties = self.connectionProperties
-        let mpdConnector = self.mpdConnector
-        
-        // Connect and run the command on the serial scheduler to prevent any blocking.
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: serialScheduler, forceCleanup: false)
-            .observe(on: serialScheduler)
-            .do(onNext: { (mpdConnection) in
-                guard let connection = mpdConnection?.connection else { return }
-                
-                command(connection)
-            }, onError: { (error) in
-            })
-            .flatMap { (mpdConnection) -> Observable<PlayerStatus> in
-                return MPDStatus(connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector).getStatus()
-            }
-            .observe(on: MainScheduler.instance)
-    }
-    
     private func runAsyncCommand(command: @escaping (SwiftMPD.MPDConnector, PlayerStatus) async -> Void) -> Observable<PlayerStatus> {
         let mpdConnector = self.mpdConnector
         let mpdStatus = MPDStatus(connectionProperties: connectionProperties, userDefaults: userDefaults, mpdConnector: mpdConnector)
         
-        Task {
-            guard let playerStatus = try? await mpdStatus.fetchPlayerStatus(mpdConnector) else { return }
+        return Observable<PlayerStatus>.fromAsync {
+            guard let playerStatus = try? await mpdStatus.fetchPlayerStatus(mpdConnector) else { return PlayerStatus() }
             await command(mpdConnector, playerStatus)
+            
+            return PlayerStatus()
         }
-        
-        return Observable.empty()
+        .observe(on: MainScheduler.instance)
     }
     
     private func runAsyncCommand(command: @escaping (SwiftMPD.MPDConnector) async -> Void) -> Observable<PlayerStatus> {
         let mpdConnector = self.mpdConnector
 
-        Task {
+        return Observable<PlayerStatus>.fromAsync {
             await command(mpdConnector)
+            
+            return PlayerStatus()
         }
-        
-        return Observable.empty()
+        .observe(on: MainScheduler.instance)
     }
 }
 

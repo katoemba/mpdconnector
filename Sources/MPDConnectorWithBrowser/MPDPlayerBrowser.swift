@@ -165,7 +165,6 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .map({ (connectionData) -> MPDPlayer in
                 return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
             })
-            .share(replay: 1)
         
         // Create an observable that monitors for http services, and then checks if this is a volumio player.
         let httpPlayerObservable = httpNetServiceBrowser.rx.serviceAdded
@@ -429,7 +428,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         let userDefaults = self.userDefaults
         return Observable<PlayerProtocol?>.fromAsync {
             let hostToUse = MPDHelper.hostToUse(connectionProperties)
-            let _ = try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3)).getVersion()
+            let _ = try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3, uuid: UUID())).getVersion()
             
             return MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults)
         }

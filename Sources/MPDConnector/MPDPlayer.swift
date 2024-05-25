@@ -96,6 +96,7 @@ public class MPDPlayer: PlayerProtocol {
     private var port: Int
     //private var password: String
     public private(set) var type: MPDType
+    private var uuid = UUID()
     
     public private(set) var version: String
     
@@ -360,8 +361,8 @@ public class MPDPlayer: PlayerProtocol {
                                     MPDConnectionProperties.outputPort.rawValue: outputPort] as [String : Any]
         
         let hostToUse = MPDHelper.hostToUse(connectionProperties)
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3))
-        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3))
+        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid))
+        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid))
         self.mpdStatus = MPDStatus.init(connectionProperties: connectionProperties,
                                         scheduler: scheduler,
                                         userDefaults: userDefaults,
@@ -369,6 +370,7 @@ public class MPDPlayer: PlayerProtocol {
                                         mpdIdleConnector: mpdIdleConnector)
         
         HelpMePlease.allocUp(name: "MPDPlayer")
+        print("Created player \(uuid.uuidString)")
     }
     
     /// Init an instance of a MPDPlayer based on a connectionProperties dictionary
@@ -428,6 +430,7 @@ public class MPDPlayer: PlayerProtocol {
     
     deinit {
         HelpMePlease.allocDown(name: "MPDPlayer")
+        print("Destroyed player \(uuid.uuidString)")
     }
     
     // MARK: - PlayerProtocol Implementations

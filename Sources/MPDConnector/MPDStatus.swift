@@ -56,8 +56,10 @@ public class MPDStatus: StatusProtocol {
     public var playerStatusObservable : Observable<PlayerStatus> {
         get {
             return _playerStatus
-                .distinctUntilChanged()
                 .observe(on: MainScheduler.instance)
+                .filter {
+                    $0.lastUpdateTime != Date(timeIntervalSince1970: 0)
+                }
         }
     }
     
@@ -202,7 +204,7 @@ public class MPDStatus: StatusProtocol {
         let mpdConnector = self.mpdConnector
         let connectionProperties = self.connectionProperties
         return Observable<[Song]>.fromAsync {
-            let mpdSongs = try await mpdConnector.queue.playlistinfo(range: start..<end)
+            let mpdSongs = try await mpdConnector.queue.playlistinfo(range: start...end)
 
             var position = start
             let songs = mpdSongs.map {

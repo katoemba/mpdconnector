@@ -26,7 +26,6 @@
 
 import Foundation
 import ConnectorProtocol
-import libmpdclient
 import RxSwift
 import SwiftMPD
 
@@ -243,98 +242,23 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     func fetchRecentAlbums(numberOfAlbums: Int) -> Observable<[Album]> {
-        let version = connectionProperties[MPDConnectionProperties.version.rawValue] as! String
-        guard MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.20.19") == .orderedDescending else {
-            return fetchRecentAlbums_below_0_20_20(numberOfDays: 183)
+        let connectionProperties = self.connectionProperties
+        let mpdConnector = self.mpdConnector
+
+        return Observable<[Album]>.fromAsync {
+            let songs: [Song] = try await mpdConnector.database.search(filter: .modifiedSince(value: Date(timeIntervalSinceNow: -3600 * 24 * 100))).compactMap {
+                guard let title = $0.title, title != "" else { return nil }
+                return Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }
+                
+            return self.albumsFromSongs(songs, sort: .title).sorted {
+                $0.lastModified > $1.lastModified
+            }
         }
-
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Album]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                do {
-                    var albums = [Album]()
-                    
-                    try self.mpd.search_db_songs(connection, exact: true)
-                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSince1970: TimeInterval(0)))
-                    try self.mpd.search_add_sort_name(connection, name: "Last-Modified", descending: true)
-                    try self.mpd.search_add_window(connection, start: 0, end: UInt32(numberOfAlbums * 24))
-                    try self.mpd.search_commit(connection)
-                    
-                    var count = 0
-                    var albumIDs = [String: Int]()
-                    while let mpdSong = self.mpd.recv_song(connection) {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                            let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
-                            let albumID = "\(albumartist):\(song.album)"
-                            count += 1
-                            if albumIDs[albumID] == nil {
-                                albumIDs[albumID] = 1
-                                albums.append(self.createAlbumFromSong(song))
-                            }
-                        }
-
-                        self.mpd.song_free(mpdSong)
-                    }
-                    _ = self.mpd.response_finish(connection)
-                    
-                    return Observable.just(albums)
-                }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
-    
-    func fetchRecentAlbums_below_0_20_20(numberOfDays: Int = 0) -> Observable<[Album]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Album]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                do {
-                    var albums = [Album]()
-                    
-                    try self.mpd.search_db_songs(connection, exact: true)
-                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSinceNow: TimeInterval(-1 * (numberOfDays > 0 ? numberOfDays : 180) * 24 * 60 * 60)))
-                    try self.mpd.search_commit(connection)
-                    
-                    var albumIDs = [String: Int]()
-                    while let mpdSong = self.mpd.recv_song(connection) {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                            let albumartist = (song.albumartist == "") ? song.artist : song.albumartist
-                            let albumID = "\(albumartist):\(song.album)"
-                            if albumIDs[albumID] == nil {
-                                albumIDs[albumID] = 1
-                                albums.append(self.createAlbumFromSong(song))
-                            }
-                        }
-
-                        self.mpd.song_free(mpdSong)
-                    }
-                    _ = self.mpd.response_finish(connection)
-                    
-                    return Observable.just(albums.sorted(by: { (lhs, rhs) -> Bool in
-                        return lhs.lastModified > rhs.lastModified
-                    }))
-                }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
-    }
-    
+        
     public func recentAlbums() async -> [Album] {
         guard let albums = try? await fetchRecentAlbums(numberOfAlbums: 20).first().value else { return [] }
         
@@ -450,49 +374,28 @@ public class MPDBrowse: BrowseProtocol {
         .observe(on: MainScheduler.instance)
     }
 
-    fileprivate func completeCoverURI(_ connection: OpaquePointer, _ coverURI: CoverURI) -> CoverURI {
-        if case let .filenameOptionsURI(baseURI, path, filenames) = coverURI {
-            var coverFiles = [String]()
-            _ = self.mpd.send_list_files(connection, path: path)
-            while let entity = self.mpd.recv_entity(connection) {
-                if self.mpd.entity_get_type(entity) == MPD_ENTITY_TYPE_SONG {
-                    let mpdSong = self.mpd.entity_get_song(entity)
-                    let uri = self.mpd.song_get_uri(mpdSong)
-                    
-                    let components = uri.split(separator: "/")
-                    if components.count > 0 {
-                        let lastComponent = components[components.count - 1]
-                        if (lastComponent.contains(".jpg") || lastComponent.contains(".png")) && lastComponent.starts(with: ".") == false {
-                            coverFiles.append(String(lastComponent))
-                        }
-                    }
-                }
-                self.mpd.entity_free(entity)
-            }
-            _ = self.mpd.response_finish(connection)
-            
-            for bestOption in filenames {
-                if coverFiles.contains(bestOption) {
-                    return CoverURI.filenameOptionsURI(baseURI, path, [bestOption])
-                }
-            }
-            if coverFiles.count > 0 {
-                return CoverURI.filenameOptionsURI(baseURI, path, [coverFiles[0]])
-            }
-        }
-        
-        return coverURI
-    }
-    
     public func completeAlbums(_ albums: [Album]) -> Observable<[Album]> {
         Observable<[Album]>.fromAsync {
+            if let album = albums.first {
+                switch album.coverURI {
+                case let .fullPathURI(path):
+                    if path != "" {
+                        return albums
+                    }
+                case let .filenameOptionsURI(_, path, _):
+                    if path != "" {
+                        return albums
+                    }
+                }
+            }
+            
             var originalAlbums = albums
             var results = [Album]()
             
             var commands = [any CommandExecutor]()
             for album in albums {
                 let expression = MPDDatabase.Expression.and(.tagEquals(tag: .album, value: album.title), .tagEquals(tag: .albumArtist, value: album.artist))
-                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0..<1))
+                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0...0))
             }
             try await self.mpdConnector.batchCommand(commands)
             
@@ -520,7 +423,7 @@ public class MPDBrowse: BrowseProtocol {
             var commands = [any CommandExecutor]()
             for artist in artists {
                 let expression = MPDDatabase.Expression.tagEquals(tag: .albumArtist, value: artist.name)
-                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0..<1))
+                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0...0))
             }
             try await self.mpdConnector.batchCommand(commands)
             
@@ -587,73 +490,54 @@ public class MPDBrowse: BrowseProtocol {
     }
 
     public func fetchArtists(genre: Genre?, type: ArtistType) -> Observable<[Artist]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Artist]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
+        let mpdConnector = self.mpdConnector
+        
+        return Observable<[Artist]>.fromAsync {
+            let filter: MPDDatabase.Expression? = nil
+            var results: [MPDDatabase.ListExecutor.GroupChild]
+            var artists = Set<Artist>()
 
-                do {
-                    var artists = Set<Artist>()
-                    
-                    switch type {
-                    case .artist:
-                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ARTIST)
-                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ARTIST_SORT)
-                    case .albumArtist:
-                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_ALBUM_ARTIST)
-                        try self.mpd.search_add_group_tag(connection, tagType: MPD_TAG_ALBUM_ARTIST_SORT)
-                    case .performer:
-                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_PERFORMER)
-                    case .composer:
-                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_COMPOSER)
-                    }
-                    if let genre = genre, genre.id != "" {
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_GENRE, value: genre.id)
-                    }
-                    try self.mpd.search_commit(connection)
-                    
-                    // Get pairs instead of looking by tag name, to ensure we also get the sort values if present.
-                    var artist = ""
-                    var sortArtist = ""
-                    while let result = self.mpd.recv_pair(connection) {
-                        let tagName = result.0
-                        let value = result.1
-                        let tag = self.mpd.tag_name_parse(tagName)
-                        
-                        if [MPD_TAG_ARTIST, MPD_TAG_ALBUM_ARTIST, MPD_TAG_PERFORMER, MPD_TAG_COMPOSER].contains(tag) {
-                            artist = value
-                            if artist != "" {
-                                artists.insert(Artist(id: artist, type: type, source: .Local, name: artist, sortName: sortArtist))
-                                artist = ""
-                                sortArtist = ""
-                            }
-                        }
-                        else if [MPD_TAG_ARTIST_SORT, MPD_TAG_ALBUM_ARTIST_SORT].contains(tag) {
-                            sortArtist = value
+            switch type {
+            case .artist:
+                results = try await mpdConnector.database.list(type: .artist, filter: filter, groupBy: [.artistSort])
+            case .albumArtist:
+                results = try await mpdConnector.database.list(type: .albumArtist, filter: filter, groupBy: [.albumArtistSort])
+            case .performer:
+                results = try await mpdConnector.database.list(type: .performer, filter: filter, raw: true)
+            case .composer:
+                results = try await mpdConnector.database.list(type: .composer, filter: filter, raw: true)
+            }
+            
+            for result in results {
+                switch result {
+                case let .raw(pair):
+                    artists.insert(Artist(id: pair.value, type: type, source: .Local, name: pair.value))
+                case let .group(group):
+                    for child in group.children {
+                        switch child {
+                        case let .value(value):
+                            artists.insert(Artist(id: value, type: type, source: .Local, name: value, sortName: group.value ?? ""))
+                        default:
+                            continue
                         }
                     }
-                    
-                    _ = self.mpd.response_finish(connection)
-
-                    return Observable.just(artists.sorted(by: { (lhs, rhs) -> Bool in
-                        let sortOrder = lhs.sortName.caseInsensitiveCompare(rhs.sortName)
-                        if sortOrder == .orderedSame {
-                            return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
-                        }
-                        else {
-                            return sortOrder == .orderedAscending
-                        }
-                    }))
+                default:
+                    continue
                 }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
+            }
+            
+            return Array<Artist>.init(artists).sorted(by: { (lhs, rhs) -> Bool in
+                let sortOrder = lhs.sortName.caseInsensitiveCompare(rhs.sortName)
+                if sortOrder == .orderedSame {
+                    return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
+                }
+                else {
+                    return sortOrder == .orderedAscending
                 }
             })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
 
     public func fetchExistingArtists(artists: [Artist]) -> Observable<[Artist]> {
@@ -723,31 +607,18 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Returns: an observable array of playlists, order by name
     func fetchPlaylists() -> Observable<[Playlist]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Playlist]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                var playlists = [Playlist]()
-                
-                if self.mpd.send_list_playlists(connection) == true {
-                    var mpdPlaylist = self.mpd.recv_playlist(connection)
-                    while mpdPlaylist != nil {
-                        if let playlist = MPDHelper.playlistFromMpdPlaylist(mpd: self.mpd, mpdPlaylist: mpdPlaylist!) {
-                            playlists.append(playlist)
-                        }
-                    
-                        self.mpd.playlist_free(mpdPlaylist)
-                        mpdPlaylist = self.mpd.recv_playlist(connection)
-                    }
-                }
-                
-                return Observable.just(playlists.sorted(by: { (lhs, rhs) -> Bool in
-                    return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
-                }))
+        Observable<[Playlist]>.fromAsync {
+            let playlists = try await self.mpdConnector.playlist.listplaylists()
+            
+            return playlists.map {
+                Playlist(id: $0.name, source: .Local, name: $0.name, lastModified: $0.lastmodified)
+            }
+            .sorted(by: { (lhs, rhs) -> Bool in
+                return lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
             })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
     
     /// Return a view model for a preloaded list of songs.
@@ -782,13 +653,11 @@ public class MPDBrowse: BrowseProtocol {
         let connectionProperties = self.connectionProperties
 
         return Observable<[Song]>.fromAsync {
-            if let songs = try await mpdConnector.playlist.listplaylistinfo(name: playlist.name) {
-                return songs
-                    .map {
-                        Song(mpdSong: $0, connectionProperties: connectionProperties)
-                    }
-            }
-            return []
+            let songs = try await mpdConnector.playlist.listplaylistinfo(name: playlist.name)
+            return songs
+                .map {
+                    Song(mpdSong: $0, connectionProperties: connectionProperties)
+                }
         }
         .catchAndReturn([])
         .observe(on: MainScheduler.instance)
@@ -798,90 +667,17 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Parameter album: album to filter on
     /// - Returns: a SongBrowseViewModel instance
-    public func songBrowseViewModel(_ album: Album, artist: Artist?) -> SongBrowseViewModel {
-        if let artist = artist {
-            return MPDSongBrowseViewModel(browse: self, filter: .album(album), subFilter: .artist(artist))
-        }
-        else {
-            return MPDSongBrowseViewModel(browse: self, filter: .album(album))
-        }
+    public func songBrowseViewModel(_ album: Album) -> SongBrowseViewModel {
+        return MPDSongBrowseViewModel(browse: self, filter: .album(album))
     }
-    
-    /// Return an array of songs for an artist and optional album. This will search through both artist and albumartist.
-    ///
-    /// - Parameters:
-    ///   - connection: an active mpd connection
-    ///   - playlist: the name of the playlist to get songs for
-    /// - Returns: an array of Song objects
-    private func songsForPlaylist(connection: OpaquePointer, playlist: String) -> [Song] {
-        var songs = [Song]()
-        
-        if self.mpd.send_list_playlist_meta(connection, name: playlist) == true {
-            var mpdSong = mpd.recv_song(connection)
-            while mpdSong != nil {
-                if var song = MPDHelper.songFromMpdSong(mpd: mpd, connectionProperties: connectionProperties, mpdSong: mpdSong) {
-                    song.playqueueId = UUID().uuidString
-                    songs.append(song)
-                }
-                self.mpd.song_free(mpdSong)
-                mpdSong = mpd.recv_song(connection)
-            }
-            
-            _ = self.mpd.response_finish(connection)
-        }
-        
-        return songs
-    }
-    
-    func fetchSongs(start: Int, count: Int) -> Observable<[Song]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Song]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                do {
-                    var songs = [Song]()
-                    
-                    try self.mpd.search_db_songs(connection, exact: true)
-                    try self.mpd.search_add_modified_since_constraint(connection, oper: MPD_OPERATOR_DEFAULT, since:Date(timeIntervalSince1970: TimeInterval(0)))
-                    try self.mpd.search_add_sort_name(connection, name: "Last-Modified", descending: true)
-                    try self.mpd.search_add_window(connection, start: UInt32(start), end: UInt32(start + count))
-                    try self.mpd.search_commit(connection)
-                    
-                    while let mpdSong = self.mpd.recv_song(connection) {
-                        if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                            songs.append(song)
-                        }
-
-                        self.mpd.song_free(mpdSong)
-                    }
-                    _ = self.mpd.response_finish(connection)
-                    
-                    return Observable.just(songs)
-                }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
-    }
-
     
     /// Delete a playlist
     ///
     /// - Parameter playlist: the playlist to delete
     func deletePlaylist(_ playlist: Playlist) {
-        _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .subscribe(onNext: { (mpdConnection) in
-                guard let connection = mpdConnection?.connection else { return }
-
-                _ = self.mpd.run_rm(connection, name: playlist.id)
-            })
+        Task {
+            try? await mpdConnector.playlist.rm(name: playlist.id)
+        }
     }
     
     /// Rename a playlist
@@ -890,13 +686,9 @@ public class MPDBrowse: BrowseProtocol {
     ///   - playlist: the playlist to rename
     ///   - newName: the new name to give to the playlist
     func renamePlaylist(_ playlist: Playlist, newName: String) {
-        _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .subscribe(onNext: { (mpdConnection) in
-                guard let connection = mpdConnection?.connection else { return }
-
-                _ = self.mpd.run_rename(connection, from: playlist.id, to: newName)
-            })
+        Task {
+            try? await mpdConnector.playlist.rename(name: playlist.id, newName: newName)
+        }
     }
     
     /// Return a view model for a list of genres, which can return genres in batches.
@@ -910,39 +702,20 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Returns: an observable String array of genre names
     func fetchGenres() -> Observable<[Genre]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[Genre]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                do {
-                    var genres = [Genre]()
-                    
-                    try self.mpd.search_db_tags(connection, tagType: MPD_TAG_GENRE)
-                    try self.mpd.search_commit(connection)
-                    
-                    while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_GENRE) {
-                        let genreName = result.1
-                        if genreName != "" {
-                            genres.append(Genre(id: genreName, source: .Local, name: genreName))
-                        }
-                    }
-                    _ = self.mpd.response_finish(connection)
-                    
-                    return Observable.just(genres)
-                    //return Observable.just(genres.sorted(by: { (lhs, rhs) -> Bool in
-                    //    return lhs.caseInsensitiveCompare(rhs) == .orderedAscending
-                    //}))
+        let mpdConnector = self.mpdConnector
+        return Observable<[Genre]>.fromAsync {
+            let genres = try await mpdConnector.database.list(type: .genre, raw: true)
+            return genres.compactMap {
+                switch $0 {
+                case let .raw(genre):
+                    return Genre(id: genre.value, source: .Local, name: genre.value)
+                default:
+                    return nil
                 }
-                catch {
-                    print(self.mpd.connection_get_error_message(connection))
-                    _ = self.mpd.connection_clear_error(connection)
-                    
-                    return Observable.just([])
-                }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+            }
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
     
     /// Return a view model for a list of items in the root folder. Contents might be returned in batches.
@@ -964,55 +737,28 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Returns: an observable String array of genre names
     func fetchFolderContents(parentFolder: Folder? = nil) -> Observable<[FolderContent]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[FolderContent]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                do {
-                    var folderContents = [FolderContent]()
-                    
-                    if self.mpd.send_list_meta(connection, path: parentFolder?.path ?? "") == true {
-                        var mpdEntity = self.mpd.recv_entity(connection)
-                        while mpdEntity != nil {
-                            switch self.mpd.entity_get_type(mpdEntity) {
-                            case MPD_ENTITY_TYPE_SONG:
-                                if let mpdSong = self.mpd.entity_get_song(mpdEntity) {
-                                    if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong), song.length > 0 {
-                                        folderContents.append(FolderContent.song(song))
-                                    }
-                                }
-                                break
-                            case MPD_ENTITY_TYPE_DIRECTORY:
-                                if let mpdDirectory = self.mpd.entity_get_directory(mpdEntity) {
-                                    if let folder = MPDHelper.folderFromMPDDirectory(mpd: self.mpd, mpdDirectory: mpdDirectory) {
-                                        folderContents.append(FolderContent.folder(folder))
-                                    }
-                                }
-                                break
-                            case MPD_ENTITY_TYPE_PLAYLIST:
-                                if let mpdPlaylist = self.mpd.entity_get_playlist(mpdEntity) {
-                                    if let playlist = MPDHelper.playlistFromMpdPlaylist(mpd: self.mpd, mpdPlaylist: mpdPlaylist) {
-                                        folderContents.append(FolderContent.playlist(playlist))                                        
-                                    }
-                                }
-                                break
-                            case MPD_ENTITY_TYPE_UNKNOWN:
-                                break
-                            default:
-                                break
-                            }
-                            
-                            self.mpd.entity_free(mpdEntity)
-                            mpdEntity = self.mpd.recv_entity(connection)
+        let mpdConnector = self.mpdConnector
+        let connectionProperties = self.connectionProperties
+        
+        return Observable<[FolderContent]>.fromAsync {
+            try await mpdConnector.database.lsinfo(uri: parentFolder?.path)
+                .compactMap {
+                    switch $0 {
+                    case let .song(song):
+                        return FolderContent.song(Song(mpdSong: song, connectionProperties: connectionProperties))
+                    case let .playlist(playlist, lastModified):
+                        return FolderContent.playlist(Playlist(id: playlist, source: .Local, name: playlist, lastModified: lastModified))
+                    case let .directory(directory, _):
+                        let components = directory.split(separator: "/")
+                        if let folderName = components.last {
+                            return FolderContent.folder(Folder(id: directory, source: .Local, path: directory, name: String(folderName)))
                         }
+                        return nil
                     }
-                    
-                    return Observable.just(folderContents)
                 }
-            })
-            .catchAndReturn([])
-            .observe(on: MainScheduler.instance)
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
     
     /// Get an Artist object for the artist performing a particular song
@@ -1035,45 +781,26 @@ public class MPDBrowse: BrowseProtocol {
     ///
     /// - Returns: an array of tagtypes (strings)
     public func availableTagTypes() -> Observable<[String]> {
-        let mpd = self.mpd
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[String]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                var tagTypes = [String]()
-                _ = mpd.send_list_tag_types(connection)
-                while let pair = mpd.recv_tag_type_pair(connection) {
-                    tagTypes.append(pair.1)
-                }
-                
-                _ = mpd.response_finish(connection)
-                
-                return Observable.just(tagTypes)
-            })
+        let mpdConnector = self.mpdConnector
+        
+        return Observable<[String]>.fromAsync {
+            try await mpdConnector.status.tagtypes()
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
     
     /// Return the commands that are supported by a player
     ///
     /// - Returns: an array of commands (strings)
     public func availableCommands() -> Observable<[String]> {
-        let mpd = self.mpd
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[String]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                var commands = [String]()
-                _ = mpd.send_allowed_commands(connection)
-                while let pair = mpd.recv_pair_named(connection, name: "command") {
-                    commands.append(pair.1)
-                }
-                
-                _ = mpd.response_finish(connection)
-                
-                return Observable.just(commands)
-            })
-            .catchAndReturn([])
+        let mpdConnector = self.mpdConnector
+        
+        return Observable<[String]>.fromAsync {
+            try await mpdConnector.status.commands()
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
     
     /// Preprocess a CoverURI. This allows additional processing of base URI data.
@@ -1081,19 +808,41 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter coverURI: the CoverURI to pre-process
     /// - Returns: the processed cover URI
     public func preprocessCoverURI(_ coverURI: CoverURI) -> Observable<CoverURI> {
-        let mpd = self.mpd
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ [weak self] (mpdConnection) -> Observable<CoverURI> in
-                guard let connection = mpdConnection?.connection else { return Observable.just(coverURI) }
-
-                guard let weakSelf = self else {
-                    return Observable.just(coverURI)
+        let mpdConnector = self.mpdConnector
+        
+        return Observable<CoverURI>.fromAsync {
+            if case let .filenameOptionsURI(baseURI, path, filenames) = coverURI {
+                if baseURI.contains("coverart.php") {
+                    return CoverURI.filenameOptionsURI(baseURI, path, [""])
                 }
+                    
+                var coverFiles = [String]()
+                let folderContents = try await mpdConnector.database.listfiles(uri: path)
+                for item in folderContents {
+                    switch item {
+                    case let .file(file: file, size: _, lastmodified: _):
+                        if let fileExtension = file.split(separator: ".").last, ["jpg", "png"].contains(fileExtension), file.starts(with: "._") == false {
+                            coverFiles.append(file)
+                        }
+                    default:
+                        continue
+                    }
+                }
+                
+                for bestOption in filenames {
+                    if coverFiles.contains(bestOption) {
+                        return CoverURI.filenameOptionsURI(baseURI, path, [bestOption])
+                    }
+                }
+                if coverFiles.count > 0 {
+                    return CoverURI.filenameOptionsURI(baseURI, path, [coverFiles[0]])
+                }
+            }
 
-                let updatedCoverURI = weakSelf.completeCoverURI(connection, coverURI)
-                return Observable.just(updatedCoverURI)
-            })
+            return coverURI
+        }
+        .catchAndReturn(coverURI)
+        .observe(on: MainScheduler.instance)
     }
     
     /// Filter artists that exist in the library
@@ -1130,47 +879,30 @@ public class MPDBrowse: BrowseProtocol {
     }
     
     func updateDB() {
-        _ = MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .subscribe(onNext: { (mpdConnection) in
-                guard let connection = mpdConnection?.connection else { return }
-
-                _ = self.mpd.run_update(connection, path: nil)
-            })
+        Task {
+            _ = try? await mpdConnector.database.update(path: nil)
+        }
     }
     
     func databaseStatus() -> Observable<String> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMapFirst({ (mpdConnection) -> Observable<String> in
-                guard let connection = mpdConnection?.connection else { return Observable.just("") }
-
-                var updateId = UInt32(0)
-                var lastUpdateDate = Date(timeIntervalSince1970: 0)
-                if let status = self.mpd.run_status(connection) {
-                    defer {
-                        self.mpd.status_free(status)
-                    }
-                    
-                    updateId = self.mpd.status_get_update_id(status)
-                    if let mpdStats = self.mpd.run_stats(connection) {
-                        defer {
-                            self.mpd.stats_free(mpdStats)
-                        }
-                        lastUpdateDate = self.mpd.stats_get_db_update_time(mpdStats)
-                    }
-                }
-                
+        let mpdConnector = self.mpdConnector
+        
+        return Observable<String>.fromAsync {
+            if let _ = try await mpdConnector.status.getStatus().updating_db {
+                return "Updating..."
+            }
+            else {
+                let lastUpdated = Date(timeIntervalSince1970: try await TimeInterval(mpdConnector.status.stats().db_update))
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateStyle = .medium
                 dateFormatter.timeStyle = .short
-                if updateId > 0 {
-                    return Observable.just("Updating...")
-                }
-                return Observable.just("Last updated: \(dateFormatter.string(from: lastUpdateDate))")
-            })
-            .catchAndReturn("Couldn't read status.")
-            .observe(on: MainScheduler.instance)
+
+                return "Last updated: \(dateFormatter.string(from: lastUpdated))"
+
+            }
+        }
+        .catchAndReturn("")
+        .observe(on: MainScheduler.instance)
     }
     
     public func imageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
@@ -1196,87 +928,61 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter searchItem: what to search for
     /// - Returns: an observable array of results
     public func search(searchItem: SearchItem) -> Observable<[FoundItem]> {
-        return MPDHelper.connectToMPD(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler)
-            .observe(on: scheduler)
-            .flatMap({ (mpdConnection) -> Observable<[FoundItem]> in
-                guard let connection = mpdConnection?.connection else { return Observable.just([]) }
-
-                var foundItems = Set<FoundItem>()
-                do {
-                    switch searchItem {
-                    case let .artist(artist):
-                        try self.mpd.search_db_songs(connection, exact: false)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist)
-                        try self.mpd.search_add_window(connection, start: 0, end: 100)
-                        try self.mpd.search_commit(connection)
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                                foundItems.insert(.artist(self.createArtistFromSong(song)))
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    case let .artistAlbum(artist: artist, sort: sort):
-                        try self.mpd.search_db_songs(connection, exact: false)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist)
-                        if sort == .year || sort == .yearReverse {
-                            try self.mpd.search_add_sort_tag(connection, tagType: MPD_TAG_DATE, descending: sort == .yearReverse)
-                        }
-                        // When sorting, only pick the first match
-                        try self.mpd.search_add_window(connection, start: 0, end: 1)
-                        try self.mpd.search_commit(connection)
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                                foundItems.insert(.album(self.createAlbumFromSong(song)))
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    case let .album(album, artist):
-                        try self.mpd.search_db_songs(connection, exact: false)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM, value: album)
-                        if artist != nil {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ALBUM_ARTIST, value: artist!)
-                        }
-                        try self.mpd.search_add_window(connection, start: 0, end: 100)
-                        try self.mpd.search_commit(connection)
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                                foundItems.insert(.album(self.createAlbumFromSong(song)))
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    case let .genre(genre):
-                        try self.mpd.search_db_tags(connection, tagType: MPD_TAG_GENRE)
-                        try self.mpd.search_commit(connection)
-                        while let result = self.mpd.recv_pair_tag(connection, tagType: MPD_TAG_GENRE) {
-                            if result.1.lowercased() == genre.lowercased() {
-                                foundItems.insert(.genre(Genre(id: result.1, source: .Local, name: result.1)))
-                            }
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    case let .song(title, artist):
-                        try self.mpd.search_db_songs(connection, exact: false)
-                        try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_TITLE, value: title)
-                        if artist != nil {
-                            try self.mpd.search_add_tag_constraint(connection, oper: MPD_OPERATOR_DEFAULT, tagType: MPD_TAG_ARTIST, value: artist!)
-                        }
-                        try self.mpd.search_add_window(connection, start: 0, end: 100)
-                        try self.mpd.search_commit(connection)
-                        while let mpdSong = self.mpd.recv_song(connection) {
-                            if let song = MPDHelper.songFromMpdSong(mpd: self.mpd, connectionProperties: self.connectionProperties, mpdSong: mpdSong) {
-                                foundItems.insert(.song(song))
-                            }
-                            self.mpd.song_free(mpdSong)
-                        }
-                        _ = self.mpd.response_finish(connection)
-                    default:
-                        break
+        let mpdConnector = self.mpdConnector
+        let connectionProperties = self.connectionProperties
+        
+        return Observable<[FoundItem]>.fromAsync {
+            var foundItems = Array<FoundItem>()
+            switch searchItem {
+            case let .artist(artist):
+                foundItems = try await mpdConnector.database.search(filter: .tagEquals(tag: .artist, value: artist), range: 0...100)
+                    .map {
+                        FoundItem.artist(self.createArtistFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
                     }
+            case let .artistAlbum(artist, sort):
+                let sortToUse: MPDDatabase.TagSort? = sort == .year ? .ascending(.date) : ((sort == .yearReverse) ? .descending(.date) : nil)
+                foundItems = try await mpdConnector.database.search(filter: .tagEquals(tag: .albumArtist, value: artist), sort: sortToUse, range: 0...100)
+                    .map {
+                        FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    }
+            case let .album(album, artist):
+                var filter: MPDDatabase.Expression
+                if let artist {
+                    filter = .and(.tagEquals(tag: .album, value: album), .tagEquals(tag: .albumArtist, value: artist))
                 }
-                
-                return Observable.just(Array(foundItems))
-            })
+                else {
+                    filter = .tagEquals(tag: .album, value: album)
+                }
+                foundItems = try await mpdConnector.database.search(filter: filter, range: 0...100)
+                    .map {
+                        FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    }
+            case let .genre(genre):
+                foundItems = try await mpdConnector.database.search(filter: .tagEquals(tag: .genre, value: genre), range: 0...100)
+                    .compactMap {
+                        guard let genre = $0.genre else { return nil }
+                        
+                        return FoundItem.genre(Genre(id: genre, source: .Local, name: genre))
+                    }
+            case let .song(title, artist):
+                var filter: MPDDatabase.Expression
+                if let artist {
+                    filter = .and(.tagEquals(tag: .title, value: title), .tagEquals(tag: .albumArtist, value: artist))
+                }
+                else {
+                    filter = .tagEquals(tag: .title, value: title)
+                }
+                foundItems = try await mpdConnector.database.search(filter: filter, range: 0...100)
+                    .map {
+                        FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    }
+            default:
+                break
+            }
+            
+            return Array(Set(foundItems))
+        }
+        .catchAndReturn([])
+        .observe(on: MainScheduler.instance)
     }
 }
