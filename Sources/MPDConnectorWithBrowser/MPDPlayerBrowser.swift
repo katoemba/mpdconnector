@@ -30,7 +30,6 @@ import UIKit
 #endif
 import ConnectorProtocol
 import RxSwift
-import libmpdclient
 import SWXMLHash
 import RxNetService
 import MPDConnector
@@ -158,9 +157,10 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 }
             })
             .map({ (connectionData) -> MPDConnectionData in
-                connectionData.withType((connectionData.type == .unknown && (connectionData.name.lowercased().contains("chord") || connectionData.host.lowercased().contains("chord") ||
-                                                                                connectionData.host.lowercased().contains("2go") || connectionData.host.lowercased().contains("2 go") ||
-                                                                                connectionData.host.lowercased().contains("hugo") || connectionData.host.lowercased().contains("hugo"))) ? .chord : connectionData.type)
+                connectionData.withType((connectionData.type == .unknown && (connectionData.name.lowercased().contains("poly") || connectionData.host.lowercased().contains("poly") ||
+                                                                             connectionData.name.lowercased().contains("chord") || connectionData.host.lowercased().contains("chord") ||
+                                                                             connectionData.host.lowercased().contains("2go") || connectionData.host.lowercased().contains("2 go") ||
+                                                                             connectionData.host.lowercased().contains("hugo") || connectionData.host.lowercased().contains("hugo"))) ? .chord : connectionData.type)
             })
             .map({ (connectionData) -> MPDPlayer in
                 return MPDPlayer.init(name: connectionData.name, host: connectionData.host, ipAddress: connectionData.ip, port: connectionData.port, type: connectionData.type == .unknown ? .classic : connectionData.type, userDefaults: userDefaults)
@@ -172,14 +172,21 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .filter({ (netService) -> Bool in
                 netService.name.contains("[runeaudio]") == false && netService.name.contains("bryston") == false
             })
-            .filter({ (netService) -> Bool in
-                // Check if an MPD player is present at the default port
-                let mpd = MPDWrapper()
-                if MPDHelper.connect(mpd: mpd, host: netService.hostName ?? (netService.firstIPv4Address ?? "Unknown"), port: 6600, password: "") != nil {
-                    return true
+            .flatMap({ netService -> Observable<NetService?> in
+                Observable<NetService?>.fromAsync {
+                    do {
+                        let connector = MPDConnector(MPDDeviceSettings(ipAddress: netService.hostName ?? (netService.firstIPv4Address ?? "Unknown"), port: 6600, connectTimeout: 3000, uuid: UUID(), playerName: netService.hostName ?? (netService.firstIPv4Address ?? "Unknown")))
+                        try await connector.connect()
+                        await connector.closeConnection()
+                    }
+                    catch {
+                        return nil
+                    }
+                    return netService
                 }
-                return false
+                .catchAndReturn(nil)
             })
+            .unwrap()
             .map({ (netService) -> (MPDConnectionData) in
                 let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: netService.hostName ?? "Unknown", port: netService.port)
                 let typeInt = userDefaults.integer(forKey: "\(MPDConnectionProperties.MPDType.rawValue).\(initialUniqueID)")
@@ -285,77 +292,12 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         // Merge the detected players, and get a version out of them.
         addPlayerObservable = Observable.merge(mpdPlayerObservable, volumioHttpPlayerObservable, moodeAudioHttpPlayerObservable, volumio3PlayerObservable, addManualPlayerSubject)
             .observe(on: backgroundScheduler)
-            .map({ (player) -> PlayerProtocol in
-                let mpd = MPDWrapper()
-                let connectionProperties = player.connectionProperties
-                let mpdConnection = MPDHelper.connect(mpd: mpd, connectionProperties: connectionProperties)
-                if let connection = mpdConnection?.connection {
-                    var connectionWarning = nil as String?
-                    let version = mpd.connection_get_server_version(connection)
-                    if MPDHelper.compareVersion(leftVersion: version, rightVersion: "0.19.0") == .orderedAscending {
-                        connectionWarning = "MPD version \(version) too low, 0.19.0 required"
-                    }
-                    
-                    let mpdStatus = mpd.run_status(connection)
-                    if  mpd.connection_get_error(connection) == MPD_ERROR_SERVER,
-                        mpd.connection_get_server_error(connection) == MPD_SERVER_ERROR_PERMISSION {
-                        connectionWarning = "Player requires a password"
-                    }
-                    if mpdStatus != nil {
-                        mpd.status_free(mpdStatus)
-                    }
-                    
-                    // Check for tag-type albumartist here, and set warning in case not found.
-                    if connectionWarning == nil {
-                        var tagTypes = [String]()
-                        _ = mpd.send_list_tag_types(connection)
-                        while let pair = mpd.recv_tag_type_pair(connection) {
-                            tagTypes.append(pair.1)
-                        }
-                        _ = mpd.response_finish(connection)
-                        var missingTagTypes = [String]()
-                        if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
-                            missingTagTypes.append("albumartist")
-                        }
-                        if tagTypes.contains("ArtistSort") == false && tagTypes.contains("artistsort") == false {
-                            missingTagTypes.append("artistsort")
-                        }
-                        if tagTypes.contains("AlbumArtistSort") == false && tagTypes.contains("albumartistsort") == false {
-                            missingTagTypes.append("albumartistsort")
-                        }
-                        if missingTagTypes.count == 1 {
-                            connectionWarning = "id3-tag \(missingTagTypes[0]) is not configured"
-                        }
-                        else if missingTagTypes.count > 1 {
-                            connectionWarning = "id3-tags "
-                            for tag in missingTagTypes {
-                                if connectionWarning! != "id3-tags " {
-                                    connectionWarning! += ", "
-                                }
-                                connectionWarning! += tag
-                            }
-                            connectionWarning! += " are not configured"
-                        }
-                    }
-                    
-                    var commands = [String]()
-                    _ = mpd.send_allowed_commands(connection)
-                    while let command = mpd.recv_pair_named(connection, name: "command") {
-                        commands.append(command.1)
-                    }
-                    _ = mpd.response_finish(connection)
-                    
-                    return MPDPlayer.init(connectionProperties: player.connectionProperties,
-                                          type: player.type,
-                                          version: version,
-                                          discoverMode: player.discoverMode,
-                                          connectionWarning: connectionWarning,
-                                          userDefaults: userDefaults,
-                                          commands: commands)
-                }
-                
-                return player
-            })
+            .do {
+                $0.finishDiscovery()
+            }
+            .map {
+                $0 as PlayerProtocol
+            }
             .observe(on: MainScheduler.instance)
         
         // Create an observable that monitors when players disappear from the network.
@@ -410,8 +352,6 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             guard UIApplication.shared.applicationState != .active else {
                 return
             }
-
-            MPDConnection.cleanup()
         }
 #endif
     }
@@ -428,7 +368,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         let userDefaults = self.userDefaults
         return Observable<PlayerProtocol?>.fromAsync {
             let hostToUse = MPDHelper.hostToUse(connectionProperties)
-            let _ = try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3, uuid: UUID())).getVersion()
+            try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3, uuid: UUID(), playerName: connectionProperties[ConnectionProperties.name.rawValue] as? String ?? "Unknown")).connect()
             
             return MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults)
         }

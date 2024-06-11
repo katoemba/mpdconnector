@@ -28,7 +28,6 @@ import Foundation
 import XCTest
 import ConnectorProtocol
 import MPDConnector
-import libmpdclient
 import RxSwift
 import RxBlocking
 

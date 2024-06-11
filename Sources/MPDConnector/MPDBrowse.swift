@@ -42,20 +42,16 @@ public class MPDBrowse: BrowseProtocol {
     public var name = "mpd"
     
     private static var operationQueue: OperationQueue?
-    /// Connection to a MPD Player
-    private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
     private let mpdConnector: SwiftMPD.MPDConnector
 
     private var scheduler: SchedulerType
     
-    public init(mpd: MPDProtocol? = nil,
-                connectionProperties: [String: Any],
+    public init(connectionProperties: [String: Any],
                 identification: String = "NoID",
                 scheduler: SchedulerType? = nil,
                 mpdConnector: SwiftMPD.MPDConnector) {
-        self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
         self.mpdConnector = mpdConnector
@@ -113,8 +109,12 @@ public class MPDBrowse: BrowseProtocol {
     /// - Returns: an array of Song objects
     private func songsForArtistAndOrAlbum(artist: Artist, album: String? = nil) async throws -> [Song] {
         var tag: MPDDatabase.Tag
+        var alternativeTag: MPDDatabase.Tag?
         switch artist.type {
-        case .artist, .albumArtist:
+        case .artist:
+            tag = .artist
+            alternativeTag = .albumArtist
+        case .albumArtist:
             tag = .albumArtist
         case .composer:
             tag = .composer
@@ -122,13 +122,27 @@ public class MPDBrowse: BrowseProtocol {
             tag = .performer
         }
 
-        return try await mpdConnector.database.search(filter: .tagEquals(tag: tag, value: artist.name))
-            .filter {
+        var mpdSongs = try await mpdConnector.database.search(filter: .tagEquals(tag: tag, value: artist.name))
+        if let alternativeTag {
+            mpdSongs += try await mpdConnector.database.search(filter: .tagEquals(tag: alternativeTag, value: artist.name))
+        }
+        
+        let songs = Array(Set(mpdSongs.filter {
                 album == nil || $0.album == album!
             }
             .map {
                 Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }))
+        
+        return songs.sorted(by: {
+            if $0.album != $1.album {
+                return $0.album < $1.album
             }
+            if $0.disc != $1.disc {
+                return $0.disc < $1.disc
+            }
+            return $0.track < $1.track
+        })
     }
     
     /// Asynchronously get all songs on an album
@@ -246,13 +260,18 @@ public class MPDBrowse: BrowseProtocol {
         let mpdConnector = self.mpdConnector
 
         return Observable<[Album]>.fromAsync {
-            let songs: [Song] = try await mpdConnector.database.search(filter: .modifiedSince(value: Date(timeIntervalSinceNow: -3600 * 24 * 100))).compactMap {
-                guard let title = $0.title, title != "" else { return nil }
-                return Song(mpdSong: $0, connectionProperties: connectionProperties)
-            }
+            do {
+                let songs: [Song] = try await mpdConnector.database.search(filter: .modifiedSince(value: Date(timeIntervalSinceNow: -3600 * 24 * 100))).compactMap {
+                    guard let title = $0.title, title != "" else { return nil }
+                    return Song(mpdSong: $0, connectionProperties: connectionProperties)
+                }
                 
-            return self.albumsFromSongs(songs, sort: .title).sorted {
-                $0.lastModified > $1.lastModified
+                return self.albumsFromSongs(songs, sort: .title).sorted {
+                    $0.lastModified > $1.lastModified
+                }
+            }
+            catch {
+                throw error
             }
         }
         .catchAndReturn([])
@@ -656,7 +675,7 @@ public class MPDBrowse: BrowseProtocol {
             let songs = try await mpdConnector.playlist.listplaylistinfo(name: playlist.name)
             return songs
                 .map {
-                    Song(mpdSong: $0, connectionProperties: connectionProperties)
+                    Song(mpdSong: $0, connectionProperties: connectionProperties, forcePlayqueueId: true)
                 }
         }
         .catchAndReturn([])
@@ -849,10 +868,12 @@ public class MPDBrowse: BrowseProtocol {
     /// - Parameter artist: the set of artists to check
     /// - Returns: an observable of the filtered array of artists
     public func existingArtists(artists: [Artist]) -> Observable<[Artist]> {
-        return fetchExistingArtists(artists: artists)
+        fetchExistingArtists(artists: artists)
             .flatMap { [weak self] (artists) -> Observable<[Artist]> in
-                guard let weakSelf = self else { return Observable.just([]) }
-                return weakSelf.completeArtists(artists)
+                guard let self else { 
+                    return Observable.just([])
+                }
+                return self.completeArtists(artists)
             }
             .catchAndReturn([])
     }

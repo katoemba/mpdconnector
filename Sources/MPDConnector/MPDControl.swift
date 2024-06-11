@@ -33,7 +33,6 @@ public class MPDControl: ControlProtocol {
     private var playerVolumeAdjustmentKey: String {
         MPDHelper.playerVolumeAdjustmentKey((connectionProperties[ConnectionProperties.name.rawValue] as? String) ?? "NoName")
     }
-    private let mpd: MPDProtocol
     private var identification = ""
     private var connectionProperties: [String: Any]
     private let userDefaults: UserDefaults
@@ -55,13 +54,11 @@ public class MPDControl: ControlProtocol {
         }
     }
     
-    public init(mpd: MPDProtocol? = nil,
-                connectionProperties: [String: Any],
+    public init(connectionProperties: [String: Any],
                 identification: String = "NoID",
                 scheduler: SchedulerType? = nil,
                 userDefaults: UserDefaults,
                 mpdConnector: SwiftMPD.MPDConnector) {
-        self.mpd = mpd ?? MPDWrapper()
         self.identification = identification
         self.connectionProperties = connectionProperties
         self.userDefaults = userDefaults
@@ -218,8 +215,8 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter consumeMode: The consume mode to use.
     public func setConsume(_ consumeMode: ConsumeMode) {
-        _ = runAsyncCommand() {
-            _ = try? await $0.playback.setConsume(consumeMode == .On ? .on : .off)
+        Task {
+            _ = try? await mpdConnector.playback.setConsume(consumeMode == .On ? .on : .off)
         }
     }
     
@@ -230,6 +227,7 @@ public class MPDControl: ControlProtocol {
         _ = runAsyncCommand() { mpdConnector, playerStatus in
             _ = try? await mpdConnector.playback.setConsume(playerStatus.playing.consumeMode == .On ? .off : .on)
         }
+        .subscribe()
     }
     
     /// Set the volume of the player.((randomMode == .On)?,true:false)
@@ -353,7 +351,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of album and addResponse.
     public func add(_ album: Album, addDetails: AddDetails) -> Observable<(Album, AddResponse)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsOnAlbum(album)
             .flatMap({ (songs) -> Observable<(Album, AddResponse)> in
                 self.add(songs, addDetails: addDetails)
@@ -372,7 +370,7 @@ public class MPDControl: ControlProtocol {
     public func addToPlaylist(_ album: Album, playlist: Playlist) -> Observable<(Album, Playlist)> {
         // First we need to get all the songs on an album, then add them one by one
         let mpdConnector = self.mpdConnector
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsOnAlbum(album)
             .flatMap({ (songs) -> Observable<(Album, Playlist)> in
                 Observable<(Album, Playlist)>.fromAsync {
@@ -395,7 +393,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of artist and addResponse.
     public func add(_ artist: Artist, addDetails: AddDetails) -> Observable<(Artist, AddResponse)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.songsByArtist(artist)
             .flatMap({ (songs) -> Observable<(Artist, AddResponse)> in
                 self.add(songs, addDetails: addDetails)
@@ -458,7 +456,7 @@ public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of folder and addResponse.
     public func add(_ folder: Folder, addDetails: AddDetails) -> Observable<(Folder, AddResponse)> {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
         return browse.fetchFolderContents(parentFolder: folder)
             .map({ (folderContents) -> [Song] in
                 var songs = [Song]()
@@ -533,8 +531,8 @@ public class MPDControl: ControlProtocol {
     ///   - from: the position of the song to change
     ///   - to: the position to move the song to
     public func moveSong(from: Int, to: Int) {
-        _ = runAsyncCommand {
-            _ = try? await $0.queue.move(frompos: from, topos: .absolute(UInt(to)))
+        Task {
+            _ = try? await mpdConnector.queue.move(frompos: from, topos: .absolute(UInt(to)))
         }
     }
     
@@ -542,8 +540,8 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter at: the position of the song to remove
     public func deleteSong(_ at: Int) {
-        _ = runAsyncCommand {
-            _ = try? await $0.queue.delete(at)
+        Task {
+            _ = try? await mpdConnector.queue.delete(at)
         }
     }
     
@@ -554,8 +552,8 @@ public class MPDControl: ControlProtocol {
     ///   - from: the position of the song to change
     ///   - to: the position to move the song to
     public func moveSong(playlist: Playlist, from: Int, to: Int) {
-        _ = runAsyncCommand {
-            try? await $0.playlist.playlistmove(name: playlist.id, from: UInt(from), to: UInt(to))
+        Task {
+            try? await mpdConnector.playlist.playlistmove(name: playlist.id, from: UInt(from), to: UInt(to))
         }
     }
     
@@ -565,8 +563,8 @@ public class MPDControl: ControlProtocol {
     ///   - playlist: the playlist from which to remove the song
     ///   - at: the position of the song to remove
     public func deleteSong(playlist: Playlist, at: Int) {
-        _ = runAsyncCommand {
-            try? await $0.playlist.playlistdelete(name: playlist.id, songpos: UInt(at))
+        Task {
+            try? await mpdConnector.playlist.playlistdelete(name: playlist.id, songpos: UInt(at))
         }
     }
     
@@ -574,15 +572,15 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter name: name for the playlist
     public func savePlaylist(_ name: String) {
-        _ = runAsyncCommand {
-            try? await $0.playlist.save(name: name)
+        Task {
+            try? await mpdConnector.playlist.save(name: name)
         }
     }
     
     /// Clear the active playqueue
     public func clearPlayqueue() {
-        _ = runAsyncCommand {
-            try? await $0.queue.clear()
+        Task {
+            try? await mpdConnector.queue.clear()
         }
     }
     
@@ -590,7 +588,7 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter station: the station that has to be played
     public func playStation(_ station: Station) {
-        _ = runAsyncCommand { mpdConnector in
+        Task {
             var executors = [any CommandExecutor]()
             executors.append(mpdConnector.playback.stopExecutor())
             executors.append(mpdConnector.queue.clearExecutor())
@@ -612,13 +610,13 @@ public class MPDControl: ControlProtocol {
     ///   - output: the output to set
     ///   - enabled: true to enable the output, false to disable it
     public func setOutput(_ output: Output, enabled: Bool) {
-        _ = runAsyncCommand {
+        Task {
             if let output_id = Int(output.id) {
                 if enabled {
-                    _ = try? await $0.output.enableoutput(output_id)
+                    _ = try? await mpdConnector.output.enableoutput(output_id)
                 }
                 else {
-                    _ = try? await $0.output.disableoutput(output_id)
+                    _ = try? await mpdConnector.output.disableoutput(output_id)
                 }
             }
         }
@@ -628,9 +626,9 @@ public class MPDControl: ControlProtocol {
     ///
     /// - Parameter output: the output to toggle
     public func toggleOutput(_ output: Output) {
-        _ = runAsyncCommand {
+        Task {
             if let output_id = Int(output.id) {
-                _ = try? await $0.output.toggleoutput(output_id)
+                _ = try? await mpdConnector.output.toggleoutput(output_id)
             }
         }
     }

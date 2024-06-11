@@ -27,7 +27,6 @@
 import XCTest
 import ConnectorProtocol
 import MPDConnector
-import libmpdclient
 import RxSwift
 
 class MPDStatusTests: XCTestCase {

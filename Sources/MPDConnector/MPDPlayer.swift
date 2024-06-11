@@ -26,7 +26,6 @@
 
 import Foundation
 import ConnectorProtocol
-import libmpdclient
 import RxSwift
 import SwiftMPD
 
@@ -82,7 +81,6 @@ public enum MPDConnectionProperties: String {
 
 public class MPDPlayer: PlayerProtocol {
     private let userDefaults: UserDefaults
-    private let mpd: MPDProtocol
     public static let controllerType = "MPD"
     
     public private(set) var name: String
@@ -101,6 +99,12 @@ public class MPDPlayer: PlayerProtocol {
     public private(set) var version: String
     
     public private(set) var connectionWarning: String?
+    private var playerChangedSubject = PublishSubject<PlayerProtocol>()
+    public var playerChanged: Observable<PlayerProtocol> {
+        playerChangedSubject
+            .observe(on: MainScheduler.instance)
+    }
+
     
     private let mpdConnector: SwiftMPD.MPDConnector
     private let mpdIdleConnector: SwiftMPD.MPDConnector
@@ -230,13 +234,13 @@ public class MPDPlayer: PlayerProtocol {
     public var control: ControlProtocol {
         get {
             // Use serialScheduler to synchronize commands across multiple MPDControl instances.
-            return MPDControl.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, userDefaults: userDefaults, mpdConnector: mpdConnector)
+            return MPDControl.init(connectionProperties: connectionProperties, identification: uniqueID, scheduler: serialScheduler, userDefaults: userDefaults, mpdConnector: mpdConnector)
         }
     }
     /// Create a unique object for every request for a browse object
     public var browse: BrowseProtocol {
         get {
-            return MPDBrowse.init(mpd: mpd, connectionProperties: connectionProperties, identification: uniqueID, scheduler: scheduler, mpdConnector: mpdConnector)
+            return MPDBrowse.init(connectionProperties: connectionProperties, identification: uniqueID, scheduler: scheduler, mpdConnector: mpdConnector)
         }
     }
     
@@ -262,8 +266,7 @@ public class MPDPlayer: PlayerProtocol {
     ///   - host: Host ip-address to connect to.
     ///   - port: Port to connect to.
     ///   - password: Password to use when connection, default is ""
-    public init(mpd: MPDProtocol? = nil,
-                name: String,
+    public init(name: String,
                 host: String,
                 ipAddress: String?,
                 port: Int,
@@ -276,7 +279,6 @@ public class MPDPlayer: PlayerProtocol {
                 userDefaults: UserDefaults,
                 commands: [String] = []) {
         self.userDefaults = userDefaults
-        self.mpd = mpd ?? MPDWrapper()
         self.name = name
         self.host = host
         self.ipAddress = ipAddress
@@ -361,24 +363,23 @@ public class MPDPlayer: PlayerProtocol {
                                     MPDConnectionProperties.outputPort.rawValue: outputPort] as [String : Any]
         
         let hostToUse = MPDHelper.hostToUse(connectionProperties)
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid))
-        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid))
+        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid, playerName: name))
+        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid, playerName: name))
         self.mpdStatus = MPDStatus.init(connectionProperties: connectionProperties,
                                         scheduler: scheduler,
                                         userDefaults: userDefaults,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
         
+        playerChangedSubject.onNext(self)
         HelpMePlease.allocUp(name: "MPDPlayer")
-        print("Created player \(uuid.uuidString)")
     }
     
     /// Init an instance of a MPDPlayer based on a connectionProperties dictionary
     ///
     /// - Parameters:
     ///   - connectionProperties: dictionary of properties
-    public convenience init(mpd: MPDProtocol? = nil,
-                            connectionProperties: [String: Any],
+    public convenience init(connectionProperties: [String: Any],
                             scheduler: SchedulerType? = nil,
                             type: MPDType = .classic,
                             version: String = "",
@@ -389,8 +390,7 @@ public class MPDPlayer: PlayerProtocol {
         guard let name = connectionProperties[ConnectionProperties.name.rawValue] as? String,
             let host = connectionProperties[ConnectionProperties.host.rawValue] as? String,
             let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else {
-                self.init(mpd: mpd,
-                          name: "",
+                self.init(name: "",
                           host: "",
                           ipAddress: connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String,
                           port: 6600,
@@ -405,8 +405,7 @@ public class MPDPlayer: PlayerProtocol {
         }
         
         
-        self.init(mpd: mpd,
-                  name: name,
+        self.init(name: name,
                   host: host,
                   ipAddress: connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String,
                   port: port,
@@ -429,8 +428,8 @@ public class MPDPlayer: PlayerProtocol {
     }
     
     deinit {
+        print("Deinit of player \(name)")
         HelpMePlease.allocDown(name: "MPDPlayer")
-        print("Destroyed player \(uuid.uuidString)")
     }
     
     // MARK: - PlayerProtocol Implementations
@@ -449,7 +448,7 @@ public class MPDPlayer: PlayerProtocol {
     ///
     /// - Returns: copy of the this player
     public func copy() -> PlayerProtocol {
-        return MPDPlayer.init(mpd: mpd, connectionProperties: connectionProperties, scheduler: scheduler, type: type, version: version, userDefaults: userDefaults, commands: commands)
+        return MPDPlayer.init(connectionProperties: connectionProperties, scheduler: scheduler, type: type, version: version, userDefaults: userDefaults, commands: commands)
     }
     
     /// Store setting.value into user-defaults and perform any other required actions
@@ -647,6 +646,47 @@ public class MPDPlayer: PlayerProtocol {
         }
         
         return nil
+    }
+    
+    public func finishDiscovery() {
+        Task {
+            let tagTypes = try await mpdConnector.status.tagtypes()
+            self.commands = try await mpdConnector.status.commands()
+
+            let version = mpdConnector.version
+            self.version = version.description
+            if version < SwiftMPD.MPDConnection.Version("0.19.0") {
+                connectionWarning = "MPD version \(version) too low, 0.19.0 required"
+            }
+
+            if connectionWarning == nil {
+                var missingTagTypes = [String]()
+                if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
+                    missingTagTypes.append("albumartist")
+                }
+                if tagTypes.contains("ArtistSort") == false && tagTypes.contains("artistsort") == false {
+                    missingTagTypes.append("artistsort")
+                }
+                if tagTypes.contains("AlbumArtistSort") == false && tagTypes.contains("albumartistsort") == false {
+                    missingTagTypes.append("albumartistsort")
+                }
+                if missingTagTypes.count == 1 {
+                    connectionWarning = "id3-tag \(missingTagTypes[0]) is not configured"
+                }
+                else if missingTagTypes.count > 1 {
+                    connectionWarning = "id3-tags "
+                    for tag in missingTagTypes {
+                        if connectionWarning! != "id3-tags " {
+                            connectionWarning! += ", "
+                        }
+                        connectionWarning! += tag
+                    }
+                    connectionWarning! += " are not configured"
+                }
+            }
+            
+            playerChangedSubject.onNext(self)
+        }
     }
 }
 

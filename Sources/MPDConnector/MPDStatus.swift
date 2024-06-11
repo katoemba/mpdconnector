@@ -208,7 +208,7 @@ public class MPDStatus: StatusProtocol {
 
             var position = start
             let songs = mpdSongs.map {
-                var song = Song(mpdSong: $0, connectionProperties: connectionProperties)
+                var song = Song(mpdSong: $0, connectionProperties: connectionProperties, forcePlayqueueId: true)
                 song.position = position
                 
                 position += 1
@@ -387,7 +387,7 @@ extension QualityStatus {
 }
 
 extension Song {
-    public init(mpdSong: SwiftMPD.MPDSong, connectionProperties: [String: Any]) {
+    public init(mpdSong: SwiftMPD.MPDSong, connectionProperties: [String: Any], forcePlayqueueId: Bool = false) {
         self.init()
         
         id = mpdSong.file
@@ -461,7 +461,12 @@ extension Song {
         sortAlbumArtist = mpdSong.albumartistsort ?? ""
         sortAlbum = mpdSong.albumsort ?? ""
         lastModified = mpdSong.lastmodified ?? Date()
-        playqueueId = (mpdSong.id == nil) ? UUID().uuidString : "\(mpdSong.id!)"
+        if let id = mpdSong.id {
+            playqueueId = "\(id)"
+        }
+        else if forcePlayqueueId {
+            playqueueId = UUID().uuidString
+        }
         
         var filetype = ""
         let components = id.components(separatedBy: "/")
