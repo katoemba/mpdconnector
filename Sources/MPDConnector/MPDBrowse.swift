@@ -414,7 +414,7 @@ public class MPDBrowse: BrowseProtocol {
             var commands = [any CommandExecutor]()
             for album in albums {
                 let expression = MPDDatabase.Expression.and(.tagEquals(tag: .album, value: album.title), .tagEquals(tag: .albumArtist, value: album.artist))
-                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0...0))
+                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0...1))
             }
             try await self.mpdConnector.batchCommand(commands)
             
@@ -442,7 +442,7 @@ public class MPDBrowse: BrowseProtocol {
             var commands = [any CommandExecutor]()
             for artist in artists {
                 let expression = MPDDatabase.Expression.tagEquals(tag: .albumArtist, value: artist.name)
-                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0...0))
+                commands.append(self.mpdConnector.database.findExecutor(filter: expression, range: 0...1))
             }
             try await self.mpdConnector.batchCommand(commands)
             
