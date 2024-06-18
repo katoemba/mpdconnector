@@ -540,8 +540,8 @@ public class MPDBrowse: BrowseProtocol {
                             continue
                         }
                     }
-                default:
-                    continue
+                case let.value(value):
+                    artists.insert(Artist(id: value, type: type, source: .Local, name: value))
                 }
             }
             
@@ -766,7 +766,7 @@ public class MPDBrowse: BrowseProtocol {
                     case let .song(song):
                         return FolderContent.song(Song(mpdSong: song, connectionProperties: connectionProperties))
                     case let .playlist(playlist, lastModified):
-                        return FolderContent.playlist(Playlist(id: playlist, source: .Local, name: playlist, lastModified: lastModified))
+                        return FolderContent.playlist(Playlist(id: playlist, source: .Local, name: playlist, lastModified: lastModified ?? Date()))
                     case let .directory(directory, _):
                         let components = directory.split(separator: "/")
                         if let folderName = components.last {

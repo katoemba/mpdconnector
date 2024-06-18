@@ -268,7 +268,12 @@ extension PlayerStatus {
         }
         lastUpdateTime = Date()
         time.elapsedTime = Int(from.elapsed ?? 0)
-        time.trackTime = Int(from.duration ?? 0)
+        if let duration = from.duration {
+            time.trackTime = Int(duration)
+        }
+        else if self.currentSong.length > 0 {
+            time.trackTime = self.currentSong.length
+        }
         
         if from.volume < 0 {
             volume = 0.5
