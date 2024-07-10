@@ -60,7 +60,7 @@ public enum MPDType: Int {
         case .moodeaudio:
             return "moOde"
         case .chord:
-            return "Chord"
+            return "Chord Poly/2go"
         }
     }
 }
@@ -491,6 +491,13 @@ public class MPDPlayer: PlayerProtocol {
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
                     type = MPDType.moodeaudio
                 }
+                else if selectionSetting.value == MPDType.chord.rawValue {
+                    userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
+                    userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
+                    type = MPDType.moodeaudio
+                }
                 else {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
                     userDefaults.set("Folder.jpg", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
@@ -551,7 +558,8 @@ public class MPDPlayer: PlayerProtocol {
                                                  MPDType.volumio.rawValue: MPDType.volumio.description,
                                                  MPDType.bryston.rawValue: MPDType.bryston.description,
                                                  MPDType.runeaudio.rawValue: MPDType.runeaudio.description,
-                                                 MPDType.moodeaudio.rawValue: MPDType.moodeaudio.description],
+                                                 MPDType.moodeaudio.rawValue: MPDType.moodeaudio.description,
+                                                 MPDType.chord.rawValue: MPDType.chord.description],
                                          value: userDefaults.integer(forKey: playerSpecificId))
         }
         else if id == ConnectionProperties.name.rawValue {
