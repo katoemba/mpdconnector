@@ -337,6 +337,13 @@ public class MPDPlayer: PlayerProtocol {
         }
         self.type = defaultTypeInt > 0 ? MPDType(rawValue: defaultTypeInt)! : type
         
+        // If this is a chord player that was not discovered before, set connectToIpAddress to true by default
+        if self.type == .chord {
+            if userDefaults.value(forKey: "\(MPDConnectionProperties.connectToIpAddress.rawValue).\(initialUniqueID)") == nil {
+                userDefaults.set(true, forKey: "\(MPDConnectionProperties.connectToIpAddress.rawValue).\(initialUniqueID)")
+            }
+        }
+        
         // Note: using _name here instead of _uniqueId because that is not yet available.
         let coverHttpPort = userDefaults.string(forKey: "\(MPDConnectionProperties.coverHttpPort.rawValue).\(initialUniqueID)") ?? ""
         let prefix = userDefaults.string(forKey: "\(MPDConnectionProperties.coverPrefix.rawValue).\(initialUniqueID)") ?? ""
@@ -496,7 +503,8 @@ public class MPDPlayer: PlayerProtocol {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverPostfix.rawValue + "." + uniqueID)
                     userDefaults.set("", forKey: MPDConnectionProperties.alternativeCoverHost.rawValue + "." + uniqueID)
-                    type = MPDType.moodeaudio
+                    userDefaults.set(true, forKey: MPDConnectionProperties.connectToIpAddress.rawValue + "." + uniqueID)
+                    type = MPDType.chord
                 }
                 else {
                     userDefaults.set("", forKey: MPDConnectionProperties.coverPrefix.rawValue + "." + uniqueID)
