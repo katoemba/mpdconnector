@@ -104,11 +104,11 @@ public class MPDPlayer: PlayerProtocol {
         playerChangedSubject
             .observe(on: MainScheduler.instance)
     }
-
+    
     
     private let mpdConnector: SwiftMPD.MPDConnector
     private let mpdIdleConnector: SwiftMPD.MPDConnector
-
+    
     public var description: String {
         return type.description + " " + version
     }
@@ -156,6 +156,11 @@ public class MPDPlayer: PlayerProtocol {
             let password = (self.loadSetting(id: ConnectionProperties.password.rawValue) as? StringSetting)?.value ?? ""
             let outputHost = (self.loadSetting(id: MPDConnectionProperties.outputHost.rawValue) as? StringSetting)?.value ?? ""
             let outputPort = (self.loadSetting(id: MPDConnectionProperties.outputPort.rawValue) as? StringSetting)?.value ?? ""
+            let binaryCoverArt = (self.loadSetting(id: ConnectionProperties.binaryCoverArt.rawValue) as? ToggleSetting)?.value ?? false
+            let embeddedCoverArt = (self.loadSetting(id: ConnectionProperties.embeddedCoverArt.rawValue) as? ToggleSetting)?.value ?? false
+            let urlCoverArt = (self.loadSetting(id: ConnectionProperties.urlCoverArt.rawValue) as? ToggleSetting)?.value ?? false
+            let discogsCoverArt = (self.loadSetting(id: ConnectionProperties.discogsCoverArt.rawValue) as? ToggleSetting)?.value ?? false
+            let musicbrainzCoverArt = (self.loadSetting(id: ConnectionProperties.musicbrainzCoverArt.rawValue) as? ToggleSetting)?.value ?? false
             return [ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
                     ConnectionProperties.name.rawValue: name,
                     ConnectionProperties.host.rawValue: host,
@@ -163,6 +168,11 @@ public class MPDPlayer: PlayerProtocol {
                     ConnectionProperties.password.rawValue: password,
                     MPDConnectionProperties.ipAddress.rawValue: ipAddress,
                     MPDConnectionProperties.connectToIpAddress.rawValue: connectToIpAddress,
+                    ConnectionProperties.binaryCoverArt.rawValue: binaryCoverArt,
+                    ConnectionProperties.embeddedCoverArt.rawValue: embeddedCoverArt,
+                    ConnectionProperties.urlCoverArt.rawValue: urlCoverArt,
+                    ConnectionProperties.discogsCoverArt.rawValue: discogsCoverArt,
+                    ConnectionProperties.musicbrainzCoverArt.rawValue: musicbrainzCoverArt,
                     MPDConnectionProperties.alternativeCoverHost.rawValue: alternativCoverHost,
                     MPDConnectionProperties.coverHttpPort.rawValue: coverHttpPort,
                     MPDConnectionProperties.coverPrefix.rawValue: prefix,
@@ -185,13 +195,13 @@ public class MPDPlayer: PlayerProtocol {
                 })
             
             let httpOutputDescription = "If you are a subscriber and have configured a http output in your mpd.conf, you can specify the host/ip-address and port number so that you can enjoy your library right here on your device.\n" +
-                    "When configured correctly a headphone icon will appear on the now playing view which lets you connect to the playing music.\n" +
-                    "Note that there is a couple of seconds audio delay on all actions, as audio data needs to be buffered first for uninterrupted play."
+            "When configured correctly a headphone icon will appear on the now playing view which lets you connect to the playing music.\n" +
+            "Note that there is a couple of seconds audio delay on all actions, as audio data needs to be buffered first for uninterrupted play."
             var coverArtDescription = ""
             if type == .runeaudio {
                 coverArtDescription = "To enable cover art retrieval from a Rune Audio player, you need to configure the internal webserver:\n\n" +
-                    "1 - Login to the player: ssh root@\(host) (the default password is 'rune')\n" +
-                    "2 - Enter the following command: ln -s /mnt/MPD   /var/www/music\n" +
+                "1 - Login to the player: ssh root@\(host) (the default password is 'rune')\n" +
+                "2 - Enter the following command: ln -s /mnt/MPD   /var/www/music\n" +
                 "3 - Make sure the specified Cover Filename matches the artwork filename you use in each folder"
             }
             else if type == .bryston {
@@ -208,6 +218,25 @@ public class MPDPlayer: PlayerProtocol {
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
             }
             let advancedPlayerDescription = "If you're experiencing connection problems, you can try to connect to the player using the ip-address. Don't enable this when things are working okay."
+            
+            var coverArtSettings = [PlayerSetting]()
+            if supportedFunctions.contains(.binaryImageRetrieval) {
+                coverArtSettings.append(loadSetting(id: ConnectionProperties.binaryCoverArt.rawValue)!)
+            }
+            if supportedFunctions.contains(.embeddedImageRetrieval) {
+                coverArtSettings.append(loadSetting(id: ConnectionProperties.embeddedCoverArt.rawValue)!)
+            }
+            let urlCoverArtSetting = loadSetting(id: ConnectionProperties.urlCoverArt.rawValue) as! ToggleSetting
+            coverArtSettings.append(urlCoverArtSetting)
+            if urlCoverArtSetting.value == true {
+                coverArtSettings += [loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
+                                     loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue)!,
+                                     loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
+                                     loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!,
+                                     loadSetting(id: MPDConnectionProperties.alternativeCoverHost.rawValue)!]
+            }
+            coverArtSettings += [loadSetting(id: ConnectionProperties.discogsCoverArt.rawValue)!,
+                                 loadSetting(id: ConnectionProperties.musicbrainzCoverArt.rawValue)!]
             return [PlayerSettingGroup(title: "Player", description: "", settings:[loadSetting(id: MPDConnectionProperties.MPDType.rawValue)!,
                                                                                    loadSetting(id: ConnectionProperties.name.rawValue)!,
                                                                                    loadSetting(id: ConnectionProperties.host.rawValue)!,
@@ -215,18 +244,14 @@ public class MPDPlayer: PlayerProtocol {
                                                                                    loadSetting(id: ConnectionProperties.password.rawValue)!]),
                     PlayerSettingGroup(title: "Advanced Player", description: advancedPlayerDescription, settings:[loadSetting(id: MPDConnectionProperties.ipAddress.rawValue)!,
                                                                                                                    loadSetting(id: MPDConnectionProperties.connectToIpAddress.rawValue)!]),
-                    PlayerSettingGroup(title: "Cover Art", description: coverArtDescription, settings:[loadSetting(id: MPDConnectionProperties.coverPrefix.rawValue)!,
-                                                                                                       loadSetting(id: MPDConnectionProperties.coverHttpPort.rawValue)!,
-                                                                                                       loadSetting(id: MPDConnectionProperties.coverPostfix.rawValue)!,
-                                                                                                       loadSetting(id: MPDConnectionProperties.alternativeCoverPostfix.rawValue)!,
-                                                                                                       loadSetting(id: MPDConnectionProperties.alternativeCoverHost.rawValue)!]),
+                    PlayerSettingGroup(title: "Cover Art Sources", description: coverArtDescription, settings: coverArtSettings),
                     PlayerSettingGroup(title: "HTTP Output", description: httpOutputDescription, settings:[loadSetting(id: MPDConnectionProperties.outputHost.rawValue)!,
                                                                                                            loadSetting(id: MPDConnectionProperties.outputPort.rawValue)!]),
                     PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
                                                                                          ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () -> Observable<String> in
-                                                                                            (self.browse as! MPDBrowse).updateDB()
-                                                                                            return Observable.just("Update initiated")
-                                                                                         })])]
+                (self.browse as! MPDBrowse).updateDB()
+                return Observable.just("Update initiated")
+            })])]
         }
     }
     
@@ -246,9 +271,9 @@ public class MPDPlayer: PlayerProtocol {
     
     public var playerStreamURL: URL? {
         guard let hostString = connectionProperties[MPDConnectionProperties.outputHost.rawValue] as? String, hostString != "",
-            let portString = connectionProperties[MPDConnectionProperties.outputPort.rawValue] as? String, let port = Int(portString), port != 0
+              let portString = connectionProperties[MPDConnectionProperties.outputPort.rawValue] as? String, let port = Int(portString), port != 0
         else { return nil }
-
+        
         return URL(string: "http://\(hostString):\(port)")
     }
     
@@ -290,7 +315,7 @@ public class MPDPlayer: PlayerProtocol {
         self.version = version
         self.discoverMode = discoverMode
         let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
-                
+        
         userDefaults.set(ipAddress, forKey: MPDConnectionProperties.ipAddress.rawValue + "." + initialUniqueID)
         if password != nil {
             userDefaults.set(password, forKey: ConnectionProperties.password.rawValue + "." + initialUniqueID)
@@ -395,20 +420,20 @@ public class MPDPlayer: PlayerProtocol {
                             userDefaults: UserDefaults,
                             commands: [String] = []) {
         guard let name = connectionProperties[ConnectionProperties.name.rawValue] as? String,
-            let host = connectionProperties[ConnectionProperties.host.rawValue] as? String,
-            let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else {
-                self.init(name: "",
-                          host: "",
-                          ipAddress: connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String,
-                          port: 6600,
-                          scheduler: scheduler,
-                          type: type,
-                          version: version,
-                          discoverMode: discoverMode,
-                          connectionWarning: connectionWarning,
-                          userDefaults: userDefaults,
-                          commands: commands)
-                return
+              let host = connectionProperties[ConnectionProperties.host.rawValue] as? String,
+              let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else {
+            self.init(name: "",
+                      host: "",
+                      ipAddress: connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String,
+                      port: 6600,
+                      scheduler: scheduler,
+                      type: type,
+                      version: version,
+                      discoverMode: discoverMode,
+                      connectionWarning: connectionWarning,
+                      userDefaults: userDefaults,
+                      commands: commands)
+            return
         }
         
         
@@ -551,6 +576,26 @@ public class MPDPlayer: PlayerProtocol {
             let toggleSetting = setting as! ToggleSetting
             userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
         }
+        else if setting.id == ConnectionProperties.binaryCoverArt.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
+        else if setting.id == ConnectionProperties.embeddedCoverArt.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
+        else if setting.id == ConnectionProperties.urlCoverArt.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
+        else if setting.id == ConnectionProperties.discogsCoverArt.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
+        else if setting.id == ConnectionProperties.musicbrainzCoverArt.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
     }
     
     /// Get data for a specific setting
@@ -601,36 +646,63 @@ public class MPDPlayer: PlayerProtocol {
                                       description: "Port",
                                       placeholder: "",
                                       value: "\(port)",
-                restriction: .readonly)
+                                      restriction: .readonly)
+        }
+        else if id == ConnectionProperties.binaryCoverArt.rawValue {
+            return ToggleSetting.init(id: id,
+                                      description: "Cover.jpg / Cover.png",
+                                      value: userDefaults.bool(forKey: playerSpecificId))
+        }
+        else if id == ConnectionProperties.embeddedCoverArt.rawValue {
+            return ToggleSetting.init(id: id,
+                                      description: "Embedded artwork",
+                                      value: userDefaults.bool(forKey: playerSpecificId))
+        }
+        else if id == ConnectionProperties.urlCoverArt.rawValue {
+            let setting = ToggleSetting.init(id: id,
+                                             description: "HTTP server",
+                                             value: userDefaults.bool(forKey: playerSpecificId))
+            setting.reloadAllOnChange = true
+            return setting
+        }
+        else if id == ConnectionProperties.discogsCoverArt.rawValue {
+            return ToggleSetting.init(id: id,
+                                      description: "Discogs",
+                                      value: userDefaults.bool(forKey: playerSpecificId))
+        }
+        else if id == ConnectionProperties.musicbrainzCoverArt.rawValue {
+            return ToggleSetting.init(id: id,
+                                      description: "Musicbrainz",
+                                      value: userDefaults.bool(forKey: playerSpecificId))
         }
         else if id == MPDConnectionProperties.alternativeCoverHost.rawValue {
             return StringSetting.init(id: id,
-                                      description: "Alternative Cover Host",
+                                      description: "> Alternative Cover Host",
                                       placeholder: "IP Address",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
         else if id == MPDConnectionProperties.coverHttpPort.rawValue {
             return StringSetting.init(id: id,
-                                      description: "Cover Http Port",
+                                      description: "> Cover Http Port",
                                       placeholder: "Optional Port Number",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "",
                                       restriction: .numeric)
         }
         else if id == MPDConnectionProperties.coverPrefix.rawValue {
             return StringSetting.init(id: id,
-                                      description: "Cover Prefix",
+                                      description: "> Cover Prefix",
                                       placeholder: "Prefix",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
         else if id == MPDConnectionProperties.coverPostfix.rawValue {
             return StringSetting.init(id: id,
-                                      description: "Cover Filename",
+                                      description: "> Cover Filename",
                                       placeholder: "Filename",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
         else if id == MPDConnectionProperties.alternativeCoverPostfix.rawValue {
             return StringSetting.init(id: id,
-                                      description: "Alternative Cover Filename",
+                                      description: "> Alternative Cover Filename",
                                       placeholder: "Alternative",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "")
         }
@@ -668,13 +740,26 @@ public class MPDPlayer: PlayerProtocol {
         Task {
             let tagTypes = try await mpdConnector.status.tagtypes()
             self.commands = try await mpdConnector.status.commands()
-
+            
             let version = mpdConnector.version
             self.version = version.description
             if version < SwiftMPD.MPDConnection.Version("0.19.0") {
                 connectionWarning = "MPD version \(version) too low, 0.19.0 required"
             }
-
+            
+            if userDefaults.value(forKey: ConnectionProperties.binaryCoverArt.rawValue + "." + uniqueID) == nil {
+                userDefaults.set(self.supportedFunctions.contains(.binaryImageRetrieval), forKey: ConnectionProperties.binaryCoverArt.rawValue + "." + uniqueID)
+                userDefaults.set(self.supportedFunctions.contains(.embeddedImageRetrieval), forKey: ConnectionProperties.embeddedCoverArt.rawValue + "." + uniqueID)
+                if !self.supportedFunctions.contains(.binaryImageRetrieval) && !self.supportedFunctions.contains(.embeddedImageRetrieval) {
+                    userDefaults.set(true, forKey: ConnectionProperties.urlCoverArt.rawValue + "." + uniqueID)
+                }
+                else {
+                    userDefaults.set(false, forKey: ConnectionProperties.urlCoverArt.rawValue + "." + uniqueID)
+                }
+                userDefaults.set(false, forKey: ConnectionProperties.discogsCoverArt.rawValue + "." + uniqueID)
+                userDefaults.set(false, forKey: ConnectionProperties.musicbrainzCoverArt.rawValue + "." + uniqueID)
+            }
+            
             if connectionWarning == nil {
                 var missingTagTypes = [String]()
                 if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
