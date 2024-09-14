@@ -1006,4 +1006,23 @@ public class MPDBrowse: BrowseProtocol {
         .catchAndReturn([])
         .observe(on: MainScheduler.instance)
     }
+    
+    /// Select a number of random songs from the collection
+    /// - Parameter count: the number of songs to return
+    /// - Returns: an array of songs
+    public func randomSongs(_ count: Int) async throws -> [Song] {
+        try await randomSongs(count: count).asSingle().value
+    }
+    
+    /// Select a random album from the collection
+    /// - Parameter count: the number of albums to return
+    /// - Returns: an array of albums
+    public func randomAlbums(_ count: Int) async throws -> [Album] {
+        try await fetchAlbums(genre: nil, sort: .title)
+            .map {
+                Array($0.shuffled().prefix(count))
+            }
+            .asSingle()
+            .value
+    }
 }

@@ -789,6 +789,10 @@ public class MPDPlayer: PlayerProtocol {
             playerChangedSubject.onNext(self)
         }
     }
+    
+    public func ping() async -> Bool {
+        await mpdConnector.ping()
+    }
 }
 
 extension MPDPlayer : Equatable {
