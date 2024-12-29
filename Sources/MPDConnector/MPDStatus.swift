@@ -275,19 +275,19 @@ extension PlayerStatus {
             time.trackTime = self.currentSong.length
         }
         
-        if from.volume < 0 {
-            volume = 0.5
-            volumeEnabled = false
-        }
-        else {
+        if let volume = from.volume, volume >= 0 {
             let playerVolumeAdjustmentKey = MPDHelper.playerVolumeAdjustmentKey((connectionProperties[ConnectionProperties.name.rawValue] as? String) ?? "NoName")
             if let volumeAdjustment = userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float {
-                volume = MPDHelper.adjustedVolumeFromPlayer(Float(from.volume) / 100.0, volumeAdjustment: volumeAdjustment)
+                self.volume = MPDHelper.adjustedVolumeFromPlayer(Float(volume) / 100.0, volumeAdjustment: volumeAdjustment)
             }
             else {
-                volume = Float(from.volume) / 100.0
+                self.volume = Float(volume) / 100.0
             }
             volumeEnabled = true
+        }
+        else {
+            self.volume = 0.5
+            volumeEnabled = false
         }
 
         switch from.state {
