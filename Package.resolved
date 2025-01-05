@@ -10,15 +10,6 @@
       }
     },
     {
-      "identity" : "libmpdclient-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/katoemba/libmpdclient-swift.git",
-      "state" : {
-        "branch" : "master",
-        "revision" : "edb20ac42bd657da5ca55d7301beb596ddc3f128"
-      }
-    },
-    {
       "identity" : "rxnetservice",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/katoemba/rxnetservice.git",

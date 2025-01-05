@@ -904,7 +904,13 @@ public class MPDBrowse: BrowseProtocol {
             _ = try? await mpdConnector.database.update(path: nil)
         }
     }
-    
+
+    func rescanLibrary() {
+        Task {
+            _ = try? await mpdConnector.database.rescan(path: nil)
+        }
+    }
+
     func databaseStatus() -> Observable<String> {
         let mpdConnector = self.mpdConnector
         

@@ -218,6 +218,7 @@ public class MPDPlayer: PlayerProtocol {
                 "Make sure the specified Cover Filename matches the artwork filename you use in each folder."
             }
             let advancedPlayerDescription = "If you're experiencing connection problems, you can try to connect to the player using the ip-address. Don't enable this when things are working okay."
+            let mpdDatabaseDescription = "Update DB will look for files added or updated since the previous scan. Rescan DB will perform a full rescan of the entire library, which can take a long time."
             
             var coverArtSettings = [PlayerSetting]()
             if supportedFunctions.contains(.binaryImageRetrieval) {
@@ -247,11 +248,15 @@ public class MPDPlayer: PlayerProtocol {
                     PlayerSettingGroup(title: "Cover Art Sources", description: coverArtDescription, settings: coverArtSettings),
                     PlayerSettingGroup(title: "HTTP Output", description: httpOutputDescription, settings:[loadSetting(id: MPDConnectionProperties.outputHost.rawValue)!,
                                                                                                            loadSetting(id: MPDConnectionProperties.outputPort.rawValue)!]),
-                    PlayerSettingGroup(title: "MPD Database", description: "", settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
+                    PlayerSettingGroup(title: "MPD Database", description: mpdDatabaseDescription, settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
                                                                                          ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () -> Observable<String> in
                 (self.browse as! MPDBrowse).updateDB()
                 return Observable.just("Update initiated")
-            })])]
+            }),
+                                                                                         ActionSetting.init(id: "MPDRescan", description: "Rescan DB", action: { () -> Observable<String> in
+                (self.browse as! MPDBrowse).rescanLibrary()
+                                                                                     return Observable.just("Rescan initiated")
+                                                                                 })])]
         }
     }
     
