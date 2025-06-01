@@ -444,6 +444,7 @@ extension Song {
         }
         albumartist = mpdSong.albumartist ?? ""
         composer = mpdSong.composer ?? ""
+        conductor = mpdSong.conductor ?? ""
         genre = mpdSong.genre == nil ? [] : [mpdSong.genre!]
         length = Int(mpdSong.duration)
         if length == 0, let time = mpdSong.time {

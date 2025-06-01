@@ -108,23 +108,25 @@ public class MPDBrowse: BrowseProtocol {
     ///   - album: optionally an album title to search for
     /// - Returns: an array of Song objects
     private func songsForArtistAndOrAlbum(artist: Artist, album: String? = nil) async throws -> [Song] {
-        var tag: MPDDatabase.Tag
-        var alternativeTag: MPDDatabase.Tag?
+        var filter: MPDDatabase.Expression
+        var alternativeFilter: MPDDatabase.Expression?
         switch artist.type {
         case .artist:
-            tag = .artist
-            alternativeTag = .albumArtist
+            filter = .tagEquals(tag: .artist, value: artist.name)
+            alternativeFilter = .tagEquals(tag: .albumArtist, value: artist.name)
         case .albumArtist:
-            tag = .albumArtist
+            filter = .tagEquals(tag: .albumArtist, value: artist.name)
         case .composer:
-            tag = .composer
+            filter = .tagEquals(tag: .composer, value: artist.name)
         case .performer:
-            tag = .performer
+            filter = .tagContains(tag: .performer, value: artist.name)
+        case .conductor:
+            filter = .tagEquals(tag: .composer, value: artist.name)
         }
 
-        var mpdSongs = try await mpdConnector.database.search(filter: .tagEquals(tag: tag, value: artist.name))
-        if let alternativeTag {
-            mpdSongs += try await mpdConnector.database.search(filter: .tagEquals(tag: alternativeTag, value: artist.name))
+        var mpdSongs = try await mpdConnector.database.search(filter: filter)
+        if let alternativeFilter {
+            mpdSongs += try await mpdConnector.database.search(filter: alternativeFilter)
         }
         
         let songs = Array(Set(mpdSongs.filter {
@@ -525,23 +527,43 @@ public class MPDBrowse: BrowseProtocol {
                 results = try await mpdConnector.database.list(type: .performer, filter: filter, raw: true)
             case .composer:
                 results = try await mpdConnector.database.list(type: .composer, filter: filter, raw: true)
+            case .conductor:
+                results = try await mpdConnector.database.list(type: .conductor, filter: filter, raw: true)
             }
             
+            var artistStrings: [String] = []
+
             for result in results {
                 switch result {
-                case let .raw(pair):
-                    artists.insert(Artist(id: pair.value, type: type, source: .Local, name: pair.value))
-                case let .group(group):
+                case .value(let stringValue):
+                    artistStrings.append(stringValue)
+
+                case .raw(let pair):
+                    artistStrings.append(pair.value)
+
+                case .group(let group):
                     for child in group.children {
                         switch child {
                         case let .value(value):
-                            artists.insert(Artist(id: value, type: type, source: .Local, name: value, sortName: group.value ?? ""))
+                            artistStrings.append(value)
                         default:
                             continue
                         }
                     }
-                case let.value(value):
-                    artists.insert(Artist(id: value, type: type, source: .Local, name: value))
+                }
+            }
+
+
+            if type == .performer {
+                for artistString in artistStrings {
+                    for performer in Artist.splitPerformerString(artistString) {
+                        artists.insert(Artist(id: performer, type: type, source: .Local, name: performer))
+                    }
+                }
+            }
+            else {
+                for artistString in artistStrings {
+                    artists.insert(Artist(id: artistString, type: type, source: .Local, name: artistString))
                 }
             }
             
