@@ -578,9 +578,17 @@ public class MPDControl: ControlProtocol {
     }
     
     /// Clear the active playqueue
-    public func clearPlayqueue() {
+    public func clearPlayqueue(from: Int?, to: Int?) {
         Task {
-            try? await mpdConnector.queue.clear()
+            if from == nil && to == nil {
+                try? await mpdConnector.queue.clear()
+            }
+            else {
+                _ = runAsyncCommand { mpdConnector, playerStatus in
+                    try? await mpdConnector.queue.delete(range: UInt((from ?? 0))...UInt((to ?? playerStatus.playqueue.length)))
+                }
+                .subscribe()
+            }
         }
     }
     
