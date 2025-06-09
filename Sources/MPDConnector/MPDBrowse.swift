@@ -94,6 +94,35 @@ public class MPDBrowse: BrowseProtocol {
             }
             searchResult.artists = Array<Artist>(artists.prefix(limit))
             
+            let performerStrings = try await mpdConnector.database.search(filter: .tagContains(tag: .performer, value: search)).compactMap({
+                $0.performer
+            })
+            var performers = Set<Artist>()
+            for entry in performerStrings {
+                for performer in Artist.splitPerformerString(entry).filter({ $0.lowercased().contains(search.lowercased())}) {
+                    performers.insert(Artist(id: performer, type: .performer, source: .Local, name: performer))
+                }
+            }
+            searchResult.performers = Array<Artist>(performers.prefix(limit))
+
+            let conductorSongs = try await mpdConnector.database.search(filter: .tagContains(tag: .conductor, value: search)).map {
+                Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }
+            var conductors = Set<Artist>()
+            for song in conductorSongs {
+                conductors.insert(self.createArtistFromSong(song, type: .conductor))
+            }
+            searchResult.conductors = Array<Artist>(conductors.prefix(limit))
+
+            let composerSongs = try await mpdConnector.database.search(filter: .tagContains(tag: .composer, value: search)).map {
+                Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }
+            var composers = Set<Artist>()
+            for song in composerSongs {
+                composers.insert(self.createArtistFromSong(song, type: .composer))
+            }
+            searchResult.composers = Array<Artist>(composers.prefix(limit))
+
             return searchResult
         }
         .catchAndReturn(SearchResult())
@@ -121,7 +150,7 @@ public class MPDBrowse: BrowseProtocol {
         case .performer:
             filter = .tagContains(tag: .performer, value: artist.name)
         case .conductor:
-            filter = .tagEquals(tag: .composer, value: artist.name)
+            filter = .tagEquals(tag: .conductor, value: artist.name)
         }
 
         var mpdSongs = try await mpdConnector.database.search(filter: filter)
@@ -195,9 +224,19 @@ public class MPDBrowse: BrowseProtocol {
         .observe(on: MainScheduler.instance)
     }
     
-    private func createArtistFromSong(_ song: Song) -> Artist {
+    private func createArtistFromSong(_ song: Song, type: ArtistType = .artist) -> Artist {
         let sortName = song.sortArtist != "" ? song.sortArtist : song.sortAlbumArtist
-        var artist = Artist(id: song.artist, source: song.source, name: song.artist, sortName: sortName)
+        var artist: Artist
+        switch type {
+        case .albumArtist, .artist:
+            artist = Artist(id: song.artist, type: .artist, source: song.source, name: song.artist, sortName: sortName)
+        case .conductor:
+            artist = Artist(id: song.conductor, type: type, source: song.source, name: song.conductor)
+        case .performer:
+            artist = Artist(id: song.performer, type: type, source: song.source, name: song.performer)
+        case .composer:
+            artist = Artist(id: song.composer, type: type, source: song.source, name: song.composer)
+        }
         if case let .filenameOptionsURI(baseUri, path, possibleFilenames) = song.coverURI {
             let baseUriComponents = baseUri.components(separatedBy: "/")
             var newBaseUri = ""
