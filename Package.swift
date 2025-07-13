@@ -13,11 +13,8 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "master"),
+        .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "AsyncAwait"),
         .package(url: "https://github.com/katoemba/SwiftMPD.git", branch: "main"),
-        .package(url: "https://github.com/katoemba/rxnetservice.git", .upToNextMajor(from: "0.2.3")),
-        .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "6.6.0")),
-        .package(url: "https://github.com/RxSwiftCommunity/RxSwiftExt.git", .upToNextMajor(from: "6.0.0")),
         .package(url: "https://github.com/drmohundro/SWXMLHash.git", .upToNextMajor(from: "7.0.0"))
     ],
     targets: [
@@ -26,20 +23,13 @@ let package = Package(
         .target(
             name: "MPDConnector",
             dependencies: [.product(name: "ConnectorProtocol", package: "connectorprotocol"),
-                           .product(name: "RxRelay", package: "rxswift"),
-                           .product(name: "RxSwift", package: "rxswift"),
-                           .product(name: "RxSwiftExt", package: "rxswiftext"),
                            .product(name: "SwiftMPD", package: "swiftmpd")]),
         .target(
             name: "MPDConnectorWithBrowser",
             dependencies: ["MPDConnector",
-                           .product(name: "RxNetService", package: "rxnetservice"),
                            .product(name: "SWXMLHash", package: "swxmlhash")]),
         .testTarget(
             name: "MPDConnectorTests",
-            dependencies: ["MPDConnector",
-                           .product(name: "RxTest", package: "rxswift"),
-                           .product(name: "RxBlocking", package: "rxswift"),
-            ])
+            dependencies: ["MPDConnector"])
     ]
 )

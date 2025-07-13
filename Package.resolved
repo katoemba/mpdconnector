@@ -5,35 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "3f58bac0823c001644c74f39e6b552067e722aac"
-      }
-    },
-    {
-      "identity" : "rxnetservice",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/katoemba/rxnetservice.git",
-      "state" : {
-        "revision" : "1c9298e859ef0a79d6304bed3ca8a195e6a53dd0",
-        "version" : "0.2.4"
-      }
-    },
-    {
-      "identity" : "rxswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ReactiveX/RxSwift.git",
-      "state" : {
-        "revision" : "5949cbd3d4f3f97968bb40b6cd232f8315c6341c",
-        "version" : "6.7.0"
-      }
-    },
-    {
-      "identity" : "rxswiftext",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/RxSwiftCommunity/RxSwiftExt.git",
-      "state" : {
-        "revision" : "eb4adf9f00a21b3efc3869a5218a6d7517e95222",
-        "version" : "6.2.1"
+        "branch" : "AsyncAwait",
+        "revision" : "9decc69c9eded82ba1b766fa913afb1072eac1c2"
       }
     },
     {
@@ -41,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-atomics.git",
       "state" : {
-        "revision" : "cd142fd2f64be2100422d658e7411e39489da985",
-        "version" : "1.2.0"
+        "revision" : "b601256eab081c0f92f059e12818ac1d4f178ff7",
+        "version" : "1.3.0"
       }
     },
     {
@@ -50,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
       "state" : {
-        "revision" : "94cf62b3ba8d4bed62680a282d4c25f9c63c2efb",
-        "version" : "1.1.0"
+        "revision" : "c1805596154bb3a265fd91b8ac0c4433b4348fb0",
+        "version" : "1.2.0"
       }
     },
     {
@@ -59,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "359c461e5561d22c6334828806cc25d759ca7aa6",
-        "version" : "2.65.0"
+        "revision" : "ad6b5f17270a7008f60d35ec5378e6144a575162",
+        "version" : "2.84.0"
       }
     },
     {
@@ -68,8 +41,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "025bcb1165deab2e20d4eaba79967ce73013f496",
-        "version" : "1.2.1"
+        "revision" : "61e4ca4b81b9e09e2ec863b00c340eb13497dac6",
+        "version" : "1.5.0"
       }
     },
     {
@@ -78,7 +51,7 @@
       "location" : "https://github.com/katoemba/SwiftMPD.git",
       "state" : {
         "branch" : "main",
-        "revision" : "d6dc83d79384317eb548bc52fefd76b122812c70"
+        "revision" : "fead94f09d61a1d1d512e79a89b58478adc88899"
       }
     },
     {
