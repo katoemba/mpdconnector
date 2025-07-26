@@ -214,7 +214,6 @@ public class MPDPlayer: PlayerProtocol {
         self.version = version
         self.discoverMode = discoverMode
         self.type = type
-        let initialUniqueID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
         
         let connectionProperties = [ConnectionProperties.name.rawValue: name,
                                     ConnectionProperties.host.rawValue: host,

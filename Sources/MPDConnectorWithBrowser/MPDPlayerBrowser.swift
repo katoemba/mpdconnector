@@ -140,7 +140,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
     }
     
-    public func removePlayer(_ player: PlayerProtocol) {
+    public func removePlayer(_ player: any PlayerProtocol) {
         guard player.controllerType == MPDPlayer.controllerType else { return }
         
         var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()

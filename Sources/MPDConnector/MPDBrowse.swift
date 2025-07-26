@@ -37,7 +37,7 @@ extension Array where Element:Hashable {
     }
 }
 
-public class MPDBrowse: BrowseProtocol {
+final public class MPDBrowse: BrowseProtocol {
     public var cacheStatus: String?
 
     public var name = "mpd"

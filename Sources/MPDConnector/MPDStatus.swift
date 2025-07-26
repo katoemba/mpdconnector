@@ -30,7 +30,7 @@ import SwiftMPD
 import Combine
 import SwiftUI
 
-public class MPDStatus: StatusProtocol {
+public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Connection to a MPD Player
     private var identification = ""
     private var connectionProperties: [String: Any]
@@ -53,7 +53,12 @@ public class MPDStatus: StatusProtocol {
         _connectionStatusStream
     }
 
-    @Published public var playerStatus: PlayerStatus = PlayerStatus()
+    @Published public var playerStatus: PlayerStatus = PlayerStatus() {
+        didSet {
+            let _ = playerStatusStream
+            playerStatusContinuation.yield(playerStatus)
+        }
+    }
     public var playerStatusPublisher: AnyPublisher<PlayerStatus, Never> { $playerStatus.eraseToAnyPublisher() }
     
     private var playerStatusContinuation: AsyncStream<PlayerStatus>.Continuation!
@@ -123,7 +128,7 @@ public class MPDStatus: StatusProtocol {
                 }
 
                 counter += 1
-                if counter > 4 * 5 {
+                if counter > 20 {
                     counter = 0
                     if let playerStatus = try? await playerStatus() {
                         self.playerStatus = playerStatus

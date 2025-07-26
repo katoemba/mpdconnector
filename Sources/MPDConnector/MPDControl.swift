@@ -28,7 +28,7 @@ import Foundation
 import ConnectorProtocol
 import SwiftMPD
 
-public class MPDControl: ControlProtocol {
+final public class MPDControl: ControlProtocol {
     private var identification = ""
     private var connectionProperties: [String: Any]
     private let userDefaults: UserDefaults
