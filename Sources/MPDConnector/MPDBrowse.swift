@@ -295,7 +295,6 @@ final public class MPDBrowse: BrowseProtocol {
         return Array<Album>(albums)
     }
 
-
     // This is the old-fashioned way of getting data, using a double group by.
     private func fetchAlbums_below_20_22(genre: Genre? = nil, sort: SortType) async throws -> [Album] {
         let filter: MPDDatabase.Expression? = (genre == nil) ? nil : MPDDatabase.Expression.tagEquals(tag: .genre, value: genre!.id)
@@ -689,7 +688,7 @@ final public class MPDBrowse: BrowseProtocol {
     /// - Parameter album: an album for which data must be completed
     /// - Returns: an observable album
     public func complete(_ album: Album) async throws -> Album {
-        album
+        try await completeAlbums([album]).first!
     }
 
     /// Complete data for an artist
