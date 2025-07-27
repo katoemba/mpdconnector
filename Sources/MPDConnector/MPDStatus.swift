@@ -490,9 +490,7 @@ extension Song {
         quality = QualityStatus(audioFormat: mpdSong.audioFormat)
         quality.filetype = filetype
         
-        if source == .Radio {
-            location = mpdSong.file
-        }
+        location = mpdSong.file
                 
         // Get a sensible coverURI
         guard source == .Local else { return }
