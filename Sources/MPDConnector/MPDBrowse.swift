@@ -80,34 +80,40 @@ final public class MPDBrowse: BrowseProtocol {
         }
         searchResult.artists = Array<Artist>(artists.prefix(limit))
         
-        let performerStrings = try await mpdConnector.database.search(filter: .tagContains(tag: .performer, value: search)).compactMap({
-            $0.performer
-        })
-        var performers = Set<Artist>()
-        for entry in performerStrings {
-            for performer in Artist.splitPerformerString(entry).filter({ $0.lowercased().contains(search.lowercased())}) {
-                performers.insert(Artist(id: performer, type: .performer, source: .Local, name: performer))
+        if let performerMpdStrings = try? await mpdConnector.database.search(filter: .tagContains(tag: .performer, value: search)) {
+            let performerStrings = performerMpdStrings.compactMap({
+                $0.performer
+            })
+            var performers = Set<Artist>()
+            for entry in performerStrings {
+                for performer in Artist.splitPerformerString(entry).filter({ $0.lowercased().contains(search.lowercased())}) {
+                    performers.insert(Artist(id: performer, type: .performer, source: .Local, name: performer))
+                }
             }
+            searchResult.performers = Array<Artist>(performers.prefix(limit))
         }
-        searchResult.performers = Array<Artist>(performers.prefix(limit))
 
-        let conductorSongs = try await mpdConnector.database.search(filter: .tagContains(tag: .conductor, value: search)).map {
-            Song(mpdSong: $0, connectionProperties: connectionProperties)
+        if let conductorMpdSongs = try? await mpdConnector.database.search(filter: .tagContains(tag: .conductor, value: search)) {
+            let conductorSongs = conductorMpdSongs.map {
+                Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }
+            var conductors = Set<Artist>()
+            for song in conductorSongs {
+                conductors.insert(self.createArtistFromSong(song, type: .conductor))
+            }
+            searchResult.conductors = Array<Artist>(conductors.prefix(limit))
         }
-        var conductors = Set<Artist>()
-        for song in conductorSongs {
-            conductors.insert(self.createArtistFromSong(song, type: .conductor))
-        }
-        searchResult.conductors = Array<Artist>(conductors.prefix(limit))
 
-        let composerSongs = try await mpdConnector.database.search(filter: .tagContains(tag: .composer, value: search)).map {
-            Song(mpdSong: $0, connectionProperties: connectionProperties)
+        if let composerMpdSongs = try? await mpdConnector.database.search(filter: .tagContains(tag: .composer, value: search)) {
+            let composerSongs = composerMpdSongs.map {
+                Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }
+            var composers = Set<Artist>()
+            for song in composerSongs {
+                composers.insert(self.createArtistFromSong(song, type: .composer))
+            }
+            searchResult.composers = Array<Artist>(composers.prefix(limit))
         }
-        var composers = Set<Artist>()
-        for song in composerSongs {
-            composers.insert(self.createArtistFromSong(song, type: .composer))
-        }
-        searchResult.composers = Array<Artist>(composers.prefix(limit))
 
         return searchResult
     }
