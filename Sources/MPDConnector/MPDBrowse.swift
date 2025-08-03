@@ -257,6 +257,20 @@ final public class MPDBrowse: BrowseProtocol {
         albumsFromSongs(try await songsByArtist(artist), sort: sort)
     }
 
+    public func albumsByDecade(_ decade: Int) async throws -> [Album] {
+        var albums = Set<Album>()
+        for yearOffset in 0..<10 {
+            let songs = try await mpdConnector.database.search(filter: .tagContains(tag: .date, value: "\(decade+yearOffset)"), range: 0...1000).map {
+                Song(mpdSong: $0, connectionProperties: connectionProperties)
+            }
+            for song in songs {
+                albums.insert(albumFromSong(song))
+            }
+        }
+        
+        return Array(albums).sorted(by: { $0.year < $1.year })
+    }
+
     public func recentAlbums() async throws -> [Album] {
         try await recentAlbums(numberOfAlbums: 20)
     }

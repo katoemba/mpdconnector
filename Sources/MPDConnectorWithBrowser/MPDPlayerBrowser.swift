@@ -38,7 +38,8 @@ enum MPDError: Error {
 }
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
-public class MPDPlayerBrowser: PlayerBrowserProtocol {
+@MainActor
+public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     struct MPDConnectionData {
         let name: String
         let host: String
@@ -62,18 +63,14 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     public var controllerType: String {
         MPDPlayer.controllerType
     }
-    private let mpdNetServiceBrowser : NetServiceBrowser
-    private let volumioNetServiceBrowser : NetServiceBrowser
-    private let httpNetServiceBrowser : NetServiceBrowser
+    
+    @Published public var players: [any PlayerProtocol] = []
     
     private var isListening = false
     private var userDefaults: UserDefaults
     
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
-        mpdNetServiceBrowser = NetServiceBrowser()
-        volumioNetServiceBrowser = NetServiceBrowser()
-        httpNetServiceBrowser = NetServiceBrowser()
     }
     
     /// Start listening for players on the local domain.
@@ -83,13 +80,63 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         }
         
         isListening = true
-        mpdNetServiceBrowser.searchForServices(ofType: "_mpd._tcp.", inDomain: "")
-        volumioNetServiceBrowser.searchForServices(ofType: "_Volumio._tcp.", inDomain: "")
-        httpNetServiceBrowser.searchForServices(ofType: "_http._tcp.", inDomain: "")
         
+        let browser = AsyncServiceBrowser()
+        Task {
+            for await event in browser.discover(type: "_mpd._tcp.") {
+                switch event {
+                case .found(let service):
+                    do {
+                        if let player = try await createPlayerFromService(service) {
+                            // Only add if not already in the list
+                            if !players.contains(where: { $0.name == player.name }) {
+                                players.append(player)
+                            }
+                        }
+                    } catch {
+                        print("Failed to create player: \(error)")
+                    }
+                case .removed(let service):
+                    // Find and remove player with matching name
+                    removePlayerByName(service.name)
+                }
+            }
+        }
+        
+        // Handle manually configured players
         let persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
         for persistedPlayer in persistedPlayers.keys {
+            if let playerProperties = persistedPlayers[persistedPlayer] as? [String: Any] {
+                Task {
+                    do {
+                        let player = try await playerForConnectionProperties(playerProperties)
+                        // Only add if not already in the list
+                        if !players.contains(where: { $0.name == player.name }) {
+                            players.append(player)
+                        }
+                    } catch {
+                        print("Failed to create persisted player \(persistedPlayer): \(error)")
+                    }
+                }
+            }
         }
+    }
+    
+    /// Create a player from a discovered service
+    private func createPlayerFromService(_ service: DiscoveredService) async throws -> PlayerProtocol? {
+        // Create connection properties
+        var connectionProperties: [String: Any] = [
+            ConnectionProperties.name.rawValue: service.name,
+            ConnectionProperties.host.rawValue: service.service.hostName ?? "",
+            ConnectionProperties.port.rawValue: service.service.port,
+            ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
+            MPDConnectionProperties.MPDType.rawValue: MPDType.classic.rawValue
+        ]
+        if let ipAddress = service.ipAddresses?.first {
+            connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ipAddress
+        }
+                
+        return try await playerForConnectionProperties(connectionProperties)
     }
     
     /// Stop listening for players.
@@ -99,17 +146,6 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
         }
         
         isListening = false
-        mpdNetServiceBrowser.stop()
-        volumioNetServiceBrowser.stop()
-        httpNetServiceBrowser.stop()
-        
-#if os(iOS)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            guard UIApplication.shared.applicationState != .active else {
-                return
-            }
-        }
-#endif
     }
     
     /// Manually create a player based on the connection properties
@@ -149,5 +185,9 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             persistedPlayers.removeValue(forKey: player.name)
             userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
         }
+    }
+    
+    private func removePlayerByName(_ name: String) {
+        players.removeAll { $0.name == name }
     }
 }

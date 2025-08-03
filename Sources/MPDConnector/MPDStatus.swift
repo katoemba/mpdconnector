@@ -40,37 +40,24 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     private var mpdIdleConnector: SwiftMPD.MPDConnector?
     private var mpdConnector: SwiftMPD.MPDConnector
     
-    @Published var connectionStatus: ConnectionStatus = .unknown
-    public var connectionStatusPublisher: AnyPublisher<ConnectionStatus, Never> { $connectionStatus.eraseToAnyPublisher() }
-    
-    private var connectionStatusContinuation: AsyncStream<ConnectionStatus>.Continuation!
-    lazy var _connectionStatusStream: AsyncStream<ConnectionStatus> = {
-        AsyncStream<ConnectionStatus> { continuation in
-            self.connectionStatusContinuation = continuation
-        }
-    }()
-    public var connectionStatusStream: AsyncStream<ConnectionStatus> {
-        _connectionStatusStream
-    }
-
-    @Published public var playerStatus: PlayerStatus = PlayerStatus() {
+    public private(set) var statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
+    public var playerStatus: PlayerStatus = PlayerStatus() {
         didSet {
-            let _ = playerStatusStream
-            playerStatusContinuation.yield(playerStatus)
+            Task {
+                await statusStream.send(playerStatus)
+            }
         }
     }
-    public var playerStatusPublisher: AnyPublisher<PlayerStatus, Never> { $playerStatus.eraseToAnyPublisher() }
     
-    private var playerStatusContinuation: AsyncStream<PlayerStatus>.Continuation!
-    lazy var _playerStatusStream: AsyncStream<PlayerStatus> = {
-        AsyncStream<PlayerStatus> { continuation in
-            self.playerStatusContinuation = continuation
+    public private(set) var connectionStatusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.ConnectionStatus>()
+    public var connectionStatus: ConnectionStatus = .unknown  {
+        didSet {
+            Task {
+                await connectionStatusStream.send(connectionStatus)
+            }
         }
-    }()
-    public var playerStatusStream: AsyncStream<PlayerStatus> {
-        _playerStatusStream
     }
-
+    
     private var lastKnownElapsedTime = 0
     private var lastKnownElapsedTimeRecorded = Date()
     private var elapsedTask: Task<Void, Never>?
@@ -85,8 +72,6 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         self.userDefaults = userDefaults
         self.mpdConnector = mpdConnector
         self.mpdIdleConnector = mpdIdleConnector
-        let _ = _connectionStatusStream
-        self.connectionStatusContinuation.yield(.unknown)
     }
     
     /// Cleanup connection object
@@ -100,7 +85,6 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         }
         
         connectionStatus = .online
-        connectionStatusContinuation.yield(.online)
         Task {
             while (true) {
                 if let playerStatus = try? await playerStatus(connector: mpdIdleConnector) {
@@ -144,9 +128,12 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     
     /// Stop monitoring status changes on a player, and close the active connection
     public func stop() {
+        elapsedTask?.cancel()
+        elapsedTask = nil
+        connectionStatus = .offline
         Task {
-            connectionStatus = .offline
-            connectionStatusContinuation.yield(.offline)
+            await statusStream.unsubscribeAll()
+            statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
             try? await mpdIdleConnector?.status.noidle()
         }
     }

@@ -79,6 +79,9 @@ public enum MPDConnectionProperties: String {
 }
 
 public class MPDPlayer: PlayerProtocol {
+    private static var discoCount = 0
+    private var playerDisco = 0
+    
     public var mediaServerModel: String = "MPD"
 
     public var mediaAvailable: Bool = true
@@ -281,11 +284,17 @@ public class MPDPlayer: PlayerProtocol {
     /// Upon activation, the status object starts monitoring the player status.
     public func activate() {
         mpdStatus.start()
+        Self.discoCount += 1
+        playerDisco += 1
+        print("Disco count (\(name) - \(playerDisco)) \(Self.discoCount)")
     }
     
     /// Upon deactivation, the shared status object starts monitoring the player status, and open connections are closed.
     public func deactivate() {
         mpdStatus.stop()
+        Self.discoCount -= 1
+        playerDisco -= 1
+        print("Disco count (\(name) - \(playerDisco)) \(Self.discoCount)")
     }
     
     /// Create a copy of a player
