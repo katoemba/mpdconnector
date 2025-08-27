@@ -237,6 +237,7 @@ final public class MPDBrowse: BrowseProtocol {
         album.coverURI = song.coverURI
         album.lastModified = song.lastModified
         album.quality = song.quality
+        album.fullyLoaded = true
     
         return album
     }
@@ -259,12 +260,20 @@ final public class MPDBrowse: BrowseProtocol {
 
     public func albumsByDecade(_ decade: Int) async throws -> [Album] {
         var albums = Set<Album>()
+        
+        var commands = [any CommandExecutor]()
         for yearOffset in 0..<10 {
-            let songs = try await mpdConnector.database.search(filter: .tagContains(tag: .date, value: "\(decade+yearOffset)"), range: 0...1000).map {
-                Song(mpdSong: $0, connectionProperties: connectionProperties)
+            commands.append(self.mpdConnector.database.searchExecutor(filter: .tagContains(tag: .date, value: "\(decade+yearOffset)")))
+        }
+        try await self.mpdConnector.batchCommand(commands)
+        
+        for command in commands {
+            guard let songs = try command.processResults() as? [MPDSong], songs.count > 0 else {
+                continue
             }
+
             for song in songs {
-                albums.insert(albumFromSong(song))
+                albums.insert(albumFromSong(Song(mpdSong: song, connectionProperties: connectionProperties)))
             }
         }
         
@@ -400,19 +409,6 @@ final public class MPDBrowse: BrowseProtocol {
     }
     
     public func completeAlbums(_ albums: [Album]) async throws -> [Album] {
-        if let album = albums.first {
-            switch album.coverURI {
-            case let .fullPathURI(path):
-                if path != "" {
-                    return albums
-                }
-            case let .filenameOptionsURI(_, path, _):
-                if path != "" {
-                    return albums
-                }
-            }
-        }
-        
         var originalAlbums = albums
         var results = [Album]()
         
@@ -708,7 +704,8 @@ final public class MPDBrowse: BrowseProtocol {
     /// - Parameter album: an album for which data must be completed
     /// - Returns: an observable album
     public func complete(_ album: Album) async throws -> Album {
-        try await completeAlbums([album]).first!
+        guard !album.fullyLoaded else { return album }
+        return (try? await completeAlbums([album]).first) ?? album
     }
 
     /// Complete data for an artist
