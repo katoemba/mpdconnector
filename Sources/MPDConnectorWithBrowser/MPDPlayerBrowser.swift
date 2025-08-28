@@ -190,4 +190,12 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     private func removePlayerByName(_ name: String) {
         players.removeAll { $0.name == name }
     }
+    
+    public func decodePlayer(_ data: Data) throws -> any PlayerProtocol {
+        let player = try MPDPlayer.decodePlayer(data)
+        if !players.contains(where: { $0.uniqueID == player.uniqueID }) {
+            players.append(player)
+        }
+        return player
+    }
 }

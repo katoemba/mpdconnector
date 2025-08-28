@@ -32,7 +32,7 @@ enum ConnectionError: Error {
     case internalError
 }
 
-public enum MPDType: Int {
+public enum MPDType: Int, Codable {
     case unknown = 0
     case classic = 1
     case mopidy = 2
@@ -79,9 +79,17 @@ public enum MPDConnectionProperties: String {
 }
 
 public class MPDPlayer: PlayerProtocol {
-    private static var discoCount = 0
-    private var playerDisco = 0
-    
+    struct CodablePlayer: Codable {
+        let uuid: UUID
+        let name: String
+        let version: String
+        let ipAddress: String?
+        let host: String
+        let port: Int
+        let password: String?
+        let type: MPDType
+    }
+
     public var mediaServerModel: String = "MPD"
 
     public var mediaAvailable: Bool = true
@@ -103,7 +111,7 @@ public class MPDPlayer: PlayerProtocol {
     private var host: String
     private var ipAddress: String?
     private var port: Int
-    //private var password: String
+    private var password: String?
     public private(set) var type: MPDType
     private var uuid = UUID()
     
@@ -161,7 +169,34 @@ public class MPDPlayer: PlayerProtocol {
         }
     }
     
-  
+    public func encodePlayer() throws -> Data {
+        let encodedPlayer = CodablePlayer(
+            uuid: uuid,
+            name: name,
+            version: version,
+            ipAddress: ipAddress,
+            host: host,
+            port: port,
+            password: password,
+            type: type)
+        return try! JSONEncoder().encode(encodedPlayer)
+    }
+
+    public static func decodePlayer(_ data: Data) throws -> Self {
+        let decodedPlayer = try JSONDecoder().decode(CodablePlayer.self, from: data)
+        return MPDPlayer(
+            name: decodedPlayer.name,
+            host: decodedPlayer.host,
+            ipAddress: decodedPlayer.ipAddress,
+            port: decodedPlayer.port,
+            password: decodedPlayer.password,
+            type: decodedPlayer.type,
+            version: decodedPlayer.version,
+            userDefaults: UserDefaults.standard
+        ) as! Self
+
+    }
+
     /// Create a unique object for every request for a control object
     public var control: ControlProtocol {
         get {
@@ -212,6 +247,7 @@ public class MPDPlayer: PlayerProtocol {
         self.host = host
         self.ipAddress = ipAddress
         self.port = port
+        self.password = password
         self.connectionWarning = connectionWarning
         self.commands = commands
         self.version = version
@@ -284,17 +320,11 @@ public class MPDPlayer: PlayerProtocol {
     /// Upon activation, the status object starts monitoring the player status.
     public func activate() {
         mpdStatus.start()
-        Self.discoCount += 1
-        playerDisco += 1
-        print("Disco count (\(name) - \(playerDisco)) \(Self.discoCount)")
     }
     
     /// Upon deactivation, the shared status object starts monitoring the player status, and open connections are closed.
     public func deactivate() {
         mpdStatus.stop()
-        Self.discoCount -= 1
-        playerDisco -= 1
-        print("Disco count (\(name) - \(playerDisco)) \(Self.discoCount)")
     }
     
     /// Create a copy of a player
