@@ -280,6 +280,25 @@ final public class MPDBrowse: BrowseProtocol {
         return Array(albums).sorted(by: { $0.year < $1.year })
     }
 
+    public func songsByDecade(_ decade: Int) async throws -> [Song] {
+        var commands = [any CommandExecutor]()
+        for yearOffset in 0..<10 {
+            commands.append(self.mpdConnector.database.searchExecutor(filter: .tagContains(tag: .date, value: "\(decade+yearOffset)")))
+        }
+        try await self.mpdConnector.batchCommand(commands)
+        
+        var results = [Song]()
+        for command in commands {
+            guard let songs = try command.processResults() as? [MPDSong], songs.count > 0 else {
+                continue
+            }
+
+            results += songs.map { Song(mpdSong: $0, connectionProperties: connectionProperties) }
+        }
+        
+        return Array(results).sorted(by: { $0.year < $1.year })
+    }
+
     public func recentAlbums() async throws -> [Album] {
         try await recentAlbums(numberOfAlbums: 20)
     }
@@ -293,8 +312,19 @@ final public class MPDBrowse: BrowseProtocol {
             return Song(mpdSong: $0, connectionProperties: connectionProperties)
         }
         
-        return self.albumsFromSongs(songs, sort: .title).sorted {
+        return Array(self.albumsFromSongs(songs, sort: .title).sorted {
             $0.lastModified > $1.lastModified
+        }
+        .prefix(numberOfAlbums))
+    }
+    
+    public func recentSongs() async throws -> [Song] {
+        let connectionProperties = self.connectionProperties
+        let mpdConnector = self.mpdConnector
+
+        return try await mpdConnector.database.search(filter: .modifiedSince(value: Date(timeIntervalSinceNow: -3600 * 24 * 100))).compactMap {
+            guard let title = $0.title, title != "" else { return nil }
+            return Song(mpdSong: $0, connectionProperties: connectionProperties)
         }
     }
         
@@ -322,6 +352,15 @@ final public class MPDBrowse: BrowseProtocol {
         }
         
         return Array<Album>(albums)
+    }
+    
+    /// Fetch an array of all songs that match a Genre
+    /// - Parameter genre: a Genre to filter songs
+    /// - Returns: an array of Song objects
+    public func songs(genre: Genre) async throws -> [Song] {
+        let expression: MPDDatabase.Expression = .tagEquals(tag: .genre, value: genre.id)
+        let mpdSongs = try await self.mpdConnector.database.search(filter: expression)
+        return mpdSongs.map { Song(mpdSong: $0, connectionProperties: connectionProperties) }
     }
 
     // This is the old-fashioned way of getting data, using a double group by.
