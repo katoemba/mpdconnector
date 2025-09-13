@@ -999,20 +999,25 @@ public class MPDBrowse: BrowseProtocol {
         .observe(on: MainScheduler.instance)
     }
     
-    public func imageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
+    public func imageDataFromCoverURI(_ coverURI: CoverURI, cacheValidator: @escaping (String) -> Data?) -> Observable<Data?> {
         guard coverURI.path != "" else { return Observable.just(nil) }
         return Observable<[Data?]>.fromAsync {
-            return try? await self.mpdConnector.database.getAlbumart(path: coverURI.path)
+            return try? await self.mpdConnector.database
+                .getAlbumart(
+                    path: coverURI.path,
+                    cacheValidator: cacheValidator
+                )
         }
         .catchAndReturn(nil)
         .observe(on: MainScheduler.instance)
 
     }
 
-    public func embeddedImageDataFromCoverURI(_ coverURI: CoverURI) -> Observable<Data?> {
+    public func embeddedImageDataFromCoverURI(_ coverURI: CoverURI, cacheValidator: @escaping (String) -> Data?) -> Observable<Data?> {
         guard let path = coverURI.embeddedUri else { return Observable.just(nil) }
         return Observable<[Data?]>.fromAsync {
-            return try? await self.mpdConnector.database.getReadpicture(path: path)
+            return try? await self.mpdConnector.database
+                .getReadpicture(path: path, cacheValidator: cacheValidator)
         }
         .catchAndReturn(nil)
         .observe(on: MainScheduler.instance)
