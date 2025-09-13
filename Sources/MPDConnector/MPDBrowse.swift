@@ -38,6 +38,26 @@ extension Array where Element:Hashable {
     }
 }
 
+public struct DatabaseStats {
+    public let artists: Int
+    public let albums: Int
+    public let songs: Int
+    public let uptime: Int
+    public let db_playtime: Int
+    public let db_update: Int
+    public let playtime: Int
+
+    init(stats: SwiftMPD.MPDStatus.StatsExecutor.Stats) {
+        artists = stats.artists
+        albums = stats.albums
+        songs = stats.songs
+        uptime = stats.uptime
+        db_playtime = stats.db_playtime
+        db_update = stats.db_update
+        playtime = stats.playtime
+    }
+}
+
 public class MPDBrowse: BrowseProtocol {
     public var name = "mpd"
     
@@ -996,6 +1016,18 @@ public class MPDBrowse: BrowseProtocol {
             }
         }
         .catchAndReturn("")
+        .observe(on: MainScheduler.instance)
+    }
+    
+    func stats() -> Observable<DatabaseStats?> {
+        let mpdConnector = self.mpdConnector
+
+        return Observable<DatabaseStats?>.fromAsync {
+            if let stats = (try? await mpdConnector.status.stats()) {
+                return DatabaseStats(stats: stats)
+            }
+            return nil
+        }
         .observe(on: MainScheduler.instance)
     }
     

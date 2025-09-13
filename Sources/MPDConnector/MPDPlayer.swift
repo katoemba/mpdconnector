@@ -193,6 +193,12 @@ public class MPDPlayer: PlayerProtocol {
                 .flatMap( { _ in
                     mpdDBStatusObservable
                 })
+            let mpdStatsObservable = (self.browse as! MPDBrowse).stats()
+                .map {
+                    guard let stats = $0 else { return "No stats available" }
+                    
+                    return "\(stats.artists) artists, \(stats.albums) albums, \(stats.songs) songs"
+                }
             
             let httpOutputDescription = "If you are a subscriber and have configured a http output in your mpd.conf, you can specify the host/ip-address and port number so that you can enjoy your library right here on your device.\n" +
             "When configured correctly a headphone icon will appear on the now playing view which lets you connect to the playing music.\n" +
@@ -248,15 +254,24 @@ public class MPDPlayer: PlayerProtocol {
                     PlayerSettingGroup(title: "Cover Art Sources", description: coverArtDescription, settings: coverArtSettings),
                     PlayerSettingGroup(title: "HTTP Output", description: httpOutputDescription, settings:[loadSetting(id: MPDConnectionProperties.outputHost.rawValue)!,
                                                                                                            loadSetting(id: MPDConnectionProperties.outputPort.rawValue)!]),
-                    PlayerSettingGroup(title: "MPD Database", description: mpdDatabaseDescription, settings:[DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
-                                                                                         ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () -> Observable<String> in
+                    PlayerSettingGroup(
+title: "MPD Database",
+ description: mpdDatabaseDescription,
+ settings:[
+DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
+DynamicSetting.init(id: "MPDStats", description: "Database Contents", titleObservable: mpdStatsObservable),
+ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () -> Observable<String> in
                 (self.browse as! MPDBrowse).updateDB()
                 return Observable.just("Update initiated")
             }),
-                                                                                         ActionSetting.init(id: "MPDRescan", description: "Rescan DB", action: { () -> Observable<String> in
-                (self.browse as! MPDBrowse).rescanLibrary()
-                                                                                     return Observable.just("Rescan initiated")
-                                                                                 })])]
+ActionSetting.init(
+    id: "MPDRescan",
+    description: "Rescan DB",
+    action: { () -> Observable<String> in
+        (self.browse as! MPDBrowse).rescanLibrary()
+        return Observable.just("Rescan initiated")
+    })]
+                    )]
         }
     }
     
