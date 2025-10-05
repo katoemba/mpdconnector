@@ -77,6 +77,7 @@ public enum MPDConnectionProperties: String {
     case outputPort = "MPD.Output.Port"
     case ipAddress = "MPD.IpAddress"
     case connectToIpAddress = "MPD.ConnectToIpAddress"
+    case skipHiddenFiles = "MPD.SkipHiddenFiles"
 }
 
 public class MPDPlayer: PlayerProtocol {
@@ -161,6 +162,7 @@ public class MPDPlayer: PlayerProtocol {
             let urlCoverArt = (self.loadSetting(id: ConnectionProperties.urlCoverArt.rawValue) as? ToggleSetting)?.value ?? false
             let discogsCoverArt = (self.loadSetting(id: ConnectionProperties.discogsCoverArt.rawValue) as? ToggleSetting)?.value ?? false
             let musicbrainzCoverArt = (self.loadSetting(id: ConnectionProperties.musicbrainzCoverArt.rawValue) as? ToggleSetting)?.value ?? false
+            let skipHiddenFiles = (self.loadSetting(id: MPDConnectionProperties.skipHiddenFiles.rawValue) as? ToggleSetting)?.value ?? false
             return [ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
                     ConnectionProperties.name.rawValue: name,
                     ConnectionProperties.host.rawValue: host,
@@ -181,7 +183,8 @@ public class MPDPlayer: PlayerProtocol {
                     MPDConnectionProperties.MPDType.rawValue: type.rawValue,
                     MPDConnectionProperties.version.rawValue: version,
                     MPDConnectionProperties.outputHost.rawValue: outputHost,
-                    MPDConnectionProperties.outputPort.rawValue: outputPort]
+                    MPDConnectionProperties.outputPort.rawValue: outputPort,
+                    MPDConnectionProperties.skipHiddenFiles.rawValue: skipHiddenFiles]
         }
     }
     
@@ -260,6 +263,7 @@ title: "MPD Database",
  settings:[
 DynamicSetting.init(id: "MPDDBStatus", description: "Database Status", titleObservable: Observable.merge(mpdDBStatusObservable, reloadingObservable)),
 DynamicSetting.init(id: "MPDStats", description: "Database Contents", titleObservable: mpdStatsObservable),
+loadSetting(id: MPDConnectionProperties.skipHiddenFiles.rawValue)!,
 ActionSetting.init(id: "MPDReload", description: "Update DB", action: { () -> Observable<String> in
                 (self.browse as! MPDBrowse).updateDB()
                 return Observable.just("Update initiated")
@@ -398,6 +402,7 @@ ActionSetting.init(
         let outputHost = userDefaults.string(forKey: "\(MPDConnectionProperties.outputHost.rawValue).\(initialUniqueID)") ?? ""
         let outputPort = userDefaults.string(forKey: "\(MPDConnectionProperties.outputPort.rawValue).\(initialUniqueID)") ?? ""
         let connectToIpAddress = userDefaults.bool(forKey: "\(MPDConnectionProperties.connectToIpAddress.rawValue).\(initialUniqueID)")
+        let skipHiddenFiles = (userDefaults.object(forKey: "\(MPDConnectionProperties.connectToIpAddress.rawValue).\(initialUniqueID)") as? Bool) ?? true
         let connectionProperties = [ConnectionProperties.name.rawValue: name,
                                     ConnectionProperties.host.rawValue: host,
                                     ConnectionProperties.port.rawValue: port,
@@ -412,11 +417,32 @@ ActionSetting.init(
                                     MPDConnectionProperties.MPDType.rawValue: self.type,
                                     MPDConnectionProperties.version.rawValue: version,
                                     MPDConnectionProperties.outputHost.rawValue: outputHost,
-                                    MPDConnectionProperties.outputPort.rawValue: outputPort] as [String : Any]
+                                    MPDConnectionProperties.outputPort.rawValue: outputPort,
+                                    MPDConnectionProperties.skipHiddenFiles.rawValue: skipHiddenFiles] as [String : Any]
         
         let hostToUse = MPDHelper.hostToUse(connectionProperties)
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid, playerName: name))
-        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: hostToUse, port: port, password: password, connectTimeout: 3, uuid: uuid, playerName: name))
+        self.mpdConnector = MPDConnector(
+            MPDDeviceSettings(
+                ipAddress: hostToUse,
+                port: port,
+                password: password,
+                connectTimeout: 3,
+                uuid: uuid,
+                playerName: name,
+                skipHiddenFiles: skipHiddenFiles
+            )
+        )
+        self.mpdIdleConnector = MPDConnector(
+            MPDDeviceSettings(
+                ipAddress: hostToUse,
+                port: port,
+                password: password,
+                connectTimeout: 3,
+                uuid: uuid,
+                playerName: name,
+                skipHiddenFiles: skipHiddenFiles
+            )
+        )
         self.mpdStatus = MPDStatus.init(connectionProperties: connectionProperties,
                                         scheduler: scheduler,
                                         userDefaults: userDefaults,
@@ -616,6 +642,10 @@ ActionSetting.init(
             let toggleSetting = setting as! ToggleSetting
             userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
         }
+        else if setting.id == MPDConnectionProperties.skipHiddenFiles.rawValue {
+            let toggleSetting = setting as! ToggleSetting
+            userDefaults.set(toggleSetting.value, forKey: playerSpecificId)
+        }
     }
     
     /// Get data for a specific setting
@@ -751,6 +781,11 @@ ActionSetting.init(
                                       placeholder: "Port Number",
                                       value: userDefaults.string(forKey: playerSpecificId) ?? "",
                                       restriction: .numeric)
+        }
+        else if id == MPDConnectionProperties.skipHiddenFiles.rawValue {
+            return ToggleSetting.init(id: id,
+                                      description: "Skip hidden files",
+                                      value: (userDefaults.object(forKey: playerSpecificId) as? Bool) ?? true)
         }
         
         return nil

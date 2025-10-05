@@ -172,10 +172,24 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
             .filter({ (netService) -> Bool in
                 netService.name.contains("[runeaudio]") == false && netService.name.contains("bryston") == false
             })
-            .flatMap({ netService -> Observable<NetService?> in
+            .flatMap(
+{ netService -> Observable<NetService?> in
                 Observable<NetService?>.fromAsync {
                     do {
-                        let connector = MPDConnector(MPDDeviceSettings(ipAddress: netService.hostName ?? (netService.firstIPv4Address ?? "Unknown"), port: 6600, connectTimeout: 3000, uuid: UUID(), playerName: netService.hostName ?? (netService.firstIPv4Address ?? "Unknown")))
+                        let connector = MPDConnector(
+                            MPDDeviceSettings(
+                                ipAddress: netService.hostName ?? (
+                                    netService.firstIPv4Address ?? "Unknown"
+                                ),
+                                port: 6600,
+                                connectTimeout: 3000,
+                                uuid: UUID(),
+                                playerName: netService.hostName ?? (
+                                    netService.firstIPv4Address ?? "Unknown"
+                                ),
+                                skipHiddenFiles: true
+                            )
+                        )
                         try await connector.connect()
                         await connector.closeConnection()
                     }
