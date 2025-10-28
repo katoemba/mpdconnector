@@ -32,6 +32,7 @@ import ConnectorProtocol
 import SWXMLHash
 import MPDConnector
 import SwiftMPD
+import SwiftUI
 
 enum MPDError: Error {
     case invalidData
@@ -50,11 +51,11 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         func withType(_ newType: MPDType) -> MPDConnectionData {
             MPDConnectionData(name: name, host: host, ip: ip, port: port, type: newType)
         }
-
+        
         func withPortAndType(_ newPort: Int, _ newType: MPDType) -> MPDConnectionData {
             MPDConnectionData(name: name, host: host, ip: ip, port: newPort, type: newType)
         }
-
+        
         func withNameAndPortAndType(_ newName: String, _ newPort: Int, _ newType: MPDType) -> MPDConnectionData {
             MPDConnectionData(name: newName, host: host, ip: ip, port: newPort, type: newType)
         }
@@ -123,7 +124,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     }
     
     /// Create a player from a discovered service
-    private func createPlayerFromService(_ service: DiscoveredService) async throws -> PlayerProtocol? {
+    private func createPlayerFromService(_ service: DiscoveredService) async throws -> (any PlayerProtocol)? {
         // Create connection properties
         var connectionProperties: [String: Any] = [
             ConnectionProperties.name.rawValue: service.name,
@@ -135,7 +136,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         if let ipAddress = service.ipAddresses?.first {
             connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ipAddress
         }
-                
+        
         return try await playerForConnectionProperties(connectionProperties)
     }
     
@@ -152,11 +153,11 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     ///
     /// - Parameter connectionProperties: dictionary of connection properties
     /// - Returns: An observable on which a created Player can published.
-    public func playerForConnectionProperties(_ connectionProperties: [String: Any]) async throws -> PlayerProtocol {
+    public func playerForConnectionProperties(_ connectionProperties: [String: Any]) async throws -> any PlayerProtocol {
         guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType,
               MPDHelper.hostToUse(connectionProperties) != "",
               let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else { throw MPDError.invalidData }
-
+        
         let userDefaults = self.userDefaults
         let hostToUse = MPDHelper.hostToUse(connectionProperties)
         try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3, uuid: UUID(), playerName: connectionProperties[ConnectionProperties.name.rawValue] as? String ?? "Unknown")).connect()
@@ -191,11 +192,16 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         players.removeAll { $0.name == name }
     }
     
-    public func decodePlayer(_ data: Data) throws -> any PlayerProtocol {
-        let player = try MPDPlayer.decodePlayer(data)
+    public func decodePlayer(_ data: Data) async throws -> any PlayerProtocol {
+        let player = try await MPDPlayer.decodePlayer(data)
         if !players.contains(where: { $0.uniqueID == player.uniqueID }) {
             players.append(player)
         }
         return player
+    }
+        
+    @ViewBuilder
+    public func manualAddPlayerView() -> some View {
+        Text("Here we can add a player manually.")
     }
 }

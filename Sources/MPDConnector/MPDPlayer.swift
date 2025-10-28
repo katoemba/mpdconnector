@@ -27,6 +27,7 @@
 import Foundation
 import ConnectorProtocol
 import SwiftMPD
+import SwiftUI
 
 enum ConnectionError: Error {
     case internalError
@@ -79,6 +80,11 @@ public enum MPDConnectionProperties: String {
 }
 
 public class MPDPlayer: PlayerProtocol {
+    @ViewBuilder
+    public func settingsView() -> some View {
+        EmptyView()
+    }
+
     struct CodablePlayer: Codable {
         let uuid: UUID
         let name: String
@@ -182,7 +188,7 @@ public class MPDPlayer: PlayerProtocol {
         return try! JSONEncoder().encode(encodedPlayer)
     }
 
-    public static func decodePlayer(_ data: Data) throws -> Self {
+    public static func decodePlayer(_ data: Data) async throws -> Self {
         let decodedPlayer = try JSONDecoder().decode(CodablePlayer.self, from: data)
         return MPDPlayer(
             name: decodedPlayer.name,
@@ -194,7 +200,6 @@ public class MPDPlayer: PlayerProtocol {
             version: decodedPlayer.version,
             userDefaults: UserDefaults.standard
         ) as! Self
-
     }
 
     /// Create a unique object for every request for a control object
@@ -330,7 +335,7 @@ public class MPDPlayer: PlayerProtocol {
     /// Create a copy of a player
     ///
     /// - Returns: copy of the this player
-    public func copy() async -> PlayerProtocol {
+    public func copy() async -> any PlayerProtocol {
         return await MPDPlayer.init(connectionProperties: connectionProperties, type: type, version: version, userDefaults: userDefaults, commands: commands)
     }
     
