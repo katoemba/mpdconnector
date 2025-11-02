@@ -900,4 +900,24 @@ final public class MPDBrowse: BrowseProtocol {
             return try await self.mpdConnector.database.getReadpicture(path: song.coverURI.path, key: song.cacheKey, cacheValidator: cacheValidator)
         }
     }
+    
+    /// Browse the contents of a folder
+    /// - Returns: an array of FolderContents (folder, song or playlist)
+    public func folderContents(_ folder: Folder) async throws -> [FolderContent] {
+        try await mpdConnector.database.lsinfo(uri: folder.path)
+            .compactMap {
+                switch $0 {
+                case let .song(song):
+                    return FolderContent.song(Song(mpdSong: song, connectionProperties: connectionProperties))
+                case let .playlist(playlist, lastModified):
+                    return FolderContent.playlist(Playlist(id: playlist, source: .Local, name: playlist, lastModified: lastModified ?? Date()))
+                case let .directory(directory, _):
+                    let components = directory.split(separator: "/")
+                    if let folderName = components.last {
+                        return FolderContent.folder(Folder(id: directory, source: .Local, path: directory, name: String(folderName)))
+                    }
+                    return nil
+                }
+            }
+    }
 }
