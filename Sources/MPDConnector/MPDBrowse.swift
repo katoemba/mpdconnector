@@ -591,7 +591,7 @@ final public class MPDBrowse: BrowseProtocol {
     /// Load playlists from mpd.
     ///
     /// - Returns: an observable array of playlists, order by name
-    func fetchPlaylists() async throws -> [Playlist] {
+    public func playlists() async throws -> [Playlist] {
         let playlists = try await self.mpdConnector.playlist.listplaylists()
         
         return playlists.map {
