@@ -617,10 +617,22 @@ final public class MPDBrowse: BrowseProtocol {
     /// Delete a playlist
     ///
     /// - Parameter playlist: the playlist to delete
-    func deletePlaylist(_ playlist: Playlist) async throws {
+    public func delete(_ playlist: Playlist) async throws {
         try await mpdConnector.playlist.rm(name: playlist.id)
     }
     
+    public func addSong(_ song: Song, playlist: Playlist) async throws {
+        try await mpdConnector.playlist.playlistadd(name: playlist.name, uri: song.location)
+    }
+
+    public func removeSongAtIndex(_ index: Int, fromPlaylist playlist: Playlist) async throws {
+        try await mpdConnector.playlist.playlistdelete(name: playlist.name, songpos: UInt(index))
+    }
+
+    public func moveSongAtIndex(_ index: Int, to: Int, playlist: Playlist) async throws {
+        try await mpdConnector.playlist.playlistmove(name: playlist.name, from: UInt(index), to: UInt(to))
+    }
+
     /// Rename a playlist
     ///
     /// - Parameters:
