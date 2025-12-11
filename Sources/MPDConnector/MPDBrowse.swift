@@ -714,7 +714,7 @@ final public class MPDBrowse: BrowseProtocol {
     /// - Returns: the processed cover URI
     public func preprocessCoverURI(_ coverURI: CoverURI) async throws -> CoverURI {
         if case let .filenameOptionsURI(baseURI, path, filenames) = coverURI {
-            if baseURI.contains("coverart.php") {
+            if baseURI.contains("coverart.php") { 
                 return CoverURI.filenameOptionsURI(baseURI, path, [""])
             }
                 
@@ -788,7 +788,13 @@ final public class MPDBrowse: BrowseProtocol {
 
         }
     }
-    
+
+    // Provide database statistics (artists, albums, songs)
+    func databaseStats() async throws -> (artists: Int, albums: Int, songs: Int) {
+        let stats = try await mpdConnector.status.stats()
+        return (artists: stats.artists, albums: stats.albums, songs: stats.songs)
+    }
+
     /// Search for the existance a certain item
     /// - Parameter searchItem: what to search for
     /// - Returns: an observable array of results

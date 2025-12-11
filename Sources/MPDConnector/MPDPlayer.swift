@@ -77,14 +77,10 @@ public enum MPDConnectionProperties: String {
     case outputPort = "MPD.Output.Port"
     case ipAddress = "MPD.IpAddress"
     case connectToIpAddress = "MPD.ConnectToIpAddress"
+    case customPlayerName = "MPD.CustomPlayerName"
 }
 
-public class MPDPlayer: PlayerProtocol {
-    @ViewBuilder
-    public func settingsView() -> some View {
-        EmptyView()
-    }
-
+public class MPDPlayer: PlayerProtocol, ObservableObject {
     struct CodablePlayer: Codable {
         let uuid: UUID
         let name: String
@@ -95,17 +91,17 @@ public class MPDPlayer: PlayerProtocol {
         let password: String?
         let type: MPDType
     }
-
+    
     public var mediaServerModel: String = "MPD"
-
+    
     public var mediaAvailable: Bool = true
-
+    
     public var mediaServers: [BrowseProtocol] = []
-
+    
     public func selectMediaServer(_ mediaServer: BrowseProtocol, source: ConnectorProtocol.SourceType) {
     }
-
-    private let userDefaults: UserDefaults
+    
+    internal let userDefaults: UserDefaults
     public static let controllerType = "MPD"
     
     public private(set) var name: String
@@ -125,7 +121,7 @@ public class MPDPlayer: PlayerProtocol {
     
     public private(set) var connectionWarning: String?
     
-    private let mpdConnector: SwiftMPD.MPDConnector
+    internal let mpdConnector: SwiftMPD.MPDConnector
     private let mpdIdleConnector: SwiftMPD.MPDConnector
     
     public var description: String {
@@ -187,7 +183,7 @@ public class MPDPlayer: PlayerProtocol {
             type: type)
         return try! JSONEncoder().encode(encodedPlayer)
     }
-
+    
     public static func decodePlayer(_ data: Data) async throws -> Self {
         let decodedPlayer = try JSONDecoder().decode(CodablePlayer.self, from: data)
         return MPDPlayer(
@@ -201,7 +197,7 @@ public class MPDPlayer: PlayerProtocol {
             userDefaults: UserDefaults.standard
         ) as! Self
     }
-
+    
     /// Create a unique object for every request for a control object
     public var control: ControlProtocol {
         get {
@@ -219,7 +215,7 @@ public class MPDPlayer: PlayerProtocol {
     public func browse(source: SourceType) -> (BrowseProtocol)? {
         browse
     }
-
+    
     public var playerStreamURL: URL? {
         guard let hostString = connectionProperties[MPDConnectionProperties.outputHost.rawValue] as? String, hostString != "",
               let portString = connectionProperties[MPDConnectionProperties.outputPort.rawValue] as? String, let port = Int(portString), port != 0
@@ -398,6 +394,11 @@ public class MPDPlayer: PlayerProtocol {
     
     public func ping() async -> Bool {
         await mpdConnector.ping()
+    }
+    
+    @ViewBuilder
+    public func settingsView() -> some View {
+        MPDSettingsView(player: self)
     }
 }
 
