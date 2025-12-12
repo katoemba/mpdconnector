@@ -2,13 +2,13 @@
   "sourceLanguage" : "en",
   "strings" : {
     "" : {
-
+      "shouldTranslate" : false
     },
     "%@" : {
-
+      "shouldTranslate" : false
     },
     "%lld" : {
-
+      "shouldTranslate" : false
     },
     "Advanced" : {
       "localizations" : {
@@ -40,49 +40,8 @@
         }
       }
     },
-    "Cancel" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Annuleer"
-          }
-        }
-      }
-    },
-    "Change" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wijzig"
-          }
-        }
-      }
-    },
-    "Edit Player Name" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wijzig speler naam"
-          }
-        }
-      }
-    },
-    "Enter custom name" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voer andere naam in"
-          }
-        }
-      }
+    "Change name" : {
+
     },
     "Enter hostname or IP" : {
       "localizations" : {
@@ -130,6 +89,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HTTP Stream"
+          }
+        }
+      }
+    },
+    "If the player is not responding, you can connect directly to it's IP instead. Normally this shall be disabled." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als de speler niet reageert, kun je in plaats daarvan rechtstreeks verbinding maken met het IP-adres. Normaal gesproken moet dit uitgeschakeld blijven."
+          }
+        }
+      }
+    },
+    "If you have configured a http-stream output for mpd, you can enter the ip address and port number here. Rigelian can then play the stream on your local machine." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als je een http-stream-uitvoer voor MPD hebt geconfigureerd, kun je hier het IP-adres en poortnummer invoeren. Rigelian kan de stream dan op je lokale apparaat afspelen."
           }
         }
       }
@@ -204,50 +183,6 @@
         }
       }
     },
-    "Reset to Original" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terug naar origineel"
-          }
-        }
-      }
-    },
-    "Save" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bewaard"
-          }
-        }
-      }
-    },
-    "Save Advanced" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bewaar geavanceerd"
-          }
-        }
-      }
-    },
-    "Save Output" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bewaar output"
-          }
-        }
-      }
-    },
     "Songs" : {
       "localizations" : {
         "nl" : {
@@ -314,6 +249,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Versie"
+          }
+        }
+      }
+    },
+    "You can change the player's name that will be displayed in Rigelian." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je kunt de naam van de speler wijzigen die in Rigelian wordt weergegeven."
           }
         }
       }

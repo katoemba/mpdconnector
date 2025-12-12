@@ -25,6 +25,8 @@ public struct MPDSettingsView: View {
     @State private var databaseAlbums: String = "-"
     @State private var databaseSongs: String = "-"
     @State private var performingDBAction: Bool = false
+    
+    private let changeNameTip = MPDChangeNameTip()
 
     public init(player: MPDPlayer) {
         self.player = player
@@ -64,13 +66,16 @@ public struct MPDSettingsView: View {
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .frame(maxWidth: 220)
+                        .popoverTip(changeNameTip)
                         .onChange(of: customPlayerName) { _, newValue in
                             let key = MPDConnectionProperties.customPlayerName.rawValue + "." + player.uniqueID
                             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                             if trimmed.isEmpty {
                                 player.userDefaults.removeObject(forKey: key)
+                                player.name = player.deviceName
                             } else {
                                 player.userDefaults.set(trimmed, forKey: key)
+                                player.name = trimmed
                             }
                             player.objectWillChange.send()
                         }
@@ -105,12 +110,12 @@ public struct MPDSettingsView: View {
             }
 
             // Advanced Section
-            Section(header: Text("Advanced", bundle: .module)) {
+            Section(header: Text("Advanced", bundle: .module), footer: Text("If the player is not responding, you can connect directly to it's IP instead. Normally this shall be disabled.", bundle: .module)) {
                 HStack {
                     Text(String(localized: "Use IP Address", bundle: .module))
                     Spacer()
                     Toggle("", isOn: $connectToIp)
-                        .onChange(of: connectToIp) { _ in
+                        .onChange(of: connectToIp) { _, _ in
                             updateIPAddressSettings()
                         }
 
@@ -124,21 +129,21 @@ public struct MPDSettingsView: View {
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .frame(maxWidth: 120)
-                        .onChange(of: ipAddressField) { _ in
+                        .onChange(of: ipAddressField) { _, _ in
                             updateIPAddressSettings()
                         }
                 }
             }
 
             // HTTP Output Section
-            Section(header: Text("HTTP Stream", bundle: .module)) {
+            Section(header: Text("HTTP Stream", bundle: .module), footer: Text("If you have configured a http-stream output for mpd, you can enter the ip address and port number here. Rigelian can then play the stream on your local machine.", bundle: .module)) {
                 HStack {
                     Text(String(localized: "Host or IP Address", bundle: .module))
                     Spacer()
                     TextField("", text: $outputHostField, prompt: Text("Enter hostname or IP"))
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
-                        .onChange(of: outputHostField) { _ in
+                        .onChange(of: outputHostField) { _, _ in
                             updateStreamSettings()
                         }
                 }
@@ -148,7 +153,7 @@ public struct MPDSettingsView: View {
                     TextField("", text: $outputPortField, prompt: Text("Enter port"))
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
-                        .onChange(of: outputPortField) { _ in
+                        .onChange(of: outputPortField) { _, _ in
                             updateStreamSettings()
                         }
                 }
@@ -272,6 +277,16 @@ public struct MPDSettingsView: View {
         ud.set(connectToIp, forKey: MPDConnectionProperties.connectToIpAddress.rawValue + "." + uid)
         player.objectWillChange.send()
     }
+}
+
+struct MPDChangeNameTip: Tip {
+    var id: String { "mpd.changename" }
+    var title: Text { Text("Change name") }
+    var message: Text? { Text("You can change the player's name that will be displayed in Rigelian.") }
+    var image: Image? { Image(systemName: "rectangle.and.pencil.and.ellipsis") }
+    var rules: [Self.Rule] { [] }
+    var actions: [Self.Action] { [] }
+    var options: [any TipOption] { [] }
 }
 
 #if DEBUG

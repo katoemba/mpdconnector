@@ -104,7 +104,9 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     internal let userDefaults: UserDefaults
     public static let controllerType = "MPD"
     
-    public private(set) var name: String
+    private(set) var deviceName: String
+    @Published public var name: String
+
     public var controllerType: String {
         return MPDPlayer.controllerType
     }
@@ -244,7 +246,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                 userDefaults: UserDefaults,
                 commands: [String] = []) {
         self.userDefaults = userDefaults
-        self.name = name
+        self.deviceName = name
         self.host = host
         self.ipAddress = ipAddress
         self.port = port
@@ -254,6 +256,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         self.version = version
         self.discoverMode = discoverMode
         self.type = type
+        self.name = deviceName
+
         
         let connectionProperties = [ConnectionProperties.name.rawValue: name,
                                     ConnectionProperties.host.rawValue: host,
@@ -269,6 +273,10 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                         userDefaults: userDefaults,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
+        let customName = userDefaults.string(forKey: defaultsKey(MPDConnectionProperties.customPlayerName.rawValue))
+        if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            self.name = customName
+        }
     }
     
     /// Init an instance of a MPDPlayer based on a connectionProperties dictionary
