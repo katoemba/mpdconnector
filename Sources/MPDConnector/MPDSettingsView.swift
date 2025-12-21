@@ -12,6 +12,7 @@ import ConnectorProtocol
 public struct MPDSettingsView: View {
     @ObservedObject private var player: MPDPlayer
     @State private var customPlayerName: String = ""
+    @State private var selectedType: MPDType = MPDType.allCases.first!
 
     // New state for advanced and output settings
     @State private var ipAddressField: String = ""
@@ -45,18 +46,62 @@ public struct MPDSettingsView: View {
             self._outputPortField = State(initialValue: "")
         }
         self._customPlayerName = State(initialValue: ud.string(forKey: MPDConnectionProperties.customPlayerName.rawValue + "." + uid) ?? "")
+        
+        // Initialize selected type from player
+        self._selectedType = State(initialValue: player.type)
     }
 
     public var body: some View {
         Form {
             // Player Information Section
             Section(header: Text("Player Information", bundle: .module)) {
+                #if os(macOS)
                 HStack {
                     Text("Type", bundle: .module)
                     Spacer()
-                    Text(player.model)
-                        .foregroundColor(.secondary)
+                    Picker("Type", selection: $selectedType) {
+                        ForEach(MPDType.selectableTypes, id: \.self) { t in
+                            Text(String(describing: t)).tag(t)
+                        }
+                    }
+                    .labelsHidden()
+                    .onChange(of: selectedType) { _, newValue in
+                        // Update player when type changes
+                        player.type = newValue
+                        let key = MPDConnectionProperties.MPDType.rawValue + "." + player.uniqueID
+                        player.userDefaults.set(newValue.rawValue, forKey: key)
+                        player.objectWillChange.send()
+                    }
                 }
+                #else
+                NavigationLink {
+                    List {
+                        ForEach(MPDType.selectableTypes, id: \.self) { t in
+                            HStack {
+                                Text(String(describing: t))
+                                Spacer()
+                                if t == selectedType { Image(systemName: "checkmark") }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedType = t
+                                player.type = t
+                                let key = MPDConnectionProperties.MPDType.rawValue + "." + player.uniqueID
+                                player.userDefaults.set(t.rawValue, forKey: key)
+                                player.objectWillChange.send()
+                            }
+                        }
+                    }
+                    .navigationTitle(Text("Type", bundle: .module))
+                } label: {
+                    HStack {
+                        Text("Type", bundle: .module)
+                        Spacer()
+                        Text(String(describing: selectedType))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                #endif
 
                 HStack {
                     Text("Name", bundle: .module)
@@ -299,3 +344,4 @@ struct OpenHomeSettingsView_Previews: PreviewProvider {
     }
 }
 #endif
+

@@ -33,10 +33,9 @@ enum ConnectionError: Error {
     case internalError
 }
 
-public enum MPDType: Int, Codable {
+public enum MPDType: Int, Codable, CaseIterable {
     case unknown = 0
     case classic = 1
-    case mopidy = 2
     case volumio = 3
     case bryston = 4
     case runeaudio = 5
@@ -49,8 +48,6 @@ public enum MPDType: Int, Codable {
             return "Unknown"
         case .classic:
             return "Classic MPD"
-        case .mopidy:
-            return "Mopidy"
         case .volumio:
             return "Volumio"
         case .bryston:
@@ -62,6 +59,10 @@ public enum MPDType: Int, Codable {
         case .chord:
             return "Chord Poly/2go"
         }
+    }
+    
+    static var selectableTypes: [MPDType] {
+        [.classic, .volumio, .bryston, .runeaudio, .moodeaudio, .chord]
     }
 }
 
@@ -116,7 +117,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     private var ipAddress: String?
     private var port: Int
     private var password: String?
-    public private(set) var type: MPDType
+    public internal(set) var type: MPDType
     private var uuid = UUID()
     
     public private(set) var version: String
@@ -258,7 +259,6 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         self.type = type
         self.name = deviceName
 
-        
         let connectionProperties = [ConnectionProperties.name.rawValue: name,
                                     ConnectionProperties.host.rawValue: host,
                                     ConnectionProperties.port.rawValue: port,
@@ -273,6 +273,15 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                         userDefaults: userDefaults,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
+        
+        let key = MPDConnectionProperties.MPDType.rawValue + "." + self.uniqueID
+        if userDefaults.object(forKey: key) != nil, let storedType = MPDType(rawValue: userDefaults.integer(forKey: key)) {
+            self.type = storedType
+        }
+        else {
+            self.type = type
+        }
+
         let customName = userDefaults.string(forKey: defaultsKey(MPDConnectionProperties.customPlayerName.rawValue))
         if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             self.name = customName
