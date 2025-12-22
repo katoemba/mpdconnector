@@ -137,6 +137,19 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ipAddress
         }
         
+        if service.name.lowercased().contains("poly") ||
+            service.service.hostName?.lowercased().contains("poly") ?? false ||
+            service.name.lowercased().contains("chord") ||
+            service.service.hostName?.lowercased().contains("chord") ?? false ||
+            service.name.lowercased().contains("2go") ||
+            service.service.hostName?.lowercased().contains("2go") ?? false ||
+            service.name.lowercased().contains("2 go") ||
+            service.service.hostName?.lowercased().contains("2 go") ?? false ||
+            service.name.lowercased().contains("hugo") ||
+            service.service.hostName?.lowercased().contains("hugo") ?? false {
+            connectionProperties[MPDConnectionProperties.MPDType.rawValue] = MPDType.chord.rawValue
+        }
+
         return try await playerForConnectionProperties(connectionProperties)
     }
     

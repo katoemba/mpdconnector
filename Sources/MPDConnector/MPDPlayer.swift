@@ -274,6 +274,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
         
+        if self.type == .chord {
+            let key = MPDConnectionProperties.connectToIpAddress.rawValue + "." + self.uniqueID
+            if userDefaults.value(forKey: key) == nil {
+                userDefaults.set(true, forKey: key)
+            }
+        }
+
         let key = MPDConnectionProperties.MPDType.rawValue + "." + self.uniqueID
         if userDefaults.object(forKey: key) != nil, let storedType = MPDType(rawValue: userDefaults.integer(forKey: key)) {
             self.type = storedType
