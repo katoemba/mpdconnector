@@ -70,6 +70,10 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     private var isListening = false
     private var userDefaults: UserDefaults
     
+    private var mpdBrowser: AsyncServiceBrowser?
+    private var httpBrowser: AsyncServiceBrowser?
+    private var volumioBrowser: AsyncServiceBrowser?
+
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
     }
@@ -82,9 +86,10 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         
         isListening = true
         
-        let browser = AsyncServiceBrowser()
+        let mpdBrowser = AsyncServiceBrowser()
+        self.mpdBrowser = mpdBrowser
         Task {
-            for await event in browser.discover(type: "_mpd._tcp.") {
+            for await event in mpdBrowser.discover(type: "_mpd._tcp.") {
                 switch event {
                 case .found(let service):
                     do {
@@ -99,6 +104,58 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                     }
                 case .removed(let service):
                     // Find and remove player with matching name
+                    removePlayerByName(service.name)
+                }
+            }
+        }
+        
+        let httpBrowser = AsyncServiceBrowser()
+        self.httpBrowser = httpBrowser
+        Task {
+            for await event in httpBrowser.discover(type: "_http._tcp.") {
+                switch event {
+                case .found(let service):
+                    do {
+                        if let connectionData = await fetchMoodeConnectionData(from: service) {
+                            let connectionProperties = moodeConnectionProperties(from: connectionData)
+                            let player = try await playerForConnectionProperties(connectionProperties)
+                            if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                                players.append(player)
+                            }
+                        }
+                        else if let connectionData = await fetchVolumioConnectionData(from: service) {
+                            let connectionProperties = volumioConnectionProperties(from: connectionData)
+                            let player = try await playerForConnectionProperties(connectionProperties)
+                            if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                                players.append(player)
+                            }
+                        }
+                    } catch {
+                        print("Failed to create moOde player: \(error)")
+                    }
+                case .removed(let service):
+                    removePlayerByName(service.name)
+                }
+            }
+        }
+        
+        let volumioBrowser = AsyncServiceBrowser()
+        self.volumioBrowser = volumioBrowser
+        Task {
+            for await event in volumioBrowser.discover(type: "_Volumio._tcp.") {
+                switch event {
+                case .found(let service):
+                    do {
+                        if let player = try await createPlayerFromService(service, portOverwrite: 6600) {
+                            // Only add if not already in the list
+                            if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                                players.append(player)
+                            }
+                        }
+                    } catch {
+                        print("Failed to create volumio player: \(error)")
+                    }
+                case .removed(let service):
                     removePlayerByName(service.name)
                 }
             }
@@ -124,12 +181,12 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     }
     
     /// Create a player from a discovered service
-    private func createPlayerFromService(_ service: DiscoveredService) async throws -> (any PlayerProtocol)? {
+    private func createPlayerFromService(_ service: DiscoveredService, portOverwrite: Int? = nil) async throws -> (any PlayerProtocol)? {
         // Create connection properties
         var connectionProperties: [String: Any] = [
             ConnectionProperties.name.rawValue: service.name,
             ConnectionProperties.host.rawValue: service.service.hostName ?? "",
-            ConnectionProperties.port.rawValue: service.service.port,
+            ConnectionProperties.port.rawValue: portOverwrite ?? service.service.port,
             ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
             MPDConnectionProperties.MPDType.rawValue: MPDType.classic.rawValue
         ]
@@ -159,6 +216,15 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             return
         }
         
+        mpdBrowser?.stopListening()
+        mpdBrowser = nil
+        
+        httpBrowser?.stopListening()
+        httpBrowser = nil
+        
+        volumioBrowser?.stopListening()
+        volumioBrowser = nil
+
         isListening = false
     }
     
@@ -204,7 +270,108 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     private func removePlayerByName(_ name: String) {
         players.removeAll { $0.name == name }
     }
-    
+
+    // MARK: - moOde discovery helpers
+
+    /// Fetch and parse /browserconfig.xml to determine whether this HTTP service is a moOde instance.
+    /// Returns nil if the endpoint is missing/invalid.
+    private func fetchMoodeConnectionData(from service: DiscoveredService) async -> MPDConnectionData? {
+        let host = service.service.hostName ?? service.ipAddresses?.first ?? ""
+        guard !host.isEmpty else { return nil }
+
+        // Prefer the resolved numeric IP for the HTTP call.
+        let httpHost = service.ipAddresses?.first ?? host
+        let port = service.service.port
+
+        // Try /browserconfig.xml over HTTP.
+        guard let url = URL(string: "http://\(httpHost):\(port)/browserconfig.xml") else { return nil }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 2.5
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                return nil
+            }
+
+            let xml = XMLHash.parse(data)
+            guard let _ = xml["browserconfig"].element else {
+                return nil
+            }
+
+            return MPDConnectionData(name: host, host: host, ip: service.ipAddresses?.first, port: 6600, type: .moodeaudio)
+        } catch {
+            return nil
+        }
+    }
+
+    private func moodeConnectionProperties(from data: MPDConnectionData) -> [String: Any] {
+        var connectionProperties: [String: Any] = [
+            ConnectionProperties.name.rawValue: data.name,
+            ConnectionProperties.host.rawValue: data.host,
+            ConnectionProperties.port.rawValue: data.port,
+            ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
+            MPDConnectionProperties.MPDType.rawValue: MPDType.moodeaudio.rawValue
+        ]
+        if let ip = data.ip {
+            connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ip
+        }
+        return connectionProperties
+    }
+
+    // MARK: - Volumio discovery helpers
+
+    /// Fetch and parse /browserconfig.xml to determine whether this HTTP service is a moOde instance.
+    /// Returns nil if the endpoint is missing/invalid.
+    private func fetchVolumioConnectionData(from service: DiscoveredService) async -> MPDConnectionData? {
+        let host = service.service.hostName ?? service.ipAddresses?.first ?? ""
+        guard !host.isEmpty else { return nil }
+
+        // Prefer the resolved numeric IP for the HTTP call.
+        let httpHost = service.ipAddresses?.first ?? host
+        let port = service.service.port
+        print("host \(httpHost) \(port)")
+        
+        // Try /browserconfig.xml over HTTP.
+        guard let url = URL(string: "http://\(httpHost):\(port)/api/v1/getstate") else { return nil }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 2.5
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                return nil
+            }
+
+            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ,json["album"] != nil, json["artist"] != nil {
+                return MPDConnectionData(name: host, host: host, ip: service.ipAddresses?.first, port: 6600, type: .volumio)
+            }
+            return nil
+        } catch {
+            return nil
+        }
+    }
+
+    private func volumioConnectionProperties(from data: MPDConnectionData) -> [String: Any] {
+        var connectionProperties: [String: Any] = [
+            ConnectionProperties.name.rawValue: data.name,
+            ConnectionProperties.host.rawValue: data.host,
+            ConnectionProperties.port.rawValue: data.port,
+            ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
+            MPDConnectionProperties.MPDType.rawValue: MPDType.volumio.rawValue
+        ]
+        if let ip = data.ip {
+            connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ip
+        }
+        return connectionProperties
+    }
+
     public func decodePlayer(_ data: Data) async throws -> any PlayerProtocol {
         let player = try await MPDPlayer.decodePlayer(data)
         if !players.contains(where: { $0.uniqueID == player.uniqueID }) {

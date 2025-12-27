@@ -79,6 +79,7 @@ public enum MPDConnectionProperties: String {
     case ipAddress = "MPD.IpAddress"
     case connectToIpAddress = "MPD.ConnectToIpAddress"
     case customPlayerName = "MPD.CustomPlayerName"
+    case hidden = "MPD.Hidden"
 }
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
@@ -121,7 +122,10 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     private var uuid = UUID()
     
     public private(set) var version: String
-    
+    public var hidden: Bool {
+        return userDefaults.bool(forKey: defaultsKey(MPDConnectionProperties.hidden.rawValue))
+    }
+
     public private(set) var connectionWarning: String?
     
     internal let mpdConnector: SwiftMPD.MPDConnector
@@ -201,6 +205,14 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         ) as! Self
     }
     
+    public func playerDefinition() throws -> ConnectorProtocol.PlayerDefinition {
+        throw ControlError.notImplemented(function: "playerDefinition")
+    }
+    
+    public static func createFrom(playerDefinition: ConnectorProtocol.PlayerDefinition) async throws -> Self {
+        throw ControlError.notImplemented(function: "createFrom")
+    }
+
     /// Create a unique object for every request for a control object
     public var control: ControlProtocol {
         get {
@@ -275,13 +287,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                         mpdIdleConnector: mpdIdleConnector)
         
         if self.type == .chord {
-            let key = MPDConnectionProperties.connectToIpAddress.rawValue + "." + self.uniqueID
+            let key = DefaultsKey.connectToIpAddress.stringValue(self)
             if userDefaults.value(forKey: key) == nil {
                 userDefaults.set(true, forKey: key)
             }
         }
 
-        let key = MPDConnectionProperties.MPDType.rawValue + "." + self.uniqueID
+        let key = DefaultsKey.MPDType.stringValue(self)
         if userDefaults.object(forKey: key) != nil, let storedType = MPDType(rawValue: userDefaults.integer(forKey: key)) {
             self.type = storedType
         }
@@ -371,17 +383,17 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                 connectionWarning = "MPD version \(version) too low, 0.19.0 required"
             }
             
-            if userDefaults.value(forKey: ConnectionProperties.binaryCoverArt.rawValue + "." + uniqueID) == nil {
-                userDefaults.set(self.supportedFunctions.contains(.binaryImageRetrieval), forKey: ConnectionProperties.binaryCoverArt.rawValue + "." + uniqueID)
-                userDefaults.set(self.supportedFunctions.contains(.embeddedImageRetrieval), forKey: ConnectionProperties.embeddedCoverArt.rawValue + "." + uniqueID)
+            if userDefaults.value(forKey: DefaultsKey.binaryCoverArt.stringValue(self)) == nil {
+                userDefaults.set(self.supportedFunctions.contains(.binaryImageRetrieval), forKey: DefaultsKey.binaryCoverArt.stringValue(self))
+                userDefaults.set(self.supportedFunctions.contains(.embeddedImageRetrieval), forKey: DefaultsKey.embeddedCoverArt.stringValue(self))
                 if !self.supportedFunctions.contains(.binaryImageRetrieval) && !self.supportedFunctions.contains(.embeddedImageRetrieval) {
-                    userDefaults.set(true, forKey: ConnectionProperties.urlCoverArt.rawValue + "." + uniqueID)
+                    userDefaults.set(true, forKey: DefaultsKey.urlCoverArt.stringValue(self))
                 }
                 else {
-                    userDefaults.set(false, forKey: ConnectionProperties.urlCoverArt.rawValue + "." + uniqueID)
+                    userDefaults.set(false, forKey: DefaultsKey.urlCoverArt.stringValue(self))
                 }
-                userDefaults.set(false, forKey: ConnectionProperties.discogsCoverArt.rawValue + "." + uniqueID)
-                userDefaults.set(false, forKey: ConnectionProperties.musicbrainzCoverArt.rawValue + "." + uniqueID)
+                userDefaults.set(false, forKey: DefaultsKey.discogsCoverArt.stringValue(self))
+                userDefaults.set(false, forKey: DefaultsKey.musicbrainzCoverArt.stringValue(self))
             }
             
             if connectionWarning == nil {

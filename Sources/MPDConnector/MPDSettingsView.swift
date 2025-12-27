@@ -13,13 +13,14 @@ public struct MPDSettingsView: View {
     @ObservedObject private var player: MPDPlayer
     @State private var customPlayerName: String = ""
     @State private var selectedType: MPDType = MPDType.allCases.first!
-
+    @State private var isHidden: Bool
+    
     // New state for advanced and output settings
     @State private var ipAddressField: String = ""
     @State private var connectToIp: Bool = false
     @State private var outputHostField: String = ""
     @State private var outputPortField: String = ""
-
+    
     // Database status
     @State private var databaseStatusText: String = ""
     @State private var databaseArtists: String = "-"
@@ -28,34 +29,34 @@ public struct MPDSettingsView: View {
     @State private var performingDBAction: Bool = false
     
     private let changeNameTip = MPDChangeNameTip()
-
+    
     public init(player: MPDPlayer) {
         self.player = player
         
         // Initialize fields from userDefaults if available
-        let uid = player.uniqueID
         let ud = player.userDefaults
-        self._ipAddressField = State(initialValue: ud.string(forKey: MPDConnectionProperties.ipAddress.rawValue + "." + uid) ?? player.connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String ?? "")
-        self._connectToIp = State(initialValue: ud.bool(forKey: MPDConnectionProperties.connectToIpAddress.rawValue + "." + uid))
-        self._outputHostField = State(initialValue: ud.string(forKey: MPDConnectionProperties.outputHost.rawValue + "." + uid) ?? (player.connectionProperties[MPDConnectionProperties.outputHost.rawValue] as? String ?? ""))
-        if let portVal = ud.object(forKey: MPDConnectionProperties.outputPort.rawValue + "." + uid) as? Int {
+        self._ipAddressField = State(initialValue: ud.string(forKey: DefaultsKey.ipAddress.stringValue(player)) ?? player.connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String ?? "")
+        self._connectToIp = State(initialValue: ud.bool(forKey: DefaultsKey.connectToIpAddress.stringValue(player)))
+        self._outputHostField = State(initialValue: ud.string(forKey: DefaultsKey.outputHost.stringValue(player)) ?? (player.connectionProperties[MPDConnectionProperties.outputHost.rawValue] as? String ?? ""))
+        if let portVal = ud.object(forKey: DefaultsKey.outputPort.stringValue(player)) as? Int {
             self._outputPortField = State(initialValue: "\(portVal)")
         } else if let portFromProps = player.connectionProperties[MPDConnectionProperties.outputPort.rawValue] as? String {
             self._outputPortField = State(initialValue: portFromProps)
         } else {
             self._outputPortField = State(initialValue: "")
         }
-        self._customPlayerName = State(initialValue: ud.string(forKey: MPDConnectionProperties.customPlayerName.rawValue + "." + uid) ?? "")
+        self._customPlayerName = State(initialValue: ud.string(forKey: DefaultsKey.customPlayerName.stringValue(player)) ?? "")
+        self._isHidden = State(initialValue: ud.bool(forKey: DefaultsKey.hidden.stringValue(player)))
         
         // Initialize selected type from player
         self._selectedType = State(initialValue: player.type)
     }
-
+    
     public var body: some View {
         Form {
             // Player Information Section
-            Section(header: Text("Player Information", bundle: .module)) {
-                #if os(macOS)
+            Section(header: Text("Player Information", bundle: .module), footer: playerInformationFooter()) {
+#if os(macOS)
                 HStack {
                     Text("Type", bundle: .module)
                     Spacer()
@@ -68,12 +69,11 @@ public struct MPDSettingsView: View {
                     .onChange(of: selectedType) { _, newValue in
                         // Update player when type changes
                         player.type = newValue
-                        let key = MPDConnectionProperties.MPDType.rawValue + "." + player.uniqueID
-                        player.userDefaults.set(newValue.rawValue, forKey: key)
+                        player.userDefaults.set(newValue.rawValue, forKey: DefaultsKey.MPDType.stringValue(player))
                         player.objectWillChange.send()
                     }
                 }
-                #else
+#else
                 NavigationLink {
                     List {
                         ForEach(MPDType.selectableTypes, id: \.self) { t in
@@ -86,8 +86,7 @@ public struct MPDSettingsView: View {
                             .onTapGesture {
                                 selectedType = t
                                 player.type = t
-                                let key = MPDConnectionProperties.MPDType.rawValue + "." + player.uniqueID
-                                player.userDefaults.set(t.rawValue, forKey: key)
+                                player.userDefaults.set(t.rawValue, forKey: DefaultsKey.MPDType.stringValue(player))
                                 player.objectWillChange.send()
                             }
                         }
@@ -101,8 +100,8 @@ public struct MPDSettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                #endif
-
+#endif
+                
                 HStack {
                     Text("Name", bundle: .module)
                     Spacer()
@@ -113,7 +112,7 @@ public struct MPDSettingsView: View {
                         .frame(maxWidth: 220)
                         .popoverTip(changeNameTip)
                         .onChange(of: customPlayerName) { _, newValue in
-                            let key = MPDConnectionProperties.customPlayerName.rawValue + "." + player.uniqueID
+                            let key = DefaultsKey.customPlayerName.stringValue(player)
                             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                             if trimmed.isEmpty {
                                 player.userDefaults.removeObject(forKey: key)
@@ -125,14 +124,14 @@ public struct MPDSettingsView: View {
                             player.objectWillChange.send()
                         }
                 }
-
+                
                 HStack {
                     Text("Version", bundle: .module)
                     Spacer()
                     Text(player.mpdConnector.version.description)
                         .foregroundColor(.secondary)
                 }
-
+                
                 // Host and Port display
                 HStack {
                     Text("Host", bundle: .module)
@@ -140,7 +139,7 @@ public struct MPDSettingsView: View {
                     Text(player.connectionProperties[ConnectionProperties.host.rawValue] as? String ?? "")
                         .foregroundColor(.secondary)
                 }
-
+                
                 HStack {
                     Text("Port", bundle: .module)
                     Spacer()
@@ -152,8 +151,21 @@ public struct MPDSettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                
+                HStack {
+                    Text(String(localized: "Hide Player", bundle: .module))
+                    Spacer()
+                    Toggle("", isOn: Binding<Bool>(
+                        get: {
+                            player.userDefaults.bool(forKey: DefaultsKey.hidden.stringValue(player))
+                        },
+                        set: { newValue in
+                            player.userDefaults.set(newValue, forKey: DefaultsKey.hidden.stringValue(player))
+                        }
+                    ))
+                }
             }
-
+            
             // Advanced Section
             Section(header: Text("Advanced", bundle: .module), footer: Text("If the player is not responding, you can connect directly to it's IP instead. Normally this shall be disabled.", bundle: .module)) {
                 HStack {
@@ -163,9 +175,9 @@ public struct MPDSettingsView: View {
                         .onChange(of: connectToIp) { _, _ in
                             updateIPAddressSettings()
                         }
-
+                    
                 }
-
+                
                 HStack {
                     Text(String(localized: "IP Address to Use", bundle: .module))
                     Spacer()
@@ -179,7 +191,7 @@ public struct MPDSettingsView: View {
                         }
                 }
             }
-
+            
             // HTTP Output Section
             Section(header: Text("HTTP Stream", bundle: .module), footer: Text("If you have configured a http-stream output for mpd, you can enter the ip address and port number here. Rigelian can then play the stream on your local machine.", bundle: .module)) {
                 HStack {
@@ -203,7 +215,7 @@ public struct MPDSettingsView: View {
                         }
                 }
             }
-
+            
             // MPD Database Section
             Section(header: Text("MPD Database", bundle: .module)) {
                 HStack {
@@ -212,7 +224,7 @@ public struct MPDSettingsView: View {
                     Text(databaseStatusText)
                         .foregroundColor(.secondary)
                 }
-
+                
                 HStack {
                     Text("Artists", bundle: .module)
                     Spacer()
@@ -231,10 +243,10 @@ public struct MPDSettingsView: View {
                     Text(databaseSongs)
                         .foregroundColor(.secondary)
                 }
-
+                
                 HStack(spacing: 25){
                     Spacer()
-
+                    
                     Button(String(localized: "Update Database", bundle: .module)) {
                         Task {
                             performingDBAction = true
@@ -256,7 +268,7 @@ public struct MPDSettingsView: View {
                             performingDBAction = false
                         }
                     }
-
+                    
                     Button(String(localized: "Rescan", bundle: .module), role: .destructive) {
                         Task {
                             performingDBAction = true
@@ -295,32 +307,40 @@ public struct MPDSettingsView: View {
     }
     
     func updateStreamSettings() {
-        let uid = player.uniqueID
         let ud = player.userDefaults
         if outputHostField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ud.removeObject(forKey: MPDConnectionProperties.outputHost.rawValue + "." + uid)
+            ud.removeObject(forKey: DefaultsKey.outputHost.stringValue(player))
         } else {
-            ud.set(outputHostField, forKey: MPDConnectionProperties.outputHost.rawValue + "." + uid)
+            ud.set(outputHostField, forKey: DefaultsKey.outputHost.stringValue(player))
         }
         
         if let portInt = Int(outputPortField) {
-            ud.set(portInt, forKey: MPDConnectionProperties.outputPort.rawValue + "." + uid)
+            ud.set(portInt, forKey: DefaultsKey.outputPort.stringValue(player))
         } else {
-            ud.removeObject(forKey: MPDConnectionProperties.outputPort.rawValue + "." + uid)
+            ud.removeObject(forKey: DefaultsKey.outputPort.stringValue(player))
         }
         player.objectWillChange.send()
     }
     
     func updateIPAddressSettings() {
-        let uid = player.uniqueID
         let ud = player.userDefaults
         if ipAddressField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ud.removeObject(forKey: MPDConnectionProperties.ipAddress.rawValue + "." + uid)
+            ud.removeObject(forKey: DefaultsKey.ipAddress.stringValue(player))
         } else {
-            ud.set(ipAddressField, forKey: MPDConnectionProperties.ipAddress.rawValue + "." + uid)
+            ud.set(ipAddressField, forKey: DefaultsKey.ipAddress.stringValue(player))
         }
-        ud.set(connectToIp, forKey: MPDConnectionProperties.connectToIpAddress.rawValue + "." + uid)
+        ud.set(connectToIp, forKey: DefaultsKey.connectToIpAddress.stringValue(player))
         player.objectWillChange.send()
+    }
+
+    @ViewBuilder private func playerInformationFooter() -> some View {
+        // Adjust the footer based on the selected type if needed
+        switch selectedType {
+        case .volumio:
+            Text(String(localized: "Note that for Volumio players, the playqueue in Rigelian is not synchronized with the playqueue shown through the Volumio web interface.", bundle: .module))
+        default:
+            EmptyView()
+        }
     }
 }
 

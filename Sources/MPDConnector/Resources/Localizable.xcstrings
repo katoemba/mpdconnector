@@ -41,7 +41,14 @@
       }
     },
     "Change name" : {
-
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas naam aan"
+          }
+        }
+      }
     },
     "Enter hostname or IP" : {
       "localizations" : {
@@ -59,6 +66,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Poort nummer"
+          }
+        }
+      }
+    },
+    "Hide Player" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verberg speler"
           }
         }
       }
@@ -139,6 +156,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Naam"
+          }
+        }
+      }
+    },
+    "Note that for Volumio players, the playqueue in Rigelian is not synchronized with the playqueue shown through the Volumio web interface." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let op: bij Volumio-spelers is de afspeelwachtrij in Rigelian niet gesynchroniseerd met de afspeelwachtrij die wordt weergegeven via de Volumio-webinterface."
           }
         }
       }

@@ -33,6 +33,15 @@ class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelega
             self.browser.searchForServices(ofType: type, inDomain: domain)
         }
     }
+    
+    func stopListening() {
+        browser.stop()
+        continuation?.finish()
+    }
+    
+    deinit {
+        print("deinit AsyncServiceBrowser")
+    }
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
         if !discoveredServices.contains(service) {
