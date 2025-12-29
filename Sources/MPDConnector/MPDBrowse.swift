@@ -514,6 +514,7 @@ final public class MPDBrowse: BrowseProtocol {
         }
         
         var artistStrings: [String] = []
+        var artistSortName = [String: String]()
         
         for result in results {
             switch result {
@@ -528,6 +529,9 @@ final public class MPDBrowse: BrowseProtocol {
                     switch child {
                     case let .value(value):
                         artistStrings.append(value)
+                        if let sortValue = group.value {
+                            artistSortName[value] = sortValue
+                        }
                     default:
                         continue
                     }
@@ -544,7 +548,12 @@ final public class MPDBrowse: BrowseProtocol {
         }
         else {
             for artistString in artistStrings {
-                artists.insert(Artist(id: artistString, type: type, source: .Local, name: artistString))
+                if let sortValue = artistSortName[artistString] {
+                    artists.insert(Artist(id: artistString, type: type, source: .Local, name: artistString, sortName: sortValue))
+                }
+                else {
+                    artists.insert(Artist(id: artistString, type: type, source: .Local, name: artistString))
+                }
             }
         }
         
