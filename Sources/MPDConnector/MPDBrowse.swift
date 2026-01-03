@@ -647,7 +647,7 @@ final public class MPDBrowse: BrowseProtocol {
     /// - Parameters:
     ///   - playlist: the playlist to rename
     ///   - newName: the new name to give to the playlist
-    func renamePlaylist(_ playlist: Playlist, newName: String) async throws {
+    public func rename(_ playlist: Playlist, newName: String) async throws {
         try await mpdConnector.playlist.rename(name: playlist.id, newName: newName)
     }
     
