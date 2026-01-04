@@ -297,6 +297,11 @@ final public class MPDControl: ControlProtocol {
     ///   - addDetails: how to add the playlist to the playqueue
     /// - Returns: an observable tuple consisting of playlist and addResponse.
     public func add(_ playlist: Playlist, addDetails: AddDetails) async throws {
+        if let songs = playlist.songs {
+            try await add(songs, addDetails: addDetails)
+            return
+        }
+        
         let mpdConnector = self.mpdConnector
         var executors = [any CommandExecutor]()
         executors.append(mpdConnector.queue.clearExecutor())
