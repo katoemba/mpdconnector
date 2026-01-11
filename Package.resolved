@@ -1,13 +1,13 @@
 {
-  "originHash" : "a1dba216ed2a9fae6153b4a85aececac068e474d1d0a93b16ddf06ca7ef29b3f",
+  "originHash" : "41bdfa0bb76998b1c75743fb027769371afabeca0af3d1205aeca0c434da58da",
   "pins" : [
     {
       "identity" : "connectorprotocol",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
-        "branch" : "AsyncAwait",
-        "revision" : "7d8babecb98eba3037a50a9009d4a9bb063901a3"
+        "branch" : "WithoutConnectionProperties",
+        "revision" : "db9770cb9d46fd15aade0cb606159fc2ac7f3b8d"
       }
     },
     {

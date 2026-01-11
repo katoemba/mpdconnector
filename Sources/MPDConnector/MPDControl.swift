@@ -30,17 +30,14 @@ import SwiftMPD
 
 final public class MPDControl: ControlProtocol {
     private var identification = ""
-    private var connectionProperties: [String: Any]
-    private let userDefaults: UserDefaults
+    private var attributes: MPDPlayer.PlayerAttributes
     private let mpdConnector: SwiftMPD.MPDConnector
     
-    public init(connectionProperties: [String: Any],
+    public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
-                userDefaults: UserDefaults,
                 mpdConnector: SwiftMPD.MPDConnector) {
         self.identification = identification
-        self.connectionProperties = connectionProperties
-        self.userDefaults = userDefaults
+        self.attributes = attributes
         self.mpdConnector = mpdConnector
     }
     
@@ -255,7 +252,7 @@ final public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of album and addResponse.
     public func add(_ album: Album, addDetails: AddDetails) async throws {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(attributes: attributes, mpdConnector: mpdConnector)
         let songs = try await browse.songsOnAlbum(album)
         try await add(songs, addDetails: addDetails)
     }
@@ -268,7 +265,7 @@ final public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of album and playlist.
     public func addToPlaylist(_ album: Album, playlist: Playlist) async throws {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(attributes: attributes, mpdConnector: mpdConnector)
         let songs = try await browse.songsOnAlbum(album)
         var executors = [any CommandExecutor]()
         for song in songs {
@@ -285,7 +282,7 @@ final public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of artist and addResponse.
     public func add(_ artist: Artist, addDetails: AddDetails) async throws {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(attributes: attributes, mpdConnector: mpdConnector)
         let songs = try await browse.songsByArtist(artist)
         try await add(songs, addDetails: addDetails)
     }
@@ -338,7 +335,7 @@ final public class MPDControl: ControlProtocol {
     /// - Returns: an observable tuple consisting of folder and addResponse.
     public func add(_ folder: Folder, addDetails: AddDetails) async throws {
         // First we need to get all the songs on an album, then add them one by one
-        let browse = MPDBrowse.init(connectionProperties: connectionProperties, mpdConnector: mpdConnector)
+        let browse = MPDBrowse.init(attributes: attributes, mpdConnector: mpdConnector)
         let folderContents = try await browse.fetchFolderContents(parentFolder: folder)
         
         let songs = folderContents.compactMap {

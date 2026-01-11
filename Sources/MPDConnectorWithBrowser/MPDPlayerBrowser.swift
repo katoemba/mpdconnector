@@ -93,11 +93,15 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                 switch event {
                 case .found(let service):
                     do {
-                        if let player = try await createPlayerFromService(service) {
-                            // Only add if not already in the list
-                            if !players.contains(where: { $0.name == player.name }) {
-                                players.append(player)
-                            }
+                        let connectionData = MPDConnectionData(name: service.name,
+                                                               host: service.service.hostName ?? "",
+                                                               ip: service.ipAddresses?.first,
+                                                               port: service.service.port,
+                                                               type: .classic)
+                        let player = try await createPlayerFromService(connectionData)
+                        // Only add if not already in the list
+                        if !players.contains(where: { $0.name == player.name }) {
+                            players.append(player)
                         }
                     } catch {
                         print("Failed to create player: \(error)")
@@ -117,15 +121,13 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                 case .found(let service):
                     do {
                         if let connectionData = await fetchMoodeConnectionData(from: service) {
-                            let connectionProperties = moodeConnectionProperties(from: connectionData)
-                            let player = try await playerForConnectionProperties(connectionProperties)
+                            let player = try await createPlayerFromService(connectionData)
                             if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
                                 players.append(player)
                             }
                         }
                         else if let connectionData = await fetchVolumioConnectionData(from: service) {
-                            let connectionProperties = volumioConnectionProperties(from: connectionData)
-                            let player = try await playerForConnectionProperties(connectionProperties)
+                            let player = try await createPlayerFromService(connectionData)
                             if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
                                 players.append(player)
                             }
@@ -146,11 +148,16 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                 switch event {
                 case .found(let service):
                     do {
-                        if let player = try await createPlayerFromService(service, portOverwrite: 6600) {
-                            // Only add if not already in the list
-                            if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
-                                players.append(player)
-                            }
+                        let connectionData = MPDConnectionData(name: service.name,
+                                                               host: service.service.hostName ?? "",
+                                                               ip: service.ipAddresses?.first,
+                                                               port: 6600,
+                                                               type: .volumio)
+
+                        let player = try await createPlayerFromService(connectionData)
+                        // Only add if not already in the list
+                        if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                            players.append(player)
                         }
                     } catch {
                         print("Failed to create volumio player: \(error)")
@@ -160,54 +167,36 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                 }
             }
         }
-        
-        // Handle manually configured players
-        let persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
-        for persistedPlayer in persistedPlayers.keys {
-            if let playerProperties = persistedPlayers[persistedPlayer] as? [String: Any] {
-                Task {
-                    do {
-                        let player = try await playerForConnectionProperties(playerProperties)
-                        // Only add if not already in the list
-                        if !players.contains(where: { $0.name == player.name }) {
-                            players.append(player)
-                        }
-                    } catch {
-                        print("Failed to create persisted player \(persistedPlayer): \(error)")
-                    }
-                }
-            }
-        }
     }
     
     /// Create a player from a discovered service
-    private func createPlayerFromService(_ service: DiscoveredService, portOverwrite: Int? = nil) async throws -> (any PlayerProtocol)? {
+    private func createPlayerFromService(_ connectionData: MPDConnectionData) async throws -> MPDPlayer {
         // Create connection properties
-        var connectionProperties: [String: Any] = [
-            ConnectionProperties.name.rawValue: service.name,
-            ConnectionProperties.host.rawValue: service.service.hostName ?? "",
-            ConnectionProperties.port.rawValue: portOverwrite ?? service.service.port,
-            ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
-            MPDConnectionProperties.MPDType.rawValue: MPDType.classic.rawValue
-        ]
-        if let ipAddress = service.ipAddresses?.first {
-            connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ipAddress
+        var type: MPDType = connectionData.type
+        if type == .classic {
+            if connectionData.name.lowercased().contains("poly") ||
+                connectionData.host.lowercased().contains("poly") ||
+                connectionData.name.lowercased().contains("chord") ||
+                connectionData.host.lowercased().contains("chord") ||
+                connectionData.name.lowercased().contains("2go") ||
+                connectionData.host.lowercased().contains("2go") ||
+                connectionData.name.lowercased().contains("2 go") ||
+                connectionData.host.lowercased().contains("2 go") ||
+                connectionData.name.lowercased().contains("hugo") ||
+                connectionData.host.lowercased().contains("hugo") {
+                type = .chord
+            }
         }
         
-        if service.name.lowercased().contains("poly") ||
-            service.service.hostName?.lowercased().contains("poly") ?? false ||
-            service.name.lowercased().contains("chord") ||
-            service.service.hostName?.lowercased().contains("chord") ?? false ||
-            service.name.lowercased().contains("2go") ||
-            service.service.hostName?.lowercased().contains("2go") ?? false ||
-            service.name.lowercased().contains("2 go") ||
-            service.service.hostName?.lowercased().contains("2 go") ?? false ||
-            service.name.lowercased().contains("hugo") ||
-            service.service.hostName?.lowercased().contains("hugo") ?? false {
-            connectionProperties[MPDConnectionProperties.MPDType.rawValue] = MPDType.chord.rawValue
-        }
+        let attributes = MPDPlayer.PlayerAttributes(uuid: UUID(),
+                                                    name: connectionData.name,
+                                                    version: "0.0.0",
+                                                    ipAddress: connectionData.ip,
+                                                    host: connectionData.host,
+                                                    port: connectionData.port,
+                                                    type: type)
 
-        return try await playerForConnectionProperties(connectionProperties)
+        return MPDPlayer(attributes, userDefaults: userDefaults)
     }
     
     /// Stop listening for players.
@@ -226,34 +215,6 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         volumioBrowser = nil
 
         isListening = false
-    }
-    
-    /// Manually create a player based on the connection properties
-    ///
-    /// - Parameter connectionProperties: dictionary of connection properties
-    /// - Returns: An observable on which a created Player can published.
-    public func playerForConnectionProperties(_ connectionProperties: [String: Any]) async throws -> any PlayerProtocol {
-        guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType,
-              MPDHelper.hostToUse(connectionProperties) != "",
-              let port = connectionProperties[ConnectionProperties.port.rawValue] as? Int else { throw MPDError.invalidData }
-        
-        let userDefaults = self.userDefaults
-        let hostToUse = MPDHelper.hostToUse(connectionProperties)
-        try await SwiftMPD.MPDConnector(.init(ipAddress: hostToUse, port: port, connectTimeout: 3, uuid: UUID(), playerName: connectionProperties[ConnectionProperties.name.rawValue] as? String ?? "Unknown")).connect()
-        
-        return await MPDPlayer(connectionProperties: connectionProperties, userDefaults: userDefaults)
-    }
-    
-    public func persistPlayer(_ connectionProperties: [String: Any]) {
-        guard connectionProperties[ConnectionProperties.controllerType.rawValue] as? String == MPDPlayer.controllerType else { return }
-        
-        var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") ?? [String: [String: Any]]()
-        
-        if persistedPlayers[connectionProperties[ConnectionProperties.name.rawValue] as! String] != nil {
-        }
-        persistedPlayers[connectionProperties[ConnectionProperties.name.rawValue] as! String] = connectionProperties
-        
-        userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
     }
     
     public func removePlayer(_ player: any PlayerProtocol) {
@@ -308,20 +269,6 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         }
     }
 
-    private func moodeConnectionProperties(from data: MPDConnectionData) -> [String: Any] {
-        var connectionProperties: [String: Any] = [
-            ConnectionProperties.name.rawValue: data.name,
-            ConnectionProperties.host.rawValue: data.host,
-            ConnectionProperties.port.rawValue: data.port,
-            ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
-            MPDConnectionProperties.MPDType.rawValue: MPDType.moodeaudio.rawValue
-        ]
-        if let ip = data.ip {
-            connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ip
-        }
-        return connectionProperties
-    }
-
     // MARK: - Volumio discovery helpers
 
     /// Fetch and parse /browserconfig.xml to determine whether this HTTP service is a moOde instance.
@@ -357,29 +304,15 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             return nil
         }
     }
-
-    private func volumioConnectionProperties(from data: MPDConnectionData) -> [String: Any] {
-        var connectionProperties: [String: Any] = [
-            ConnectionProperties.name.rawValue: data.name,
-            ConnectionProperties.host.rawValue: data.host,
-            ConnectionProperties.port.rawValue: data.port,
-            ConnectionProperties.controllerType.rawValue: MPDPlayer.controllerType,
-            MPDConnectionProperties.MPDType.rawValue: MPDType.volumio.rawValue
-        ]
-        if let ip = data.ip {
-            connectionProperties[MPDConnectionProperties.ipAddress.rawValue] = ip
-        }
-        return connectionProperties
-    }
-
-    public func decodePlayer(_ data: Data) async throws -> any PlayerProtocol {
-        let player = try await MPDPlayer.decodePlayer(data)
+    
+    public func decodePlayer(_ playerDefinition: ConnectorProtocol.PlayerDefinition) async throws -> any ConnectorProtocol.PlayerProtocol {
+        let player = try await MPDPlayer.decodePlayer(playerDefinition.typeSpecificData, userDefaults: userDefaults)
         if !players.contains(where: { $0.uniqueID == player.uniqueID }) {
             players.append(player)
         }
         return player
     }
-        
+
     @ViewBuilder
     public func manualAddPlayerView() -> some View {
         Text("Here we can add a player manually.")

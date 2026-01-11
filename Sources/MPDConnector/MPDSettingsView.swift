@@ -35,18 +35,18 @@ public struct MPDSettingsView: View {
         
         // Initialize fields from userDefaults if available
         let ud = player.userDefaults
-        self._ipAddressField = State(initialValue: ud.string(forKey: DefaultsKey.ipAddress.stringValue(player)) ?? player.connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String ?? "")
-        self._connectToIp = State(initialValue: ud.bool(forKey: DefaultsKey.connectToIpAddress.stringValue(player)))
-        self._outputHostField = State(initialValue: ud.string(forKey: DefaultsKey.outputHost.stringValue(player)) ?? (player.connectionProperties[MPDConnectionProperties.outputHost.rawValue] as? String ?? ""))
-        if let portVal = ud.object(forKey: DefaultsKey.outputPort.stringValue(player)) as? Int {
+        self._ipAddressField = State(initialValue: ud.string(forKey: MPDDefaultKey.ipAddress.stringValue(player)) ?? player.attributes.ipAddress ?? "")
+        self._connectToIp = State(initialValue: ud.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(player)))
+        self._outputHostField = State(initialValue: ud.string(forKey: MPDDefaultKey.outputHost.stringValue(player)) ?? (player.attributes.outputHost ?? ""))
+        if let portVal = ud.object(forKey: MPDDefaultKey.outputPort.stringValue(player)) as? Int {
             self._outputPortField = State(initialValue: "\(portVal)")
-        } else if let portFromProps = player.connectionProperties[MPDConnectionProperties.outputPort.rawValue] as? String {
+        } else if let portFromProps = player.attributes.outputPort {
             self._outputPortField = State(initialValue: portFromProps)
         } else {
             self._outputPortField = State(initialValue: "")
         }
-        self._customPlayerName = State(initialValue: ud.string(forKey: DefaultsKey.customPlayerName.stringValue(player)) ?? "")
-        self._isHidden = State(initialValue: ud.bool(forKey: DefaultsKey.hidden.stringValue(player)))
+        self._customPlayerName = State(initialValue: ud.string(forKey: MPDDefaultKey.customPlayerName.stringValue(player)) ?? "")
+        self._isHidden = State(initialValue: ud.bool(forKey: MPDDefaultKey.hidden.stringValue(player)))
         
         // Initialize selected type from player
         self._selectedType = State(initialValue: player.type)
@@ -69,7 +69,7 @@ public struct MPDSettingsView: View {
                     .onChange(of: selectedType) { _, newValue in
                         // Update player when type changes
                         player.type = newValue
-                        player.userDefaults.set(newValue.rawValue, forKey: DefaultsKey.MPDType.stringValue(player))
+                        player.userDefaults.set(newValue.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(player))
                         player.objectWillChange.send()
                     }
                 }
@@ -112,7 +112,7 @@ public struct MPDSettingsView: View {
                         .frame(maxWidth: 220)
                         .popoverTip(changeNameTip)
                         .onChange(of: customPlayerName) { _, newValue in
-                            let key = DefaultsKey.customPlayerName.stringValue(player)
+                            let key = MPDDefaultKey.customPlayerName.stringValue(player)
                             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                             if trimmed.isEmpty {
                                 player.userDefaults.removeObject(forKey: key)
@@ -136,20 +136,15 @@ public struct MPDSettingsView: View {
                 HStack {
                     Text("Host", bundle: .module)
                     Spacer()
-                    Text(player.connectionProperties[ConnectionProperties.host.rawValue] as? String ?? "")
+                    Text(player.attributes.host)
                         .foregroundColor(.secondary)
                 }
                 
                 HStack {
                     Text("Port", bundle: .module)
                     Spacer()
-                    if let port = player.connectionProperties[ConnectionProperties.port.rawValue] as? Int {
-                        Text("\(port)")
-                            .foregroundColor(.secondary)
-                    } else {
-                        Text(String(localized: "Unknown", bundle: .module))
-                            .foregroundColor(.secondary)
-                    }
+                    Text("\(player.attributes.port)")
+                        .foregroundColor(.secondary)
                 }
                 
                 HStack {
@@ -157,10 +152,10 @@ public struct MPDSettingsView: View {
                     Spacer()
                     Toggle("", isOn: Binding<Bool>(
                         get: {
-                            player.userDefaults.bool(forKey: DefaultsKey.hidden.stringValue(player))
+                            player.userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(player))
                         },
                         set: { newValue in
-                            player.userDefaults.set(newValue, forKey: DefaultsKey.hidden.stringValue(player))
+                            player.userDefaults.set(newValue, forKey: MPDDefaultKey.hidden.stringValue(player))
                         }
                     ))
                 }
@@ -309,15 +304,15 @@ public struct MPDSettingsView: View {
     func updateStreamSettings() {
         let ud = player.userDefaults
         if outputHostField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ud.removeObject(forKey: DefaultsKey.outputHost.stringValue(player))
+            ud.removeObject(forKey: MPDDefaultKey.outputHost.stringValue(player))
         } else {
-            ud.set(outputHostField, forKey: DefaultsKey.outputHost.stringValue(player))
+            ud.set(outputHostField, forKey: MPDDefaultKey.outputHost.stringValue(player))
         }
         
         if let portInt = Int(outputPortField) {
-            ud.set(portInt, forKey: DefaultsKey.outputPort.stringValue(player))
+            ud.set(portInt, forKey: MPDDefaultKey.outputPort.stringValue(player))
         } else {
-            ud.removeObject(forKey: DefaultsKey.outputPort.stringValue(player))
+            ud.removeObject(forKey: MPDDefaultKey.outputPort.stringValue(player))
         }
         player.objectWillChange.send()
     }
@@ -325,11 +320,11 @@ public struct MPDSettingsView: View {
     func updateIPAddressSettings() {
         let ud = player.userDefaults
         if ipAddressField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ud.removeObject(forKey: DefaultsKey.ipAddress.stringValue(player))
+            ud.removeObject(forKey: MPDDefaultKey.ipAddress.stringValue(player))
         } else {
-            ud.set(ipAddressField, forKey: DefaultsKey.ipAddress.stringValue(player))
+            ud.set(ipAddressField, forKey: MPDDefaultKey.ipAddress.stringValue(player))
         }
-        ud.set(connectToIp, forKey: DefaultsKey.connectToIpAddress.stringValue(player))
+        ud.set(connectToIp, forKey: MPDDefaultKey.connectToIpAddress.stringValue(player))
         player.objectWillChange.send()
     }
 

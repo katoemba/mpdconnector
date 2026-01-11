@@ -44,26 +44,26 @@ final public class MPDBrowse: BrowseProtocol {
     
     private static var operationQueue: OperationQueue?
     private var identification = ""
-    private var connectionProperties: [String: Any]
+    private var attributes: MPDPlayer.PlayerAttributes
     private let mpdConnector: SwiftMPD.MPDConnector
 
-    public init(connectionProperties: [String: Any],
+    public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
                 mpdConnector: SwiftMPD.MPDConnector) {
+        self.attributes = attributes
         self.identification = identification
-        self.connectionProperties = connectionProperties
         self.mpdConnector = mpdConnector
     }
     
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) async throws -> SearchResult {
         var searchResult = SearchResult()
         let songs = try await mpdConnector.database.search(filter: .tagContains(tag: .title, value: search)).map {
-            Song(mpdSong: $0, connectionProperties: connectionProperties)
+            Song(mpdSong: $0, attributes: attributes)
         }
         searchResult.songs = Array<Song>(songs.prefix(limit))
         
         let albumSongs = try await mpdConnector.database.search(filter: .tagContains(tag: .album, value: search)).map {
-            Song(mpdSong: $0, connectionProperties: connectionProperties)
+            Song(mpdSong: $0, attributes: attributes)
         }
         var albums = Set<Album>()
         for song in albumSongs {
@@ -72,7 +72,7 @@ final public class MPDBrowse: BrowseProtocol {
         searchResult.albums = Array<Album>(albums.prefix(limit))
         
         let artistSongs = try await mpdConnector.database.search(filter: .tagContains(tag: .artist, value: search)).map {
-            Song(mpdSong: $0, connectionProperties: connectionProperties)
+            Song(mpdSong: $0, attributes: attributes)
         }
         var artists = Set<Artist>()
         for song in artistSongs {
@@ -95,7 +95,7 @@ final public class MPDBrowse: BrowseProtocol {
 
         if let conductorMpdSongs = try? await mpdConnector.database.search(filter: .tagContains(tag: .conductor, value: search)) {
             let conductorSongs = conductorMpdSongs.map {
-                Song(mpdSong: $0, connectionProperties: connectionProperties)
+                Song(mpdSong: $0, attributes: attributes)
             }
             var conductors = Set<Artist>()
             for song in conductorSongs {
@@ -106,7 +106,7 @@ final public class MPDBrowse: BrowseProtocol {
 
         if let composerMpdSongs = try? await mpdConnector.database.search(filter: .tagContains(tag: .composer, value: search)) {
             let composerSongs = composerMpdSongs.map {
-                Song(mpdSong: $0, connectionProperties: connectionProperties)
+                Song(mpdSong: $0, attributes: attributes)
             }
             var composers = Set<Artist>()
             for song in composerSongs {
@@ -151,7 +151,7 @@ final public class MPDBrowse: BrowseProtocol {
                 album == nil || $0.album == album!
             }
             .map {
-                Song(mpdSong: $0, connectionProperties: connectionProperties)
+                Song(mpdSong: $0, attributes: attributes)
             }))
         
         return songs.sorted(by: {
@@ -273,7 +273,7 @@ final public class MPDBrowse: BrowseProtocol {
             }
 
             for song in songs {
-                albums.insert(albumFromSong(Song(mpdSong: song, connectionProperties: connectionProperties)))
+                albums.insert(albumFromSong(Song(mpdSong: song, attributes: attributes)))
             }
         }
         
@@ -293,7 +293,7 @@ final public class MPDBrowse: BrowseProtocol {
                 continue
             }
 
-            results += songs.map { Song(mpdSong: $0, connectionProperties: connectionProperties) }
+            results += songs.map { Song(mpdSong: $0, attributes: attributes) }
         }
         
         return Array(results).sorted(by: { $0.year < $1.year })
@@ -304,12 +304,11 @@ final public class MPDBrowse: BrowseProtocol {
     }
 
     public func recentAlbums(numberOfAlbums: Int) async throws -> [Album] {
-        let connectionProperties = self.connectionProperties
         let mpdConnector = self.mpdConnector
 
         let songs: [Song] = try await mpdConnector.database.search(filter: .modifiedSince(value: Date(timeIntervalSinceNow: -3600 * 24 * 100))).compactMap {
             guard let title = $0.title, title != "" else { return nil }
-            return Song(mpdSong: $0, connectionProperties: connectionProperties)
+            return Song(mpdSong: $0, attributes: attributes)
         }
         
         return Array(self.albumsFromSongs(songs, sort: .title).sorted {
@@ -319,12 +318,11 @@ final public class MPDBrowse: BrowseProtocol {
     }
     
     public func recentSongs() async throws -> [Song] {
-        let connectionProperties = self.connectionProperties
         let mpdConnector = self.mpdConnector
 
         return try await mpdConnector.database.search(filter: .modifiedSince(value: Date(timeIntervalSinceNow: -3600 * 24 * 100))).compactMap {
             guard let title = $0.title, title != "" else { return nil }
-            return Song(mpdSong: $0, connectionProperties: connectionProperties)
+            return Song(mpdSong: $0, attributes: attributes)
         }
     }
         
@@ -360,7 +358,7 @@ final public class MPDBrowse: BrowseProtocol {
     public func songs(genre: Genre) async throws -> [Song] {
         let expression: MPDDatabase.Expression = .tagEquals(tag: .genre, value: genre.id)
         let mpdSongs = try await self.mpdConnector.database.search(filter: expression)
-        return mpdSongs.map { Song(mpdSong: $0, connectionProperties: connectionProperties) }
+        return mpdSongs.map { Song(mpdSong: $0, attributes: attributes) }
     }
 
     // This is the old-fashioned way of getting data, using a double group by.
@@ -464,7 +462,7 @@ final public class MPDBrowse: BrowseProtocol {
                 continue
             }
             
-            let song = Song(mpdSong: songs[0], connectionProperties: self.connectionProperties)
+            let song = Song(mpdSong: songs[0], attributes: attributes)
             results.append(self.createAlbumFromSong(song))
             originalAlbums.removeFirst()
         }
@@ -488,7 +486,7 @@ final public class MPDBrowse: BrowseProtocol {
                 continue
             }
             
-            let song = Song(mpdSong: songs[0], connectionProperties: self.connectionProperties)
+            let song = Song(mpdSong: songs[0], attributes: attributes)
             results.append(self.createArtistFromSong(song))
             originalArtist.removeFirst()
         }
@@ -619,7 +617,7 @@ final public class MPDBrowse: BrowseProtocol {
         let songs = try await mpdConnector.playlist.listplaylistinfo(name: playlist.name)
         return songs
             .map {
-                Song(mpdSong: $0, connectionProperties: connectionProperties, forcePlayqueueId: true)
+                Song(mpdSong: $0, attributes: attributes, forcePlayqueueId: true)
             }
     }
     
@@ -674,7 +672,7 @@ final public class MPDBrowse: BrowseProtocol {
             .compactMap {
                 switch $0 {
                 case let .song(song):
-                    return FolderContent.song(Song(mpdSong: song, connectionProperties: connectionProperties))
+                    return FolderContent.song(Song(mpdSong: song, attributes: attributes))
                 case let .playlist(playlist, lastModified):
                     return FolderContent.playlist(Playlist(id: playlist, source: .Local, name: playlist, lastModified: lastModified ?? Date()))
                 case let .directory(directory, _):
@@ -813,13 +811,13 @@ final public class MPDBrowse: BrowseProtocol {
         case let .artist(artist):
             foundItems = try await mpdConnector.database.search(filter: .tagEquals(tag: .artist, value: artist), range: 0...100)
                 .map {
-                    FoundItem.artist(self.createArtistFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    FoundItem.artist(self.createArtistFromSong(Song(mpdSong: $0, attributes: attributes)))
                 }
         case let .artistAlbum(artist, sort):
             let sortToUse: MPDDatabase.TagSort? = sort == .year ? .ascending(.date) : ((sort == .yearReverse) ? .descending(.date) : nil)
             foundItems = try await mpdConnector.database.search(filter: .tagEquals(tag: .albumArtist, value: artist), sort: sortToUse, range: 0...100)
                 .map {
-                    FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, attributes: attributes)))
                 }
         case let .album(album, artist):
             var filter: MPDDatabase.Expression
@@ -831,7 +829,7 @@ final public class MPDBrowse: BrowseProtocol {
             }
             foundItems = try await mpdConnector.database.search(filter: filter, range: 0...100)
                 .map {
-                    FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, attributes: attributes)))
                 }
         case let .genre(genre):
             foundItems = try await mpdConnector.database.search(filter: .tagEquals(tag: .genre, value: genre), range: 0...100)
@@ -850,7 +848,7 @@ final public class MPDBrowse: BrowseProtocol {
             }
             foundItems = try await mpdConnector.database.search(filter: filter, range: 0...100)
                 .map {
-                    FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, connectionProperties: connectionProperties)))
+                    FoundItem.album(self.createAlbumFromSong(Song(mpdSong: $0, attributes: attributes)))
                 }
         default:
             break
@@ -935,7 +933,7 @@ final public class MPDBrowse: BrowseProtocol {
             .compactMap {
                 switch $0 {
                 case let .song(song):
-                    return FolderContent.song(Song(mpdSong: song, connectionProperties: connectionProperties))
+                    return FolderContent.song(Song(mpdSong: song, attributes: attributes))
                 case let .playlist(playlist, lastModified):
                     return FolderContent.playlist(Playlist(id: playlist, source: .Local, name: playlist, lastModified: lastModified ?? Date()))
                 case let .directory(directory, _):

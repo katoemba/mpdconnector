@@ -33,8 +33,7 @@ import SwiftUI
 public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Connection to a MPD Player
     private var identification = ""
-    private var connectionProperties: [String: Any]
-    private var userDefaults: UserDefaults
+    private var attributes: MPDPlayer.PlayerAttributes
     
     /// ConectionStatus for the player
     private var mpdIdleConnector: SwiftMPD.MPDConnector?
@@ -62,14 +61,12 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     private var lastKnownElapsedTimeRecorded = Date()
     private var elapsedTask: Task<Void, Never>?
 
-    public init(connectionProperties: [String: Any],
+    public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
-                userDefaults: UserDefaults,
                 mpdConnector: SwiftMPD.MPDConnector,
                 mpdIdleConnector: SwiftMPD.MPDConnector? = nil) {
-        self.connectionProperties = connectionProperties
+        self.attributes = attributes
         self.identification = identification
-        self.userDefaults = userDefaults
         self.mpdConnector = mpdConnector
         self.mpdIdleConnector = mpdIdleConnector
     }
@@ -158,7 +155,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         let outputs = try outputsExecutor.processResults()
         let currentSong = try? currentsongExecutor.processResults()
         
-        return PlayerStatus(from: status, currentSong: currentSong, outputs: outputs, connectionProperties: connectionProperties, userDefaults: userDefaults)
+        return PlayerStatus(from: status, currentSong: currentSong, outputs: outputs, attributes: attributes)
     }
     
     /// Get an array of songs from the playqueue.
@@ -172,13 +169,13 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
             return []
         }
         
-        let connectionProperties = self.connectionProperties
+        let attributes = self.attributes
         do {
             let mpdSongs = try await mpdConnector.queue.playlistinfo(range: start...end)
             
             var position = start
             let songs = mpdSongs.map {
-                var song = Song(mpdSong: $0, connectionProperties: connectionProperties, forcePlayqueueId: true)
+                var song = Song(mpdSong: $0, attributes: attributes, forcePlayqueueId: true)
                 song.position = position
                 
                 position += 1
@@ -240,11 +237,11 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
 }
 
 extension PlayerStatus {
-    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong?, outputs: [SwiftMPD.MPDOutput.Output], connectionProperties: [String: Any], userDefaults: UserDefaults) {
+    public init(from: SwiftMPD.MPDStatus.Status, currentSong: SwiftMPD.MPDSong?, outputs: [SwiftMPD.MPDOutput.Output], attributes: MPDPlayer.PlayerAttributes) {
         self.init()
         
         if let currentSong {
-            self.currentSong = Song(mpdSong: currentSong, connectionProperties: connectionProperties)
+            self.currentSong = Song(mpdSong: currentSong, attributes: attributes)
         }
         else {
             self.currentSong = Song()
@@ -259,13 +256,7 @@ extension PlayerStatus {
         }
         
         if let volume = from.volume, volume >= 0 {
-            let playerVolumeAdjustmentKey = MPDHelper.playerVolumeAdjustmentKey((connectionProperties[ConnectionProperties.name.rawValue] as? String) ?? "NoName")
-            if let volumeAdjustment = userDefaults.value(forKey: playerVolumeAdjustmentKey) as? Float {
-                self.volume = MPDHelper.adjustedVolumeFromPlayer(Float(volume) / 100.0, volumeAdjustment: volumeAdjustment)
-            }
-            else {
-                self.volume = Float(volume) / 100.0
-            }
+            self.volume = Float(volume) / 100.0
             volumeEnabled = true
         }
         else {
@@ -375,7 +366,7 @@ extension QualityStatus {
 }
 
 extension Song {
-    public init(mpdSong: SwiftMPD.MPDSong, connectionProperties: [String: Any], forcePlayqueueId: Bool = false) {
+    public init(mpdSong: SwiftMPD.MPDSong, attributes: MPDPlayer.PlayerAttributes, forcePlayqueueId: Bool = false) {
         self.init()
         
         id = mpdSong.file
@@ -487,29 +478,29 @@ extension Song {
             }
         }
         
-        let coverString = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
-        var coverHost = connectionProperties[MPDConnectionProperties.alternativeCoverHost.rawValue] as? String ?? ""
-        if coverHost == "" {
-            coverHost = connectionProperties[ConnectionProperties.host.rawValue] as? String ?? ""
-        }
-        let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
-        let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"
-        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as? String ?? ""
-        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as? String ?? ""
-        let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as? String ?? ""
+//        let coverString = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+//        var coverHost = connectionProperties[MPDConnectionProperties.alternativeCoverHost.rawValue] as? String ?? ""
+//        if coverHost == "" {
+//            coverHost = connectionProperties[ConnectionProperties.host.rawValue] as? String ?? ""
+//        }
+//        let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
+//        let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"
+//        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as? String ?? ""
+//        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as? String ?? ""
+//        let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as? String ?? ""
 
 //        if postfix == "" && alternativePostfix == "" {
 //            coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)")
 //        }
 //        else
-        if postfix == "<track>" {
-            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(id)", newPath, ["cover.jpg"])
-        }
-        else if alternativePostfix == "" {
-            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, CoverURI.embeddedPrefix + id])
-        }
-        else {
-            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, alternativePostfix, CoverURI.embeddedPrefix + id])
-        }
+//        if postfix == "<track>" {
+//            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(id)", newPath, ["cover.jpg"])
+//        }
+//        else if alternativePostfix == "" {
+//            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, CoverURI.embeddedPrefix + id])
+//        }
+//        else {
+//            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, alternativePostfix, CoverURI.embeddedPrefix + id])
+//        }
      }
 }

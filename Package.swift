@@ -14,7 +14,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "AsyncAwait"),
+        .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "WithoutConnectionProperties"),
         .package(url: "https://github.com/katoemba/SwiftMPD.git", branch: "main"),
         .package(url: "https://github.com/drmohundro/SWXMLHash.git", .upToNextMajor(from: "7.0.0"))
     ],

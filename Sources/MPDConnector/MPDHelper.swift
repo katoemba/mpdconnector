@@ -33,14 +33,14 @@ public class MPDHelper {
         case permission
     }
     
-    public static func hostToUse(_ connectionProperties: [String: Any]) -> String {
-        var host = connectionProperties[ConnectionProperties.host.rawValue] as! String
-        if (connectionProperties[MPDConnectionProperties.connectToIpAddress.rawValue] as? Bool) == true,
-           let ipAddress = connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String {
-            host = ipAddress
-        }
-        return host
-    }
+//    public static func hostToUse(_ connectionProperties: [String: Any]) -> String {
+//        var host = connectionProperties[ConnectionProperties.host.rawValue] as! String
+//        if (connectionProperties[MPDConnectionProperties.connectToIpAddress.rawValue] as? Bool) == true,
+//           let ipAddress = connectionProperties[MPDConnectionProperties.ipAddress.rawValue] as? String {
+//            host = ipAddress
+//        }
+//        return host
+//    }
     
     /// Compare two mpd version strings
     ///
