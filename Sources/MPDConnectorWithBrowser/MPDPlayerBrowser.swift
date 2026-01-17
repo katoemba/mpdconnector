@@ -73,18 +73,39 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     private var mpdBrowser: AsyncServiceBrowser?
     private var httpBrowser: AsyncServiceBrowser?
     private var volumioBrowser: AsyncServiceBrowser?
+    
+    private func nowTimestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.string(from: Date())
+    }
 
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
     }
     
     /// Start listening for players on the local domain.
-    public func startListening() {
+    public func startListening(predefinedPlayers: [PlayerDefinition]) async {
         guard isListening == false else {
             return
         }
         
         isListening = true
+        
+        for definition in predefinedPlayers {
+            guard definition.type == controllerType else { continue }
+            Task {
+                guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults),
+                      await player.ping() else {
+                    return
+                }
+                
+                if !players.contains(where: { $0 as? MPDPlayer == player }) {
+                    players.append(player)
+                }
+            }
+        }
         
         let mpdBrowser = AsyncServiceBrowser()
         self.mpdBrowser = mpdBrowser
@@ -100,7 +121,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                                type: .classic)
                         let player = try await createPlayerFromService(connectionData)
                         // Only add if not already in the list
-                        if !players.contains(where: { $0.name == player.name }) {
+                        if !players.contains(where: { $0 as? MPDPlayer == player }) {
                             players.append(player)
                         }
                     } catch {
@@ -122,13 +143,13 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                     do {
                         if let connectionData = await fetchMoodeConnectionData(from: service) {
                             let player = try await createPlayerFromService(connectionData)
-                            if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                            if !players.contains(where: { $0 as? MPDPlayer == player }) {
                                 players.append(player)
                             }
                         }
                         else if let connectionData = await fetchVolumioConnectionData(from: service) {
                             let player = try await createPlayerFromService(connectionData)
-                            if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                            if !players.contains(where: { $0 as? MPDPlayer == player }) {
                                 players.append(player)
                             }
                         }
@@ -156,7 +177,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
 
                         let player = try await createPlayerFromService(connectionData)
                         // Only add if not already in the list
-                        if !players.contains(where: { $0.uniqueID == player.uniqueID && $0.controllerType == player.controllerType }) {
+                        if !players.contains(where: { $0 as? MPDPlayer == player }) {
                             players.append(player)
                         }
                     } catch {
@@ -190,17 +211,18 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         
         let attributes = MPDPlayer.PlayerAttributes(uuid: UUID(),
                                                     name: connectionData.name,
+                                                    type: type,
                                                     version: "0.0.0",
                                                     ipAddress: connectionData.ip,
                                                     host: connectionData.host,
                                                     port: connectionData.port,
-                                                    type: type)
+                                                    password: nil)
 
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
     
     /// Stop listening for players.
-    public func stopListening() {
+    public func stopListening() async {
         guard isListening == true else {
             return
         }
@@ -214,6 +236,8 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         volumioBrowser?.stopListening()
         volumioBrowser = nil
 
+        players.removeAll()
+        
         isListening = false
     }
     
@@ -318,3 +342,4 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         Text("Here we can add a player manually.")
     }
 }
+

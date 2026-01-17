@@ -7,7 +7,7 @@
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
         "branch" : "WithoutConnectionProperties",
-        "revision" : "db9770cb9d46fd15aade0cb606159fc2ac7f3b8d"
+        "revision" : "5aceb9561ea5bdb98911176b0b1e435729d0bc95"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "a1605a3303a28e14d822dec8aaa53da8a9490461",
-        "version" : "2.92.0"
+        "revision" : "4a9a97111099376854a7f8f0f9f88b9d61f52eff",
+        "version" : "2.92.2"
       }
     },
     {

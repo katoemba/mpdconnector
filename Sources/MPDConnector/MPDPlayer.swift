@@ -68,25 +68,14 @@ public enum MPDType: Int, Codable, CaseIterable {
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
     public struct PlayerAttributes: Codable {
-        public init(uuid: UUID, name: String, version: String, ipAddress: String? = nil, host: String, port: Int, password: String? = nil, type: MPDType, coverHttpPort: String? = nil, coverPrefix: String? = nil, coverPostfix: String? = nil, alternativeCoverPostfix: String? = nil, alternativeCoverHost: String? = nil, outputHost: String? = nil, outputPort: String? = nil, connectToIpAddress: Bool? = nil, customPlayerName: String? = nil, hidden: Bool? = nil) {
+        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?) {
             self.uuid = uuid
             self.name = name
+            self.type = type
             self.version = version
-            self.ipAddress = ipAddress
             self.host = host
             self.port = port
             self.password = password
-            self.type = type
-            self.coverHttpPort = coverHttpPort
-            self.coverPrefix = coverPrefix
-            self.coverPostfix = coverPostfix
-            self.alternativeCoverPostfix = alternativeCoverPostfix
-            self.alternativeCoverHost = alternativeCoverHost
-            self.outputHost = outputHost
-            self.outputPort = outputPort
-            self.connectToIpAddress = connectToIpAddress
-            self.customPlayerName = customPlayerName
-            self.hidden = hidden
         }
         
         // identification
@@ -98,20 +87,20 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         let version: String
         let host: String
         let port: Int
+        let password: String?
         
         // player settings
-        let ipAddress: String?
-        let password: String?
-        let coverHttpPort: String?
-        let coverPrefix: String?
-        let coverPostfix: String?
-        let alternativeCoverPostfix: String?
-        let alternativeCoverHost: String?
-        let outputHost: String?
-        let outputPort: String?
-        let connectToIpAddress: Bool?
-        let customPlayerName: String?
-        let hidden: Bool?
+//        let ipAddress: String?
+//        let coverHttpPort: String?
+//        let coverPrefix: String?
+//        let coverPostfix: String?
+//        let alternativeCoverPostfix: String?
+//        let alternativeCoverHost: String?
+//        let outputHost: String?
+//        let outputPort: String?
+//        let connectToIpAddress: Bool?
+//        let customPlayerName: String?
+//        let hidden: Bool?
     }
     
     public var mediaServerModel: String = "MPD"
@@ -147,7 +136,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     public private(set) var version: String
     public var hidden: Bool {
-        return userDefaults.bool(forKey: defaultsKey(MPDDefaultKey.hidden.rawValue))
+        return userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(self))
     }
 
     public private(set) var connectionWarning: String?
@@ -245,12 +234,17 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         self.attributes = attributes
         self.userDefaults = userDefaults
         self.name = attributes.name
-        self.type = attributes.type
         self.version = attributes.version
+        self.type = attributes.type
+
         self.commands = []
         
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: attributes.host, port: attributes.port, password: attributes.password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
-        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: attributes.host, port: attributes.port, password: attributes.password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+        let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port))
+        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : attributes.host
+        let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(host: attributes.host, port: attributes.port)) ?? ""
+        
+        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
         self.mpdStatus = MPDStatus.init(attributes: attributes,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
@@ -258,26 +252,24 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.commands = (try? await self.mpdConnector.status.commands()) ?? []
         }
 
-        if attributes.type == .chord {
-            let key = MPDDefaultKey.connectToIpAddress.stringValue(self)
-            if userDefaults.value(forKey: key) == nil {
-                userDefaults.set(true, forKey: key)
-            }
-        }
-
-        let key = MPDDefaultKey.MPDType.stringValue(self)
-        if userDefaults.object(forKey: key) != nil, let storedType = MPDType(rawValue: userDefaults.integer(forKey: key)) {
+        if userDefaults.object(forKey: MPDDefaultKey.binaryCoverArt.stringValue(self)) != nil,
+            let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))) {
             self.type = storedType
         }
         else {
             self.type = attributes.type
         }
 
-        let customName = userDefaults.string(forKey: defaultsKey(MPDDefaultKey.customPlayerName.rawValue))
+        if attributes.type == .chord {
+            if userDefaults.value(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self)) == nil {
+                userDefaults.set(true, forKey: MPDDefaultKey.connectToIpAddress.stringValue(self))
+            }
+        }
+
+        let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
         if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             self.name = customName
         }
-        
     }
     
     // MARK: - PlayerProtocol Implementations

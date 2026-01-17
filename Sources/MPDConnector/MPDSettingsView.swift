@@ -35,13 +35,11 @@ public struct MPDSettingsView: View {
         
         // Initialize fields from userDefaults if available
         let ud = player.userDefaults
-        self._ipAddressField = State(initialValue: ud.string(forKey: MPDDefaultKey.ipAddress.stringValue(player)) ?? player.attributes.ipAddress ?? "")
+        self._ipAddressField = State(initialValue: ud.string(forKey: MPDDefaultKey.ipAddress.stringValue(player)) ??  "")
         self._connectToIp = State(initialValue: ud.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(player)))
-        self._outputHostField = State(initialValue: ud.string(forKey: MPDDefaultKey.outputHost.stringValue(player)) ?? (player.attributes.outputHost ?? ""))
+        self._outputHostField = State(initialValue: ud.string(forKey: MPDDefaultKey.outputHost.stringValue(player)) ?? "")
         if let portVal = ud.object(forKey: MPDDefaultKey.outputPort.stringValue(player)) as? Int {
             self._outputPortField = State(initialValue: "\(portVal)")
-        } else if let portFromProps = player.attributes.outputPort {
-            self._outputPortField = State(initialValue: portFromProps)
         } else {
             self._outputPortField = State(initialValue: "")
         }

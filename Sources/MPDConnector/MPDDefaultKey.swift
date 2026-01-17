@@ -24,6 +24,7 @@ internal enum MPDDefaultKey: String {
     case connectToIpAddress = "MPD.ConnectToIpAddress"
     case customPlayerName = "MPD.CustomPlayerName"
     case hidden = "MPD.Hidden"
+    case password = "MPD.Password"
     
     func stringValue(_ player: MPDPlayer) -> String {
         return player.defaultsKey(self.rawValue)
@@ -31,5 +32,9 @@ internal enum MPDDefaultKey: String {
     
     func stringValue(_ uniqueID: String) -> String {
         return self.rawValue + "." + uniqueID
+    }
+    
+    func stringValue(host: String, port: Int) -> String {
+        return self.rawValue + "." + MPDPlayer.uniqueIDForPlayer(host: host, port: port)
     }
 }
