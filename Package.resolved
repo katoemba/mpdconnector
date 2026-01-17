@@ -1,13 +1,13 @@
 {
-  "originHash" : "41bdfa0bb76998b1c75743fb027769371afabeca0af3d1205aeca0c434da58da",
+  "originHash" : "a1dba216ed2a9fae6153b4a85aececac068e474d1d0a93b16ddf06ca7ef29b3f",
   "pins" : [
     {
       "identity" : "connectorprotocol",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
-        "branch" : "WithoutConnectionProperties",
-        "revision" : "5aceb9561ea5bdb98911176b0b1e435729d0bc95"
+        "branch" : "AsyncAwait",
+        "revision" : "f9e8258b4478ba9522e7af0b9967a7a256bd8dcb"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "395a77f0aa927f0ff73941d7ac35f2b46d47c9db",
-        "version" : "1.6.3"
+        "revision" : "7c6ad0fc39d0763e0b699210e4124afd5041c5df",
+        "version" : "1.6.4"
       }
     },
     {
