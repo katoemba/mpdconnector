@@ -871,59 +871,49 @@ final public class MPDBrowse: BrowseProtocol {
         try await Array(albums(genre: nil).shuffled().prefix(count))
     }
     
-    public func coverData(_ album: Album) async throws -> Data {
-        let coverURI = try await preprocessCoverURI(album.coverURI)
+    private func loadCoverData(path: String, imageURL: URL?, cacheKey: String?, cacheValidator: ((String) -> Data?)?) async throws -> Data {
+        // Cache first if available
+        if let key = cacheKey, let cached = cacheValidator?(key) {
+            return cached
+        }
+        // Try remote URL if provided
+        if let url = imageURL {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if data.isEmpty == false {
+                    return data
+                }
+            } catch {
+                // Fall through to MPD-based retrieval
+            }
+        }
+        
+        // MPD albumart first, then readpicture as fallback
         do {
-            let data = try await self.mpdConnector.database.getAlbumart(path: coverURI.path)
+            let data = try await self.mpdConnector.database.getAlbumart(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
             if data == Data() {
-                return try await self.mpdConnector.database.getReadpicture(path: coverURI.path)
+                return try await self.mpdConnector.database.getReadpicture(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
             }
             return data
+        } catch {
+            return try await self.mpdConnector.database.getReadpicture(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
         }
-        catch {
-            return try await self.mpdConnector.database.getReadpicture(path: coverURI.path)
-        }
+    }
+    
+    public func coverData(_ album: Album) async throws -> Data {
+        try await loadCoverData(path: album.coverURI.path, imageURL: album.coverURI.imageURL, cacheKey: nil, cacheValidator: nil)
     }
     
     public func coverData(_ album: Album, cacheValidator: @escaping (String) -> Data?) async throws -> Data {
-        let coverURI = try await preprocessCoverURI(album.coverURI)
-        do {
-            let data = try await self.mpdConnector.database.getAlbumart(path: coverURI.path, key: album.cacheKey, cacheValidator: cacheValidator)
-            if data == Data() {
-                return try await self.mpdConnector.database.getReadpicture(path: coverURI.path, key: album.cacheKey, cacheValidator: cacheValidator)
-            }
-            return data
-        }
-        catch {
-            return try await self.mpdConnector.database.getReadpicture(path: coverURI.path, key: album.cacheKey, cacheValidator: cacheValidator)
-        }
+        try await loadCoverData(path: album.coverURI.path, imageURL: album.coverURI.imageURL, cacheKey: album.cacheKey, cacheValidator: cacheValidator)
     }
-
+    
     public func coverData(_ song: Song) async throws -> Data {
-        do {
-            let data = try await self.mpdConnector.database.getAlbumart(path: song.coverURI.path)
-            if data == Data() {
-                return try await self.mpdConnector.database.getReadpicture(path: song.coverURI.path)
-            }
-            return data
-        }
-        catch {
-            return try await self.mpdConnector.database.getReadpicture(path: song.coverURI.path)
-        }
+        try await loadCoverData(path: song.coverURI.path, imageURL: song.coverURI.imageURL, cacheKey: nil, cacheValidator: nil)
     }
     
     public func coverData(_ song: Song, cacheValidator: @escaping (String) -> Data?) async throws -> Data {
-        do {
-            let data = try await self.mpdConnector.database.getAlbumart(path: song.coverURI.path, key: song.cacheKey, cacheValidator: cacheValidator
-            )
-            if data == Data() {
-                return try await self.mpdConnector.database.getReadpicture(path: song.coverURI.path, key: song.cacheKey, cacheValidator: cacheValidator)
-            }
-            return data
-        }
-        catch {
-            return try await self.mpdConnector.database.getReadpicture(path: song.coverURI.path, key: song.cacheKey, cacheValidator: cacheValidator)
-        }
+        try await loadCoverData(path: song.coverURI.path, imageURL: song.coverURI.imageURL, cacheKey: song.cacheKey, cacheValidator: cacheValidator)
     }
     
     /// Browse the contents of a folder
@@ -946,3 +936,4 @@ final public class MPDBrowse: BrowseProtocol {
             }
     }
 }
+

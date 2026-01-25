@@ -11,11 +11,6 @@ internal enum MPDDefaultKey: String {
     case coverPostfix = "MPD.Uri.Postfix"
     case alternativeCoverPostfix = "MPD.Uri.AlternativePostfix"
     case alternativeCoverHost = "MPD.Uri.AlternativeCoverHost"
-    case binaryCoverArt = "BinaryCoverArt"
-    case embeddedCoverArt = "EmbeddedCoverArt"
-    case urlCoverArt = "URLCoverArt"
-    case discogsCoverArt = "DiscogsCoverArt"
-    case musicbrainzCoverArt = "MusicbrainzCoverArt"
     case version = "MPD.Version"
     case MPDType = "type"
     case outputHost = "MPD.Output.Host"
@@ -25,6 +20,7 @@ internal enum MPDDefaultKey: String {
     case customPlayerName = "MPD.CustomPlayerName"
     case hidden = "MPD.Hidden"
     case password = "MPD.Password"
+    case useHttpCoverArt = "MPD.UseHttpCoverArt"
     
     func stringValue(_ player: MPDPlayer) -> String {
         return player.defaultsKey(self.rawValue)

@@ -477,30 +477,16 @@ extension Song {
                 newPath.append(contentsOf: "/")
             }
         }
-        
-//        let coverString = newPath.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
-//        var coverHost = connectionProperties[MPDConnectionProperties.alternativeCoverHost.rawValue] as? String ?? ""
-//        if coverHost == "" {
-//            coverHost = connectionProperties[ConnectionProperties.host.rawValue] as? String ?? ""
-//        }
-//        let coverHttpPort = connectionProperties[MPDConnectionProperties.coverHttpPort.rawValue] as? String ?? ""
-//        let portExtension = coverHttpPort == "" ? coverHttpPort : ":\(coverHttpPort)"
-//        let prefix = connectionProperties[MPDConnectionProperties.coverPrefix.rawValue] as? String ?? ""
-//        let postfix = connectionProperties[MPDConnectionProperties.coverPostfix.rawValue] as? String ?? ""
-//        let alternativePostfix = connectionProperties[MPDConnectionProperties.alternativeCoverPostfix.rawValue] as? String ?? ""
-
-//        if postfix == "" && alternativePostfix == "" {
-//            coverURI = CoverURI.fullPathURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)")
-//        }
-//        else
-//        if postfix == "<track>" {
-//            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(id)", newPath, ["cover.jpg"])
-//        }
-//        else if alternativePostfix == "" {
-//            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, CoverURI.embeddedPrefix + id])
-//        }
-//        else {
-//            coverURI = CoverURI.filenameOptionsURI("http://\(coverHost)\(portExtension)/\(prefix)\(coverString)", newPath, [postfix, alternativePostfix, CoverURI.embeddedPrefix + id])
-//        }
+       
+        let coverString = mpdSong.file.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        if attributes.type == .moodeaudio && attributes.useHttpCoverArt == true {
+            coverURI = CoverURI.fullPathURI("http://\(attributes.host)/coverart.php/\(coverString)")
+        }
+        else if attributes.type == .bryston && attributes.useHttpCoverArt == true {
+            coverURI = CoverURI.fullPathURI("http://\(attributes.host)/\(newPath)bdp_front_250.jpg")
+        }
+        else {
+            coverURI = CoverURI.filenameOptionsURI("", mpdSong.file, [])
+        }
      }
 }

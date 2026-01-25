@@ -260,6 +260,16 @@
         }
       }
     },
+    "Use HTTP cover art" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laad album covers via HTTP"
+          }
+        }
+      }
+    },
     "Use IP Address" : {
       "localizations" : {
         "nl" : {

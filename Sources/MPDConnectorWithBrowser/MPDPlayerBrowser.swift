@@ -216,7 +216,8 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                     ipAddress: connectionData.ip,
                                                     host: connectionData.host,
                                                     port: connectionData.port,
-                                                    password: nil)
+                                                    password: nil,
+                                                    useHttpCoverArt: false)
 
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }

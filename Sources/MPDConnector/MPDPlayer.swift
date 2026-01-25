@@ -68,7 +68,7 @@ public enum MPDType: Int, Codable, CaseIterable {
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
     public struct PlayerAttributes: Codable {
-        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?) {
+        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool) {
             self.uuid = uuid
             self.name = name
             self.type = type
@@ -76,6 +76,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.host = host
             self.port = port
             self.password = password
+            self.useHttpCoverArt = useHttpCoverArt
         }
         
         // identification
@@ -90,17 +91,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         let password: String?
         
         // player settings
-//        let ipAddress: String?
-//        let coverHttpPort: String?
-//        let coverPrefix: String?
-//        let coverPostfix: String?
-//        let alternativeCoverPostfix: String?
-//        let alternativeCoverHost: String?
-//        let outputHost: String?
-//        let outputPort: String?
-//        let connectToIpAddress: Bool?
-//        let customPlayerName: String?
-//        let hidden: Bool?
+        let useHttpCoverArt: Bool
     }
     
     public var mediaServerModel: String = "MPD"
@@ -127,7 +118,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     internal var attributes: PlayerAttributes {
         didSet {
-            name = attributes.name
+            let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
+            if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                name = customName
+            }
+            else {
+                name = attributes.name
+            }
         }
     }
     
@@ -252,9 +249,16 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.commands = (try? await self.mpdConnector.status.commands()) ?? []
         }
 
-        if userDefaults.object(forKey: MPDDefaultKey.binaryCoverArt.stringValue(self)) != nil,
-            let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))) {
+        if let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))) {
             self.type = storedType
+            self.attributes = PlayerAttributes(uuid: attributes.uuid,
+                                               name: attributes.host,
+                                               type: storedType,
+                                               version: attributes.version,
+                                               host: attributes.host,
+                                               port: attributes.port,
+                                               password: attributes.password,
+                                               useHttpCoverArt: userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)))
         }
         else {
             self.type = attributes.type
@@ -301,20 +305,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             if version < SwiftMPD.MPDConnection.Version("0.19.0") {
                 connectionWarning = "MPD version \(version) too low, 0.19.0 required"
             }
-            
-            if userDefaults.value(forKey: MPDDefaultKey.binaryCoverArt.stringValue(self)) == nil {
-                userDefaults.set(self.supportedFunctions.contains(.binaryImageRetrieval), forKey: MPDDefaultKey.binaryCoverArt.stringValue(self))
-                userDefaults.set(self.supportedFunctions.contains(.embeddedImageRetrieval), forKey: MPDDefaultKey.embeddedCoverArt.stringValue(self))
-                if !self.supportedFunctions.contains(.binaryImageRetrieval) && !self.supportedFunctions.contains(.embeddedImageRetrieval) {
-                    userDefaults.set(true, forKey: MPDDefaultKey.urlCoverArt.stringValue(self))
-                }
-                else {
-                    userDefaults.set(false, forKey: MPDDefaultKey.urlCoverArt.stringValue(self))
-                }
-                userDefaults.set(false, forKey: MPDDefaultKey.discogsCoverArt.stringValue(self))
-                userDefaults.set(false, forKey: MPDDefaultKey.musicbrainzCoverArt.stringValue(self))
-            }
-            
+                        
             if connectionWarning == nil {
                 var missingTagTypes = [String]()
                 if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {

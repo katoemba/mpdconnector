@@ -14,7 +14,8 @@ public struct MPDSettingsView: View {
     @State private var customPlayerName: String = ""
     @State private var selectedType: MPDType = MPDType.allCases.first!
     @State private var isHidden: Bool
-    
+    @State private var useHTTPCoverArt: Bool
+
     // New state for advanced and output settings
     @State private var ipAddressField: String = ""
     @State private var connectToIp: Bool = false
@@ -45,7 +46,8 @@ public struct MPDSettingsView: View {
         }
         self._customPlayerName = State(initialValue: ud.string(forKey: MPDDefaultKey.customPlayerName.stringValue(player)) ?? "")
         self._isHidden = State(initialValue: ud.bool(forKey: MPDDefaultKey.hidden.stringValue(player)))
-        
+        self._useHTTPCoverArt = State(initialValue: ud.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player)))
+
         // Initialize selected type from player
         self._selectedType = State(initialValue: player.type)
     }
@@ -183,6 +185,29 @@ public struct MPDSettingsView: View {
                             updateIPAddressSettings()
                         }
                 }
+                
+                if player.type == .moodeaudio || player.type == .bryston {
+                    HStack {
+                        Text(String(localized: "Use HTTP cover art", bundle: .module))
+                        Spacer()
+                        Toggle("", isOn: Binding<Bool>(
+                            get: {
+                                player.userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player))
+                            },
+                            set: { newValue in
+                                player.userDefaults.set(newValue, forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player))
+                                player.attributes = MPDPlayer.PlayerAttributes(uuid: player.attributes.uuid,
+                                                                               name: player.attributes.name,
+                                                                               type: player.attributes.type,
+                                                                               version: player.attributes.version,
+                                                                               host: player.attributes.host,
+                                                                               port: player.attributes.port,
+                                                                               password: player.attributes.password,
+                                                                               useHttpCoverArt: newValue)
+                            }
+                        ))
+                    }
+                }
             }
             
             // HTTP Output Section
@@ -312,6 +337,7 @@ public struct MPDSettingsView: View {
         } else {
             ud.removeObject(forKey: MPDDefaultKey.outputPort.stringValue(player))
         }
+        
         player.objectWillChange.send()
     }
     
