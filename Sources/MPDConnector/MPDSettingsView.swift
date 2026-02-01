@@ -86,7 +86,7 @@ public struct MPDSettingsView: View {
                             .onTapGesture {
                                 selectedType = t
                                 player.type = t
-                                player.userDefaults.set(t.rawValue, forKey: DefaultsKey.MPDType.stringValue(player))
+                                player.userDefaults.set(t.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(player))
                                 player.objectWillChange.send()
                             }
                         }

@@ -109,7 +109,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                 }
 
                 counter += 1
-                if counter > 20 {
+                if counter > 5 {
                     counter = 0
                     if let playerStatus = try? await playerStatus() {
                         self.playerStatus = playerStatus
@@ -118,7 +118,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                     }
                 }
                 
-                try? await Task.sleep(nanoseconds: 250_000_000)
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
         }
     }
