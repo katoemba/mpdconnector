@@ -68,7 +68,7 @@ public enum MPDType: Int, Codable, CaseIterable {
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
     public struct PlayerAttributes: Codable {
-        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool) {
+        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool) {
             self.uuid = uuid
             self.name = name
             self.type = type
@@ -77,6 +77,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.port = port
             self.password = password
             self.useHttpCoverArt = useHttpCoverArt
+            self.manual = manual
         }
         
         // identification
@@ -89,6 +90,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         let host: String
         let port: Int
         let password: String?
+        let manual: Bool
         
         // player settings
         let useHttpCoverArt: Bool
@@ -249,16 +251,17 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.commands = (try? await self.mpdConnector.status.commands()) ?? []
         }
 
-        if let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))) {
+        if let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))), storedType != .unknown {
             self.type = storedType
             self.attributes = PlayerAttributes(uuid: attributes.uuid,
-                                               name: attributes.host,
+                                               name: attributes.name,
                                                type: storedType,
                                                version: attributes.version,
                                                host: attributes.host,
                                                port: attributes.port,
                                                password: attributes.password,
-                                               useHttpCoverArt: userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)))
+                                               useHttpCoverArt: userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)),
+                                               manual: attributes.manual)
         }
         else {
             self.type = attributes.type
@@ -343,8 +346,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     }
     
     @ViewBuilder
-    public func settingsView() -> some View {
-        MPDSettingsView(player: self)
+    public func settingsView(deleteAction: ((any PlayerProtocol) -> ())?) -> some View {
+        MPDSettingsView(player: self, deleteAction: deleteAction)
     }
 }
 

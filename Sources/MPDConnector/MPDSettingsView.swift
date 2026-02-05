@@ -28,11 +28,14 @@ public struct MPDSettingsView: View {
     @State private var databaseAlbums: String = "-"
     @State private var databaseSongs: String = "-"
     @State private var performingDBAction: Bool = false
+    @State private var showDeleteConfirmation: Bool = false
     
     private let changeNameTip = MPDChangeNameTip()
+    private let deleteAction: ((any PlayerProtocol) -> ())?
     
-    public init(player: MPDPlayer) {
+    public init(player: MPDPlayer, deleteAction: ((any PlayerProtocol) -> ())?) {
         self.player = player
+        self.deleteAction = deleteAction
         
         // Initialize fields from userDefaults if available
         let ud = player.userDefaults
@@ -147,17 +150,40 @@ public struct MPDSettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                HStack {
-                    Text(String(localized: "Hide Player", bundle: .module))
-                    Spacer()
-                    Toggle("", isOn: Binding<Bool>(
-                        get: {
-                            player.userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(player))
-                        },
-                        set: { newValue in
-                            player.userDefaults.set(newValue, forKey: MPDDefaultKey.hidden.stringValue(player))
+                if player.attributes.manual {
+                    HStack {
+                        Text(String(localized: "Manually Added Player", bundle: .module))
+                        Spacer()
+                        if let deleteAction {
+                            Button("Delete", role: .destructive) {
+                                showDeleteConfirmation = true
+                            }
+                            .confirmationDialog(
+                                Text("Are you sure you want to delete this player?", bundle: .module),
+                                isPresented: $showDeleteConfirmation,
+                                titleVisibility: .visible
+                            ) {
+                                Button(String(localized: "Delete", bundle: .module), role: .destructive) {
+                                    deleteAction(player)
+                                }
+                                Button(String(localized: "Cancel", bundle: .module), role: .cancel) { }
+                            }
                         }
-                    ))
+                    }
+                }
+                else {
+                    HStack {
+                        Text(String(localized: "Hide Player", bundle: .module))
+                        Spacer()
+                        Toggle("", isOn: Binding<Bool>(
+                            get: {
+                                player.userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(player))
+                            },
+                            set: { newValue in
+                                player.userDefaults.set(newValue, forKey: MPDDefaultKey.hidden.stringValue(player))
+                            }
+                        ))
+                    }
                 }
             }
             
@@ -203,7 +229,8 @@ public struct MPDSettingsView: View {
                                                                                host: player.attributes.host,
                                                                                port: player.attributes.port,
                                                                                password: player.attributes.password,
-                                                                               useHttpCoverArt: newValue)
+                                                                               useHttpCoverArt: newValue,
+                                                                               manual: false)
                             }
                         ))
                     }

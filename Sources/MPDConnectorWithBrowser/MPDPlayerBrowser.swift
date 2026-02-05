@@ -96,8 +96,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         for definition in predefinedPlayers {
             guard definition.type == controllerType else { continue }
             Task {
-                guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults),
-                      await player.ping() else {
+                guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
+                guard await player.ping() == true else {
+                    print("Couldn't ping player \(player.name)")
                     return
                 }
                 
@@ -217,7 +218,8 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                     host: connectionData.host,
                                                     port: connectionData.port,
                                                     password: nil,
-                                                    useHttpCoverArt: false)
+                                                    useHttpCoverArt: false,
+                                                    manual: false)
 
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
@@ -340,7 +342,162 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
 
     @ViewBuilder
     public func manualAddPlayerView() -> some View {
-        Text("Here we can add a player manually.")
+        ManualAddMPDPlayerView(userDefaults: userDefaults) { [weak self] player in
+            guard let self else { return }
+            if !self.players.contains(where: { $0.uniqueID == player.uniqueID }) {
+                self.players.append(player)
+            }
+        }
+    }
+}
+
+private struct ManualAddMPDPlayerView: View {
+    @State private var name: String = ""
+    @State private var host: String = ""
+    @State private var port: Int = 6600
+    @State private var type: MPDType = .classic
+    @State private var password: String = ""
+    @State private var isTesting = false
+    @State private var canTest = false
+    @State private var testResult = ""
+    @State private var testColor: Color = .secondary
+    @State private var testSucceeded: Bool = false
+    @Environment(\.dismiss) private var dismiss
+
+    let userDefaults: UserDefaults
+    let onSave: (MPDPlayer) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Form {
+                Section(header: Text(String(localized: "Connection", bundle: .module))) {
+                    TextField(String(localized: "Name", bundle: .module), text: $name)
+                        .textContentType(.name)
+                    TextField(String(localized: "IP address or host", bundle: .module), text: $host)
+                        .autocorrectionDisabled(true)
+                    TextField(String(localized: "Port", bundle: .module), value: $port, formatter: NumberFormatter())
+                    Picker(String(localized: "Type", bundle: .module), selection: $type) {
+                        Text("Classic").tag(MPDType.classic)
+                        Text("Chord").tag(MPDType.chord)
+                        Text("moOde").tag(MPDType.moodeaudio)
+                        Text("Volumio").tag(MPDType.volumio)
+                        Text("Bryston").tag(MPDType.bryston)
+                    }
+                    SecureField(String(localized: "Password (optional)", bundle: .module), text: $password)
+                }
+                .onChange(of: host) { _, _ in
+                    resetTest()
+                }
+                .onChange(of: port) { _, _ in
+                    resetTest()
+                }
+
+                Section {
+                    Text(testResult)
+                        .foregroundStyle(testColor)
+                }
+            }
+            .formStyle(.grouped)
+            .frame(minWidth: 420, idealWidth: 520, maxWidth: 640, alignment: .center)
+            .toolbar {
+                ToolbarItem() {
+                    Button(String(localized: "Test Connection", bundle: .module)) {
+                        Task {
+                            await testConnection()
+                        }
+                    }
+                    .disabled(!canTest)
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "Cancel", bundle: .module)) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(String(localized: "Save", bundle: .module)) {
+                        let attributes = MPDPlayer.PlayerAttributes(
+                            uuid: UUID(),
+                            name: name.isEmpty ? host : name,
+                            type: type,
+                            version: "0.0.0",
+                            ipAddress: host,
+                            host: host,
+                            port: port,
+                            password: password.isEmpty ? nil : password,
+                            useHttpCoverArt: false,
+                            manual: true
+                        )
+
+                        // Persist manual player, add in-memory, and dismiss
+                        let player = MPDPlayer(attributes, userDefaults: userDefaults)
+                        onSave(player)
+                        dismiss()
+                    }
+                    .disabled(!testSucceeded || name.isEmpty)
+                }
+            }
+        }
+        .onAppear() {
+            resetTest()
+        }
+    }
+
+    private func buildPlayer() -> MPDPlayer {
+        let attributes = MPDPlayer.PlayerAttributes(
+            uuid: UUID(),
+            name: name.isEmpty ? host : name,
+            type: type,
+            version: "0.0.0",
+            ipAddress: host,
+            host: host,
+            port: port,
+            password: password.isEmpty ? nil : password,
+            useHttpCoverArt: false,
+            manual: true
+        )
+        return MPDPlayer(attributes, userDefaults: userDefaults)
+    }
+
+    @MainActor
+    private func testConnection() async {
+        isTesting = true
+        defer { isTesting = false }
+        testResult = String(localized: "Testing...", bundle: .module)
+        testColor = .primary
+
+        let player = buildPlayer()
+        let ok = await player.ping()
+        if ok {
+            testResult = String(localized: "Connection successful", bundle: .module)
+            testColor = .green
+            testSucceeded = true
+        } else {
+            testResult = String(localized: "Failed to connect", bundle: .module)
+            testColor = .red
+            testSucceeded = false
+        }
+    }
+    
+    private func resetTest() {
+        canTest = !host.isEmpty && port != 0
+        testResult = String(localized: "Not Connected", bundle: .module)
+        testColor = .secondary
+        testSucceeded = false
+    }
+
+    @MainActor
+    private func savePlayer() {
+        var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") as? [String: [String: Any]] ?? [:]
+        let playerName = name.isEmpty ? host : name
+        let dict: [String: Any] = [
+            "name": playerName,
+            "host": host,
+            "ipAddress": host,
+            "port": port,
+            "type": type.rawValue,
+            "password": password.isEmpty ? "" : password,
+            "useHttpCoverArt": false
+        ]
+        persistedPlayers[playerName] = dict
+        userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
     }
 }
 

@@ -30,6 +30,16 @@
         }
       }
     },
+    "Are you sure you want to delete this player?" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weet je zeker dat je deze speler wil verwijderen?"
+          }
+        }
+      }
+    },
     "Artists" : {
       "localizations" : {
         "nl" : {
@@ -40,12 +50,32 @@
         }
       }
     },
+    "Cancel" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        }
+      }
+    },
     "Change name" : {
       "localizations" : {
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pas naam aan"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder"
           }
         }
       }
@@ -136,6 +166,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "IP adres om te gebruiken"
+          }
+        }
+      }
+    },
+    "Manually Added Player" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handmatig toegevoegde speler"
           }
         }
       }

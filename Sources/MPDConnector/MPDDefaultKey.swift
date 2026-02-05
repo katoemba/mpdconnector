@@ -5,7 +5,7 @@
 //  Created by Berrie Kremers on 26/12/2025.
 //
 
-internal enum MPDDefaultKey: String {
+public enum MPDDefaultKey: String {
     case coverHttpPort = "MPD.Uri.Port"
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"
@@ -21,16 +21,17 @@ internal enum MPDDefaultKey: String {
     case hidden = "MPD.Hidden"
     case password = "MPD.Password"
     case useHttpCoverArt = "MPD.UseHttpCoverArt"
+    case manualPlayers = "MPD.ManualPlayers"
     
-    func stringValue(_ player: MPDPlayer) -> String {
+    public func stringValue(_ player: MPDPlayer) -> String {
         return player.defaultsKey(self.rawValue)
     }
     
-    func stringValue(_ uniqueID: String) -> String {
+    public func stringValue(_ uniqueID: String) -> String {
         return self.rawValue + "." + uniqueID
     }
     
-    func stringValue(host: String, port: Int) -> String {
+    public func stringValue(host: String, port: Int) -> String {
         return self.rawValue + "." + MPDPlayer.uniqueIDForPlayer(host: host, port: port)
     }
 }

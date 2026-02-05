@@ -1,0 +1,151 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Bryston" : {
+      "shouldTranslate" : false
+    },
+    "Cancel" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        }
+      }
+    },
+    "Chord" : {
+      "shouldTranslate" : false
+    },
+    "Classic" : {
+      "shouldTranslate" : false
+    },
+    "Connection" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbinding"
+          }
+        }
+      }
+    },
+    "Connection successful" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbinding geslaagd"
+          }
+        }
+      }
+    },
+    "Failed to connect" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbinding mislukt"
+          }
+        }
+      }
+    },
+    "IP address or host" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP adres of hostnaam"
+          }
+        }
+      }
+    },
+    "moOde" : {
+      "shouldTranslate" : false
+    },
+    "Name" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naam"
+          }
+        }
+      }
+    },
+    "Not Connected" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet verbonden"
+          }
+        }
+      }
+    },
+    "Password (optional)" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wachtwoord (optioneel)"
+          }
+        }
+      }
+    },
+    "Port" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poort"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar"
+          }
+        }
+      }
+    },
+    "Test Connection" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test verbinding"
+          }
+        }
+      }
+    },
+    "Testing..." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testen…"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        }
+      }
+    },
+    "Volumio" : {
+      "shouldTranslate" : false
+    }
+  },
+  "version" : "1.1"
+}
