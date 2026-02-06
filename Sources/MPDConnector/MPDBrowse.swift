@@ -212,8 +212,10 @@ final public class MPDBrowse: BrowseProtocol {
         if case let .filenameOptionsURI(baseUri, path, possibleFilenames) = song.coverURI {
             let baseUriComponents = baseUri.components(separatedBy: "/")
             var newBaseUri = ""
-            for idx in 0..<baseUriComponents.count - 2 {
-                newBaseUri.append(baseUriComponents[idx] + "/")
+            if baseUriComponents.count > 2 {
+                for idx in 0..<baseUriComponents.count - 2 {
+                    newBaseUri.append(baseUriComponents[idx] + "/")
+                }
             }
 
             let pathComponents = path.components(separatedBy: "/")
