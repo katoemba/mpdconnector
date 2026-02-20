@@ -146,7 +146,7 @@ public struct MPDSettingsView: View {
                 HStack {
                     Text("Port", bundle: .module)
                     Spacer()
-                    Text("\(player.attributes.port)")
+                    Text(verbatim: "\(player.attributes.port)")
                         .foregroundColor(.secondary)
                 }
                 
@@ -252,12 +252,20 @@ public struct MPDSettingsView: View {
                 HStack {
                     Text(String(localized: "Port number", bundle: .module))
                     Spacer()
-                    TextField("", text: $outputPortField, prompt: Text("Enter port"))
-                        .multilineTextAlignment(.trailing)
-                        .textFieldStyle(.automatic)
-                        .onChange(of: outputPortField) { _, _ in
+                    let portFieldBinding = Binding(
+                        get: { outputPortField },
+                        set: { newValue in
+                            let digitsOnly = newValue.filter { $0.isWholeNumber }
+                            outputPortField = digitsOnly
                             updateStreamSettings()
                         }
+                    )
+                    TextField("", text: portFieldBinding, prompt: Text("Enter port"))
+                        .multilineTextAlignment(.trailing)
+                        .textFieldStyle(.automatic)
+#if os(iOS) || os(tvOS)
+                        .keyboardType(.numberPad)
+#endif
                 }
             }
             
