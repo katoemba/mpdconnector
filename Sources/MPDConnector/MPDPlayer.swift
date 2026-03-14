@@ -198,13 +198,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public var control: ControlProtocol {
         get {
             // Use serialScheduler to synchronize commands across multiple MPDControl instances.
-            return MPDControl.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector)
+            return MPDControl.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector, userDefaults: userDefaults)
         }
     }
     /// Create a unique object for every request for a browse object
     public var browse: BrowseProtocol {
         get {
-            return MPDBrowse.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector)
+            return MPDBrowse.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector, userDefaults: userDefaults)
         }
     }
     
@@ -217,7 +217,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
 //        let portString = outputPortProp ?? ""
 //        guard !hostString.isEmpty, let port = Int(portString), port != 0 else { return nil }
 //        return URL(string: "http://\(hostString):\(port)")
-        return nil
+        return URL(string: "http://192.168.1.5:8000")
     }
     
     // MARK: - Initialization and connecting

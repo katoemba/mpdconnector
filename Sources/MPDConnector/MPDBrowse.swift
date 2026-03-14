@@ -46,13 +46,16 @@ final public class MPDBrowse: BrowseProtocol {
     private var identification = ""
     private var attributes: MPDPlayer.PlayerAttributes
     private let mpdConnector: SwiftMPD.MPDConnector
+    private let userDefaults: UserDefaults
 
     public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
-                mpdConnector: SwiftMPD.MPDConnector) {
+                mpdConnector: SwiftMPD.MPDConnector,
+                userDefaults: UserDefaults) {
         self.attributes = attributes
         self.identification = identification
         self.mpdConnector = mpdConnector
+        self.userDefaults = userDefaults
     }
     
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) async throws -> SearchResult {
@@ -333,25 +336,34 @@ final public class MPDBrowse: BrowseProtocol {
     }
 
     public func albums(genre: Genre?) async throws -> [Album] {
-        let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
-        let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist, .albumArtistSort, .date])
-        var albums = Set<Album>()
-        
-        for group in artists {
-            guard case let .group(artist) = group, let artistValue = artist.value else { continue }
-            for group in artist.children {
-                guard case let .group(sortArtist) = group, let sortArtistValue = sortArtist.value else { continue }
-                for group in sortArtist.children {
-                    guard case let .group(year) = group, let yearValue = year.value else { continue }
-                    for value in year.children {
-                        guard case let .value(album) = value, album != "" && artistValue != "" else { continue }
-                        albums.insert(Album(id: "\(artistValue):\(album)", source: .Local, location: "", title: album, artist: artistValue, year: Int(String(yearValue.prefix(4))) ?? 0, genre: [], length: 0, sortArtist: sortArtistValue))
-                    }
-                }
-            }
+        if mpdConnector.version < MPDConnection.Version("0.20.22") {
+            return try await fetchAlbums_below_20_22(genre: genre)
         }
-        
-        return Array<Album>(albums)
+        else if mpdConnector.version < MPDConnection.Version("0.21.11") {
+            return try await fetchAlbums_20_22_and_above(genre: genre)
+        }
+        else {
+            return try await fetchAlbums_21_11_and_above(genre: genre)
+        }
+//        let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
+//        let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist, .albumArtistSort, .date])
+//        var albums = Set<Album>()
+//        
+//        for group in artists {
+//            guard case let .group(artist) = group, let artistValue = artist.value else { continue }
+//            for group in artist.children {
+//                guard case let .group(sortArtist) = group, let sortArtistValue = sortArtist.value else { continue }
+//                for group in sortArtist.children {
+//                    guard case let .group(year) = group, let yearValue = year.value else { continue }
+//                    for value in year.children {
+//                        guard case let .value(album) = value, album != "" && artistValue != "" else { continue }
+//                        albums.insert(Album(id: "\(artistValue):\(album)", source: .Local, location: "", title: album, artist: artistValue, year: Int(String(yearValue.prefix(4))) ?? 0, genre: [], length: 0, sortArtist: sortArtistValue))
+//                    }
+//                }
+//            }
+//        }
+//        
+//        return Array<Album>(albums)
     }
     
     /// Fetch an array of all songs that match a Genre
@@ -364,9 +376,11 @@ final public class MPDBrowse: BrowseProtocol {
     }
 
     // This is the old-fashioned way of getting data, using a double group by.
-    private func fetchAlbums_below_20_22(genre: Genre? = nil, sort: SortType) async throws -> [Album] {
+    private func fetchAlbums_below_20_22(genre: Genre? = nil) async throws -> [Album] {
         let filter: MPDDatabase.Expression? = (genre == nil) ? nil : MPDDatabase.Expression.tagEquals(tag: .genre, value: genre!.id)
-        let keyValuePairs: [KeyValuePair] = try await self.mpdConnector.database.list(type: .album, filter: filter, groupBy: [.albumArtist, .date], raw: true).compactMap {
+        let albumGroupingString = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(identification))
+        let albumGrouping: MPDDatabase.Tag = albumGroupingString == "albumartist" ? .albumArtist : .artist
+        let keyValuePairs: [KeyValuePair] = try await self.mpdConnector.database.list(type: .album, filter: filter, groupBy: [albumGrouping, .date], raw: true).compactMap {
             switch $0 {
             case let .raw(keyValuePair):
                 return keyValuePair
@@ -387,7 +401,7 @@ final public class MPDBrowse: BrowseProtocol {
             idx += 1
             if title != "" {
                 var albumArtist = "Unknown"
-                if idx < keyValuePairs.count, keyValuePairs[idx].key == "albumartist" {
+                if idx < keyValuePairs.count, keyValuePairs[idx].key == albumGroupingString {
                     albumArtist = keyValuePairs[idx].value
                     idx += 1
                 }
@@ -403,12 +417,12 @@ final public class MPDBrowse: BrowseProtocol {
             }
         }
 
-        return Array<Album>(albums).sorted(sort: sort)
+        return Array<Album>(albums)
     }
     
     // The grouping was changed in 0.20.22 and above. It works more consistently it seems,
     // but because of mpd bug https://github.com/MusicPlayerDaemon/MPD/issues/408 multiple group-by's are not possible
-    private func fetchAlbums_20_22_and_above(genre: Genre?, sort: SortType) async throws -> [Album] {
+    private func fetchAlbums_20_22_and_above(genre: Genre?) async throws -> [Album] {
         let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
         let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist])
         var albums = Set<Album>()
@@ -421,11 +435,11 @@ final public class MPDBrowse: BrowseProtocol {
             }
         }
 
-        return Array<Album>(albums).sorted(sort: sort)
+        return Array<Album>(albums)
     }
     
     // Multiple grouping returns in 0.21.11 and now works consistently.
-    private func fetchAlbums_21_11_and_above(genre: Genre?, sort: SortType) async throws -> [Album] {
+    private func fetchAlbums_21_11_and_above(genre: Genre?) async throws -> [Album] {
         let expression: MPDDatabase.Expression? = (genre != nil) ? .tagEquals(tag: .genre, value: genre!.id) : nil
         let artists = try await self.mpdConnector.database.list(type: .album, filter: expression, groupBy: [.albumArtist, .albumArtistSort, .date])
         var albums = Set<Album>()
@@ -444,7 +458,7 @@ final public class MPDBrowse: BrowseProtocol {
             }
         }
         
-        return Array<Album>(albums).sorted(sort: sort)
+        return Array<Album>(albums)
     }
     
     public func completeAlbums(_ albums: [Album]) async throws -> [Album] {

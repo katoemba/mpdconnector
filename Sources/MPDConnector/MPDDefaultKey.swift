@@ -22,6 +22,7 @@ public enum MPDDefaultKey: String {
     case password = "MPD.Password"
     case useHttpCoverArt = "MPD.UseHttpCoverArt"
     case manualPlayers = "MPD.ManualPlayers"
+    case albumGrouping = "MPD.AlbumGrouping"
     
     public func stringValue(_ player: MPDPlayer) -> String {
         return player.defaultsKey(self.rawValue)

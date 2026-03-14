@@ -8,6 +8,7 @@
 import SwiftUI
 import TipKit
 import ConnectorProtocol
+import SwiftMPD
 
 public struct MPDSettingsView: View {
     @ObservedObject private var player: MPDPlayer
@@ -23,6 +24,7 @@ public struct MPDSettingsView: View {
     @State private var outputPortField: String = ""
     
     // Database status
+    @State private var albumGroupingSelection: String = "albumartist"
     @State private var databaseStatusText: String = ""
     @State private var databaseArtists: String = "-"
     @State private var databaseAlbums: String = "-"
@@ -53,6 +55,8 @@ public struct MPDSettingsView: View {
 
         // Initialize selected type from player
         self._selectedType = State(initialValue: player.type)
+        
+        self._albumGroupingSelection = State(initialValue: ud.string(forKey: MPDDefaultKey.albumGrouping.stringValue(player)) ??  "albumartist")
     }
     
     public var body: some View {
@@ -276,6 +280,23 @@ public struct MPDSettingsView: View {
                     Spacer()
                     Text(databaseStatusText)
                         .foregroundColor(.secondary)
+                }
+                
+                if player.mpdConnector.version < MPDConnection.Version("0.20.0") {
+                    HStack {
+                        Text("Album Grouping", bundle: .module)
+                        Spacer()
+                        Picker("", selection: $albumGroupingSelection) {
+                            Text("Album Artist", bundle: .module).tag("albumartist")
+                            Text("Artist", bundle: .module).tag("artist")
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: albumGroupingSelection) { _, newValue in
+                            // Update player when type changes
+                            player.userDefaults.set(newValue, forKey: MPDDefaultKey.albumGrouping.stringValue(player))
+                            player.objectWillChange.send()
+                        }
+                    }
                 }
                 
                 HStack {
