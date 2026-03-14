@@ -1,2721 +1,3049 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "": {
-      "shouldTranslate": false
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+      "shouldTranslate" : false
     },
-    "%@": {
-      "shouldTranslate": false
+    "%@" : {
+      "shouldTranslate" : false
     },
-    "%lld": {
-      "shouldTranslate": false
+    "%lld" : {
+      "shouldTranslate" : false
     },
-    "Advanced": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geavanceerd"
+    "Advanced" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanceret"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erweitert"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweitert"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avancé"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanzado"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "詳細"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisäasetukset"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "高级"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancé"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avanceret"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanzate"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avancerat"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "詳細"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avansert"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avansert"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lisäasetukset"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geavanceerd"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Додатково"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avançado"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avanzado"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancerat"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avançado"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додатково"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avanzate"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高级"
           }
         }
       }
     },
-    "Albums": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Albums"
+    "Album" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alben"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Albums"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbum"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アルバム"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumi"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "专辑"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Album"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Album"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アルバム"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Album"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Albumit"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Альбоми"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbum"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Álbumes"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Álbuns"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Альбом"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Album"
-          }
-        }
-      }
-    },
-    "Are you sure you want to delete this player?": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weet je zeker dat je deze speler wil verwijderen?"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Möchten Sie diesen Player wirklich löschen?"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voulez-vous vraiment supprimer ce lecteur ?"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このプレーヤーを削除してもよろしいですか？"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确定要删除此播放器吗？"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Er du sikker på, at du vil slette denne afspiller?"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Är du säker på att du vill ta bort den här spelaren?"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Er du sikker på at du vil slette denne spilleren?"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Haluatko varmasti poistaa tämän soittimen?"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ви впевнені, що хочете видалити цей плеєр?"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Seguro que quieres eliminar este reproductor?"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tem certeza de que deseja excluir este reprodutor?"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sei sicuro di voler eliminare questo lettore?"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专辑"
           }
         }
       }
     },
-    "Artists": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artiesten"
+    "Album Artist" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumkunstner"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Künstler"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumkünstler"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artistes"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista del álbum"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アーティスト"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumin artisti"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "艺术家"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artiste de l'album"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kunstnere"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista dell'album"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artister"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アルバムアーティスト"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artister"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumartist"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artistit"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumartiest"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Виконавці"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista do álbum"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artistas"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumartist"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artistas"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Артист альбому"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artisti"
-          }
-        }
-      }
-    },
-    "Cancel": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annuleer"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abbrechen"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annuler"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャンセル"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annuller"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avbryt"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avbryt"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Peruuta"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скасувати"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancelar"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancelar"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annulla"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专辑艺术家"
           }
         }
       }
     },
-    "Change name": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas naam aan"
+    "Album Grouping" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumgruppering"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name ändern"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumgruppierung"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modifier le nom"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrupación de álbumes"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "名前を変更"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumiryhmittely"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更改名称"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regroupement d'albums"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skift navn"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raggruppamento album"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Byt namn"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アルバムのグループ化"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Endre navn"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumgruppering"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vaihda nimi"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumgroepering"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Змінити ім’я"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrupamento de álbuns"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cambiar nombre"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumgruppering"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alterar nome"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Групування альбомів"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cambia nome"
-          }
-        }
-      }
-    },
-    "Delete": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verwijder"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Löschen"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "削除"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Slet"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ta bort"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Slett"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poista"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Видалити"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Excluir"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elimina"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专辑分组"
           }
         }
       }
     },
-    "Enter hostname or IP": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hostnaam of ip-adres"
+    "Albums" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hostname oder IP eingeben"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alben"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisir le nom d’hôte ou l’IP"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbumes"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ホスト名またはIPを入力"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albumit"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "输入主机名或IP"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albums"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indtast værtsnavn eller IP"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ange värdnamn eller IP"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アルバム"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skriv inn vertsnavn eller IP"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anna isäntänimi tai IP"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albums"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Введіть ім’я хоста або IP"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbuns"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Introduce el nombre de host o IP"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Digite o nome do host ou IP"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Альбоми"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inserisci nome host o IP"
-          }
-        }
-      }
-    },
-    "Enter port": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poort nummer"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Port eingeben"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisir le port"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ポートを入力"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "输入端口"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indtast port"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ange port"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skriv inn port"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anna portti"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Введіть порт"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Introduce el puerto"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Digite a porta"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inserisci la porta"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专辑"
           }
         }
       }
     },
-    "Hide Player": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verberg speler"
+    "Are you sure you want to delete this player?" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er du sikker på, at du vil slette denne afspiller?"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Player ausblenden"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Möchten Sie diesen Player wirklich löschen?"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Masquer le lecteur"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Seguro que quieres eliminar este reproductor?"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "プレーヤーを非表示"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haluatko varmasti poistaa tämän soittimen?"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隐藏播放器"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voulez-vous vraiment supprimer ce lecteur ?"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skjul afspiller"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sei sicuro di voler eliminare questo lettore?"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dölj spelare"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプレーヤーを削除してもよろしいですか？"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skjul spiller"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er du sikker på at du vil slette denne spilleren?"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Piilota soitin"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weet je zeker dat je deze speler wil verwijderen?"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Приховати плеєр"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tem certeza de que deseja excluir este reprodutor?"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ocultar reproductor"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Är du säker på att du vill ta bort den här spelaren?"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ocultar reprodutor"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви впевнені, що хочете видалити цей плеєр?"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nascondi lettore"
-          }
-        }
-      }
-    },
-    "Host": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Host"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Host"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hôte"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ホスト"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主机"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vært"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Värd"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vert"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Isäntä"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Хост"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Host"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Host"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Host"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定要删除此播放器吗？"
           }
         }
       }
     },
-    "Host or IP Address": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hostnaam of ip-adres"
+    "Artist" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunstner"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hostname oder IP-Adresse"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Künstler"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nom d’hôte ou adresse IP"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ホスト名またはIPアドレス"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artisti"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主机名或IP地址"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artiste"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Værtsnavn eller IP-adresse"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Värdnamn eller IP-adress"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アーティスト"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vertsnavn eller IP-adresse"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artist"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Isäntänimi tai IP-osoite"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artiest"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ім’я хоста або IP-адреса"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nombre de host o dirección IP"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artist"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nome do host ou endereço IP"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виконавець"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nome host o indirizzo IP"
-          }
-        }
-      }
-    },
-    "HTTP Stream": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP Stream"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-Stream"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flux HTTP"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTPストリーム"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP 流"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-stream"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-ström"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-strøm"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-striimi"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-потік"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flujo HTTP"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fluxo HTTP"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flusso HTTP"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "艺术家"
           }
         }
       }
     },
-    "If the player is not responding, you can connect directly to it's IP instead. Normally this shall be disabled.": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Als de speler niet reageert, kun je in plaats daarvan rechtstreeks verbinding maken met het IP-adres. Normaal gesproken moet dit uitgeschakeld blijven."
+    "Artists" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunstnere"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wenn der Player nicht reagiert, können Sie stattdessen direkt mit seiner IP verbinden. Normalerweise sollte dies deaktiviert sein."
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Künstler"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si le lecteur ne répond pas, vous pouvez vous connecter directement à son IP. Normalement, cela doit rester désactivé."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artistas"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "プレーヤーが応答しない場合は、代わりにIPへ直接接続できます。通常は無効にしておく必要があります。"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artistit"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "如果播放器没有响应，你可以改为直接连接其 IP。通常应保持禁用。"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artistes"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hvis afspilleren ikke svarer, kan du i stedet oprette direkte forbindelse til dens IP. Normalt skal dette være deaktiveret."
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artisti"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Om spelaren inte svarar kan du ansluta direkt till dess IP. Normalt ska detta vara inaktiverat."
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アーティスト"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hvis spilleren ikke svarer, kan du i stedet koble deg direkte til IP-adressen. Normalt skal dette være deaktivert."
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artister"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jos soitin ei vastaa, voit muodostaa yhteyden suoraan sen IP-osoitteeseen. Tavallisesti tämän tulisi olla pois päältä."
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artiesten"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Якщо плеєр не відповідає, ви можете під’єднатися безпосередньо до його IP. Зазвичай це має бути вимкнено."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artistas"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si el reproductor no responde, puedes conectarte directamente a su IP. Normalmente esto debe estar desactivado."
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artister"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se o reprodutor não responder, você pode se conectar diretamente ao IP dele. Normalmente isso deve ficar desativado."
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виконавці"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se il lettore non risponde, puoi collegarti direttamente al suo IP. Normalmente questo deve essere disattivato."
-          }
-        }
-      }
-    },
-    "If you have configured a http-stream output for mpd, you can enter the ip address and port number here. Rigelian can then play the stream on your local machine.": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Als je een http-stream-uitvoer voor MPD hebt geconfigureerd, kun je hier het IP-adres en poortnummer invoeren. Rigelian kan de stream dan op je lokale apparaat afspelen."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wenn Sie für MPD einen HTTP-Stream-Ausgang konfiguriert haben, können Sie hier die IP-Adresse und die Portnummer eingeben. Rigelian kann den Stream dann auf Ihrem lokalen Gerät abspielen."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si vous avez configuré une sortie de flux HTTP pour MPD, vous pouvez saisir ici l’adresse IP et le numéro de port. Rigelian pourra alors lire le flux sur votre machine locale."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD のHTTPストリーム出力を設定している場合、ここにIPアドレスとポート番号を入力できます。Rigelian はそのストリームをローカル端末で再生できます。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "如果你为 MPD 配置了 HTTP 流输出，可在此输入 IP 地址和端口号。Rigelian 就能在本机播放该流。"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hvis du har konfigureret en HTTP-stream-output for MPD, kan du indtaste IP-adressen og portnummeret her. Rigelian kan derefter afspille streamen på din lokale maskine."
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Om du har konfigurerat en HTTP-strömutgång för MPD kan du ange IP-adress och portnummer här. Rigelian kan då spela upp strömmen på din lokala maskin."
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hvis du har konfigurert en HTTP-strøm-utgang for MPD, kan du skrive inn IP-adresse og portnummer her. Rigelian kan da spille av strømmen på din lokale maskin."
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jos olet määrittänyt MPD:lle HTTP-striimiulostulon, voit syöttää IP-osoitteen ja porttinumeron tähän. Rigelian voi sitten toistaa striimin paikallisella koneella."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Якщо ви налаштували HTTP-потік для MPD, тут можна ввести IP-адресу та номер порту. Тоді Rigelian відтворюватиме потік на локальному пристрої."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si has configurado una salida de flujo HTTP para MPD, puedes introducir aquí la dirección IP y el número de puerto. Rigelian podrá reproducir el flujo en tu máquina local."
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se você configurou uma saída de fluxo HTTP para o MPD, pode inserir aqui o endereço IP e o número da porta. O Rigelian poderá reproduzir o fluxo na sua máquina local."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se hai configurato un’uscita di flusso HTTP per MPD, puoi inserire qui l’indirizzo IP e il numero di porta. Rigelian potrà riprodurre il flusso sul tuo dispositivo locale."
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "艺术家"
           }
         }
       }
     },
-    "IP Address to Use": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IP adres om te gebruiken"
+    "Cancel" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zu verwendende IP-Adresse"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbrechen"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adresse IP à utiliser"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用するIPアドレス"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peruuta"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "要使用的 IP 地址"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IP-adresse, der skal bruges"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IP-adress att använda"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キャンセル"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IP-adresse som skal brukes"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Käytettävä IP-osoite"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IP-адреса для використання"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dirección IP a usar"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Endereço IP a usar"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indirizzo IP da usare"
-          }
-        }
-      }
-    },
-    "Manually Added Player": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Handmatig toegevoegde speler"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manuell hinzugefügter Player"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lecteur ajouté manuellement"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "手動で追加したプレーヤー"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "手动添加的播放器"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manuelt tilføjet afspiller"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manuellt tillagd spelare"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manuelt lagt til spiller"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Käsin lisätty soitin"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Плеєр, доданий вручну"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reproductor añadido manualmente"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reprodutor adicionado manualmente"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lettore aggiunto manualmente"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         }
       }
     },
-    "MPD Database": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD Database"
+    "Change name" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skift navn"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD-Datenbank"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name ändern"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Base de données MPD"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar nombre"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD データベース"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaihda nimi"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD 数据库"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le nom"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD-database"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia nome"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD-databas"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前を変更"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD-database"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endre navn"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MPD-tietokanta"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas naam aan"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "База даних MPD"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar nome"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Base de datos de MPD"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Byt namn"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Banco de dados do MPD"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити ім’я"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Database MPD"
-          }
-        }
-      }
-    },
-    "Name": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Naam"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nom"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "名前"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "名称"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Navn"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Namn"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Navn"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nimi"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Назва"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nombre"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nome"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nome"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改名称"
           }
         }
       }
     },
-    "Note that for Volumio players, the playqueue in Rigelian is not synchronized with the playqueue shown through the Volumio web interface.": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Let op: bij Volumio-spelers is de afspeelwachtrij in Rigelian niet gesynchroniseerd met de afspeelwachtrij die wordt weergegeven via de Volumio-webinterface."
+    "Delete" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slet"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Beachten Sie, dass bei Volumio-Playern die Wiedergabewarteschlange in Rigelian nicht mit der über die Volumio-Weboberfläche angezeigten Warteschlange synchronisiert ist."
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notez que pour les lecteurs Volumio, la file d’attente de lecture dans Rigelian n’est pas synchronisée avec celle affichée via l’interface Web de Volumio."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Volumio プレーヤーでは、Rigelian の再生キューは Volumio のWebインターフェイスに表示される再生キューと同期されません。"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请注意，对于 Volumio 播放器，Rigelian 中的播放队列与 Volumio 网页界面显示的播放队列不同步。"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bemærk, at for Volumio-afspillere er afspilningskøen i Rigelian ikke synkroniseret med køen, der vises via Volumios webgrænseflade."
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Observera att för Volumio-spelare är kölistan i Rigelian inte synkroniserad med kölistan som visas via Volumios webbgränssnitt."
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Merk at for Volumio-spillere er spillekøen i Rigelian ikke synkronisert med køen som vises via Volumios webgrensesnitt."
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slett"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Huomaa, että Volumio-soittimissa Rigelianin toistojono ei ole synkronoitu Volumion verkkokäyttöliittymässä näkyvän jonon kanssa."
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Зверніть увагу, що для плеєрів Volumio черга відтворення в Rigelian не синхронізується з чергою, показаною у веб-інтерфейсі Volumio."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ten en cuenta que en los reproductores Volumio, la cola de reproducción en Rigelian no está sincronizada con la cola mostrada en la interfaz web de Volumio."
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Observe que, nos reprodutores Volumio, a fila de reprodução no Rigelian não é sincronizada com a fila exibida pela interface web do Volumio."
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Видалити"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nota che per i lettori Volumio, la coda di riproduzione in Rigelian non è sincronizzata con la coda mostrata tramite l’interfaccia web di Volumio."
-          }
-        }
-      }
-    },
-    "Player Information": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Speler informatie"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Player-Informationen"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Informations du lecteur"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "プレーヤー情報"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "播放器信息"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspilleroplysninger"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spelarinformation"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spillerinformasjon"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Soittimen tiedot"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Інформація про плеєр"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Información del reproductor"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Informações do reprodutor"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Informazioni sul lettore"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
           }
         }
       }
     },
-    "Port": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poort"
+    "Enter hostname or IP" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indtast værtsnavn eller IP"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Port"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hostname oder IP eingeben"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Port"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduce el nombre de host o IP"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ポート"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anna isäntänimi tai IP"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "端口"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisir le nom d’hôte ou l’IP"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Port"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserisci nome host o IP"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Port"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホスト名またはIPを入力"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Port"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriv inn vertsnavn eller IP"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portti"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hostnaam of ip-adres"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Порт"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite o nome do host ou IP"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Puerto"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ange värdnamn eller IP"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Porta"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введіть ім’я хоста або IP"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Porta"
-          }
-        }
-      }
-    },
-    "Port number": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poort nummer"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portnummer"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Numéro de port"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ポート番号"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "端口号"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portnummer"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portnummer"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portnummer"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Porttinumero"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Номер порту"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Número de puerto"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Número da porta"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Numero di porta"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入主机名或IP"
           }
         }
       }
     },
-    "Rescan": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opnieuw scannen"
+    "Enter port" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indtast port"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erneut scannen"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port eingeben"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réanalyser"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduce el puerto"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再スキャン"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anna portti"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重新扫描"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisir le port"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scan igen"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserisci la porta"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skanna igen"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポートを入力"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skann på nytt"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriv inn port"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skannaa uudelleen"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poort nummer"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сканувати знову"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite a porta"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reescanear"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ange port"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reexaminar"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введіть порт"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scansiona di nuovo"
-          }
-        }
-      }
-    },
-    "Songs": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Liedjes"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Titel"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Morceaux"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "曲"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "歌曲"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sange"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Låtar"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sanger"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kappaleet"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Пісні"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Canciones"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Músicas"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brani"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入端口"
           }
         }
       }
     },
-    "Status": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+    "Hide Player" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjul afspiller"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Player ausblenden"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Statut"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar reproductor"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ステータス"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piilota soitin"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "状态"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le lecteur"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nascondi lettore"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤーを非表示"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjul spiller"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tila"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verberg speler"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Стан"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar reprodutor"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estado"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dölj spelare"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приховати плеєр"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stato"
-          }
-        }
-      }
-    },
-    "Type": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Typ"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "タイプ"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "类型"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Typ"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tyyppi"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Тип"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tipo"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tipo"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tipo"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏播放器"
           }
         }
       }
     },
-    "Unknown": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Onbekend"
+    "Host" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vært"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unbekannt"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inconnu"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不明"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isäntä"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未知"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hôte"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ukendt"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Okänd"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホスト"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ukjent"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vert"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tuntematon"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Невідомо"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desconocido"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Värd"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desconhecido"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хост"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sconosciuto"
-          }
-        }
-      }
-    },
-    "Update Database": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Database bijwerken"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Datenbank aktualisieren"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mettre à jour la base de données"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "データベースを更新"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更新数据库"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opdater database"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uppdatera databas"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Oppdater database"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Päivitä tietokanta"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Оновити базу даних"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Actualizar base de datos"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Atualizar banco de dados"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aggiorna database"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主机"
           }
         }
       }
     },
-    "Use HTTP cover art": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Laad album covers via HTTP"
+    "Host or IP Address" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Værtsnavn eller IP-adresse"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTP-Covergrafik verwenden"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hostname oder IP-Adresse"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utiliser les pochettes via HTTP"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre de host o dirección IP"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HTTPでカバーアートを使用"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isäntänimi tai IP-osoite"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "通过 HTTP 使用封面"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom d’hôte ou adresse IP"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brug HTTP-omslag"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome host o indirizzo IP"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Använd HTTP-omslag"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホスト名またはIPアドレス"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bruk HTTP-omslag"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vertsnavn eller IP-adresse"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Käytä HTTP-kansikuvia"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hostnaam of ip-adres"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Використовувати обкладинки через HTTP"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome do host ou endereço IP"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar carátulas HTTP"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Värdnamn eller IP-adress"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar capas via HTTP"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ім’я хоста або IP-адреса"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa copertine via HTTP"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主机名或IP地址"
           }
         }
       }
     },
-    "Use IP Address": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gebruik ip adres"
+    "HTTP Stream" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-stream"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IP-Adresse verwenden"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-Stream"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utiliser l’adresse IP"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flujo HTTP"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IPアドレスを使用"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-striimi"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用 IP 地址"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flux HTTP"
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brug IP-adresse"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flusso HTTP"
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Använd IP-adress"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTPストリーム"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bruk IP-adresse"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-strøm"
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Käytä IP-osoitetta"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP Stream"
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Використовувати IP-адресу"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fluxo HTTP"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar dirección IP"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-ström"
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar endereço IP"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-потік"
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa indirizzo IP"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP 流"
           }
         }
       }
     },
-    "Version": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versie"
+    "If the player is not responding, you can connect directly to it's IP instead. Normally this shall be disabled." : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis afspilleren ikke svarer, kan du i stedet oprette direkte forbindelse til dens IP. Normalt skal dette være deaktiveret."
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn der Player nicht reagiert, können Sie stattdessen direkt mit seiner IP verbinden. Normalerweise sollte dies deaktiviert sein."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si el reproductor no responde, puedes conectarte directamente a su IP. Normalmente esto debe estar desactivado."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "バージョン"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jos soitin ei vastaa, voit muodostaa yhteyden suoraan sen IP-osoitteeseen. Tavallisesti tämän tulisi olla pois päältä."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "版本"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si le lecteur ne répond pas, vous pouvez vous connecter directement à son IP. Normalement, cela doit rester désactivé."
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se il lettore non risponde, puoi collegarti direttamente al suo IP. Normalmente questo deve essere disattivato."
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤーが応答しない場合は、代わりにIPへ直接接続できます。通常は無効にしておく必要があります。"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versjon"
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis spilleren ikke svarer, kan du i stedet koble deg direkte til IP-adressen. Normalt skal dette være deaktivert."
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versio"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als de speler niet reageert, kun je in plaats daarvan rechtstreeks verbinding maken met het IP-adres. Normaal gesproken moet dit uitgeschakeld blijven."
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Версія"
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se o reprodutor não responder, você pode se conectar diretamente ao IP dele. Normalmente isso deve ficar desativado."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versión"
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om spelaren inte svarar kan du ansluta direkt till dess IP. Normalt ska detta vara inaktiverat."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versão"
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо плеєр не відповідає, ви можете під’єднатися безпосередньо до його IP. Зазвичай це має бути вимкнено."
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versione"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果播放器没有响应，你可以改为直接连接其 IP。通常应保持禁用。"
           }
         }
       }
     },
-    "You can change the player's name that will be displayed in Rigelian.": {
-      "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Je kunt de naam van de speler wijzigen die in Rigelian wordt weergegeven."
+    "If you have configured a http-stream output for mpd, you can enter the ip address and port number here. Rigelian can then play the stream on your local machine." : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis du har konfigureret en HTTP-stream-output for MPD, kan du indtaste IP-adressen og portnummeret her. Rigelian kan derefter afspille streamen på din lokale maskine."
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sie können den Namen des Players ändern, der in Rigelian angezeigt wird."
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn Sie für MPD einen HTTP-Stream-Ausgang konfiguriert haben, können Sie hier die IP-Adresse und die Portnummer eingeben. Rigelian kann den Stream dann auf Ihrem lokalen Gerät abspielen."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vous pouvez modifier le nom du lecteur affiché dans Rigelian."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si has configurado una salida de flujo HTTP para MPD, puedes introducir aquí la dirección IP y el número de puerto. Rigelian podrá reproducir el flujo en tu máquina local."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rigelian に表示されるプレーヤー名を変更できます。"
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jos olet määrittänyt MPD:lle HTTP-striimiulostulon, voit syöttää IP-osoitteen ja porttinumeron tähän. Rigelian voi sitten toistaa striimin paikallisella koneella."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你可以更改在 Rigelian 中显示的播放器名称。"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si vous avez configuré une sortie de flux HTTP pour MPD, vous pouvez saisir ici l’adresse IP et le numéro de port. Rigelian pourra alors lire le flux sur votre machine locale."
           }
         },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Du kan ændre spillerens navn, som vises i Rigelian."
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se hai configurato un’uscita di flusso HTTP per MPD, puoi inserire qui l’indirizzo IP e il numero di porta. Rigelian potrà riprodurre il flusso sul tuo dispositivo locale."
           }
         },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Du kan ändra spelarens namn som visas i Rigelian."
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD のHTTPストリーム出力を設定している場合、ここにIPアドレスとポート番号を入力できます。Rigelian はそのストリームをローカル端末で再生できます。"
           }
         },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Du kan endre spillerens navn som vises i Rigelian."
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis du har konfigurert en HTTP-strøm-utgang for MPD, kan du skrive inn IP-adresse og portnummer her. Rigelian kan da spille av strømmen på din lokale maskin."
           }
         },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voit muuttaa Rigelianissa näkyvän soittimen nimen."
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als je een http-stream-uitvoer voor MPD hebt geconfigureerd, kun je hier het IP-adres en poortnummer invoeren. Rigelian kan de stream dan op je lokale apparaat afspelen."
           }
         },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ви можете змінити назву плеєра, що відображатиметься в Rigelian."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se você configurou uma saída de fluxo HTTP para o MPD, pode inserir aqui o endereço IP e o número da porta. O Rigelian poderá reproduzir o fluxo na sua máquina local."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Puedes cambiar el nombre del reproductor que se mostrará en Rigelian."
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om du har konfigurerat en HTTP-strömutgång för MPD kan du ange IP-adress och portnummer här. Rigelian kan då spela upp strömmen på din lokala maskin."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Você pode alterar o nome do reprodutor que será exibido no Rigelian."
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо ви налаштували HTTP-потік для MPD, тут можна ввести IP-адресу та номер порту. Тоді Rigelian відтворюватиме потік на локальному пристрої."
           }
         },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Puoi modificare il nome del lettore che verrà mostrato in Rigelian."
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果你为 MPD 配置了 HTTP 流输出，可在此输入 IP 地址和端口号。Rigelian 就能在本机播放该流。"
+          }
+        }
+      }
+    },
+    "IP Address to Use" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP-adresse, der skal bruges"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu verwendende IP-Adresse"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dirección IP a usar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytettävä IP-osoite"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse IP à utiliser"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indirizzo IP da usare"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用するIPアドレス"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP-adresse som skal brukes"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP adres om te gebruiken"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endereço IP a usar"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP-adress att använda"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP-адреса для використання"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要使用的 IP 地址"
+          }
+        }
+      }
+    },
+    "Manually Added Player" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manuelt tilføjet afspiller"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manuell hinzugefügter Player"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproductor añadido manualmente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käsin lisätty soitin"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecteur ajouté manuellement"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lettore aggiunto manualmente"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手動で追加したプレーヤー"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manuelt lagt til spiller"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handmatig toegevoegde speler"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprodutor adicionado manualmente"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manuellt tillagd spelare"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Плеєр, доданий вручну"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动添加的播放器"
+          }
+        }
+      }
+    },
+    "MPD Database" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD-database"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD-Datenbank"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base de datos de MPD"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD-tietokanta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base de données MPD"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Database MPD"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD データベース"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD-database"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD Database"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Banco de dados do MPD"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD-databas"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "База даних MPD"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPD 数据库"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navn"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navn"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naam"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namn"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назва"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名称"
+          }
+        }
+      }
+    },
+    "Note that for Volumio players, the playqueue in Rigelian is not synchronized with the playqueue shown through the Volumio web interface." : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemærk, at for Volumio-afspillere er afspilningskøen i Rigelian ikke synkroniseret med køen, der vises via Volumios webgrænseflade."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beachten Sie, dass bei Volumio-Playern die Wiedergabewarteschlange in Rigelian nicht mit der über die Volumio-Weboberfläche angezeigten Warteschlange synchronisiert ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten en cuenta que en los reproductores Volumio, la cola de reproducción en Rigelian no está sincronizada con la cola mostrada en la interfaz web de Volumio."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Huomaa, että Volumio-soittimissa Rigelianin toistojono ei ole synkronoitu Volumion verkkokäyttöliittymässä näkyvän jonon kanssa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notez que pour les lecteurs Volumio, la file d’attente de lecture dans Rigelian n’est pas synchronisée avec celle affichée via l’interface Web de Volumio."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota che per i lettori Volumio, la coda di riproduzione in Rigelian non è sincronizzata con la coda mostrata tramite l’interfaccia web di Volumio."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumio プレーヤーでは、Rigelian の再生キューは Volumio のWebインターフェイスに表示される再生キューと同期されません。"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merk at for Volumio-spillere er spillekøen i Rigelian ikke synkronisert med køen som vises via Volumios webgrensesnitt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let op: bij Volumio-spelers is de afspeelwachtrij in Rigelian niet gesynchroniseerd met de afspeelwachtrij die wordt weergegeven via de Volumio-webinterface."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observe que, nos reprodutores Volumio, a fila de reprodução no Rigelian não é sincronizada com a fila exibida pela interface web do Volumio."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Observera att för Volumio-spelare är kölistan i Rigelian inte synkroniserad med kölistan som visas via Volumios webbgränssnitt."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зверніть увагу, що для плеєрів Volumio черга відтворення в Rigelian не синхронізується з чергою, показаною у веб-інтерфейсі Volumio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请注意，对于 Volumio 播放器，Rigelian 中的播放队列与 Volumio 网页界面显示的播放队列不同步。"
+          }
+        }
+      }
+    },
+    "Player Information" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspilleroplysninger"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Player-Informationen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Información del reproductor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soittimen tiedot"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informations du lecteur"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informazioni sul lettore"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤー情報"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spillerinformasjon"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speler informatie"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informações do reprodutor"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spelarinformation"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інформація про плеєр"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放器信息"
+          }
+        }
+      }
+    },
+    "Port" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puerto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portti"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポート"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poort"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porta"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Порт"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端口"
+          }
+        }
+      }
+    },
+    "Port number" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portnummer"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portnummer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número de puerto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porttinumero"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numéro de port"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numero di porta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポート番号"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portnummer"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poort nummer"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número da porta"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portnummer"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Номер порту"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端口号"
+          }
+        }
+      }
+    },
+    "Rescan" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scan igen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut scannen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reescanear"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skannaa uudelleen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réanalyser"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scansiona di nuovo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再スキャン"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skann på nytt"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opnieuw scannen"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reexaminar"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skanna igen"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сканувати знову"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新扫描"
+          }
+        }
+      }
+    },
+    "Songs" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sange"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canciones"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kappaleet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morceaux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brani"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "曲"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanger"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liedjes"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Músicas"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Låtar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пісні"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "歌曲"
+          }
+        }
+      }
+    },
+    "Status" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tila"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statut"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ステータス"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стан"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状态"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typ"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyyppi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タイプ"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typ"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "类型"
+          }
+        }
+      }
+    },
+    "Unknown" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukendt"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconocido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuntematon"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inconnu"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sconosciuto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不明"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukjent"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onbekend"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconhecido"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okänd"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Невідомо"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知"
+          }
+        }
+      }
+    },
+    "Update Database" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opdater database"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenbank aktualisieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar base de datos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Päivitä tietokanta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour la base de données"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna database"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "データベースを更新"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oppdater database"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Database bijwerken"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar banco de dados"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uppdatera databas"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оновити базу даних"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新数据库"
+          }
+        }
+      }
+    },
+    "Use HTTP cover art" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brug HTTP-omslag"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP-Covergrafik verwenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar carátulas HTTP"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä HTTP-kansikuvia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser les pochettes via HTTP"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa copertine via HTTP"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTPでカバーアートを使用"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bruk HTTP-omslag"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laad album covers via HTTP"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar capas via HTTP"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd HTTP-omslag"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використовувати обкладинки через HTTP"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 HTTP 使用封面"
+          }
+        }
+      }
+    },
+    "Use IP Address" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brug IP-adresse"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP-Adresse verwenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar dirección IP"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä IP-osoitetta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser l’adresse IP"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa indirizzo IP"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IPアドレスを使用"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bruk IP-adresse"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik ip adres"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar endereço IP"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd IP-adress"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використовувати IP-адресу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 IP 地址"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョン"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versjon"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versie"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версія"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本"
+          }
+        }
+      }
+    },
+    "You can change the player's name that will be displayed in Rigelian." : {
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kan ændre spillerens navn, som vises i Rigelian."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie können den Namen des Players ändern, der in Rigelian angezeigt wird."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes cambiar el nombre del reproductor que se mostrará en Rigelian."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voit muuttaa Rigelianissa näkyvän soittimen nimen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez modifier le nom du lecteur affiché dans Rigelian."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puoi modificare il nome del lettore che verrà mostrato in Rigelian."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rigelian に表示されるプレーヤー名を変更できます。"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kan endre spillerens navn som vises i Rigelian."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je kunt de naam van de speler wijzigen die in Rigelian wordt weergegeven."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você pode alterar o nome do reprodutor que será exibido no Rigelian."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kan ändra spelarens namn som visas i Rigelian."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви можете змінити назву плеєра, що відображатиметься в Rigelian."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可以更改在 Rigelian 中显示的播放器名称。"
           }
         }
       }
     }
   },
-  "version": "1.1"
+  "version" : "1.1"
 }
