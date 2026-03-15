@@ -68,7 +68,7 @@ public enum MPDType: Int, Codable, CaseIterable {
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
     public struct PlayerAttributes: Codable {
-        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool) {
+        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool, albumGrouping: String, coverFilename: String) {
             self.uuid = uuid
             self.name = name
             self.type = type
@@ -78,6 +78,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.password = password
             self.useHttpCoverArt = useHttpCoverArt
             self.manual = manual
+            self.albumGrouping = albumGrouping
+            self.coverFilename = coverFilename
         }
         
         // identification
@@ -94,6 +96,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         
         // player settings
         let useHttpCoverArt: Bool
+        let albumGrouping: String
+        let coverFilename: String
     }
     
     public var mediaServerModel: String = "MPD"
@@ -198,13 +202,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public var control: ControlProtocol {
         get {
             // Use serialScheduler to synchronize commands across multiple MPDControl instances.
-            return MPDControl.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector, userDefaults: userDefaults)
+            return MPDControl.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector)
         }
     }
     /// Create a unique object for every request for a browse object
     public var browse: BrowseProtocol {
         get {
-            return MPDBrowse.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector, userDefaults: userDefaults)
+            return MPDBrowse.init(attributes: attributes, identification: uniqueID, mpdConnector: mpdConnector)
         }
     }
     
@@ -253,6 +257,10 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
 
         if let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))), storedType != .unknown {
             self.type = storedType
+            let useHttpCoverArt = userDefaults.object(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) as? Bool ?? attributes.useHttpCoverArt
+            let albumGrouping = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) ?? attributes.albumGrouping
+            let coverFilename = userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) ?? attributes.coverFilename
+
             self.attributes = PlayerAttributes(uuid: attributes.uuid,
                                                name: attributes.name,
                                                type: storedType,
@@ -260,8 +268,10 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                                host: attributes.host,
                                                port: attributes.port,
                                                password: attributes.password,
-                                               useHttpCoverArt: userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)),
-                                               manual: attributes.manual)
+                                               useHttpCoverArt: useHttpCoverArt,
+                                               manual: attributes.manual,
+                                               albumGrouping: albumGrouping,
+                                               coverFilename: coverFilename)
         }
         else {
             self.type = attributes.type
@@ -270,6 +280,18 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         if attributes.type == .chord {
             if userDefaults.value(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self)) == nil {
                 userDefaults.set(true, forKey: MPDDefaultKey.connectToIpAddress.stringValue(self))
+            }
+        }
+
+        if attributes.type == .bryston {
+            if userDefaults.value(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) == nil {
+                userDefaults.set(true, forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self))
+            }
+            if userDefaults.value(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) == nil {
+                userDefaults.set("albumartist", forKey: MPDDefaultKey.albumGrouping.stringValue(self))
+            }
+            if userDefaults.value(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) == nil {
+                userDefaults.set("bdp_front_250.jpg", forKey: MPDDefaultKey.coverPostfix.stringValue(self))
             }
         }
 

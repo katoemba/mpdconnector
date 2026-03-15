@@ -219,7 +219,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                     port: connectionData.port,
                                                     password: nil,
                                                     useHttpCoverArt: false,
-                                                    manual: false)
+                                                    manual: false,
+                                                    albumGrouping: "albumartist",
+                                                    coverFilename: "")
 
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
@@ -423,7 +425,9 @@ private struct ManualAddMPDPlayerView: View {
                             port: port,
                             password: password.isEmpty ? nil : password,
                             useHttpCoverArt: false,
-                            manual: true
+                            manual: true,
+                            albumGrouping: "albumartist",
+                            coverFilename: ""
                         )
 
                         // Persist manual player, add in-memory, and dismiss
@@ -451,7 +455,9 @@ private struct ManualAddMPDPlayerView: View {
             port: port,
             password: password.isEmpty ? nil : password,
             useHttpCoverArt: false,
-            manual: true
+            manual: true,
+            albumGrouping: "albumartist",
+            coverFilename: ""
         )
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }

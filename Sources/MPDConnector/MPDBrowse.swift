@@ -46,16 +46,13 @@ final public class MPDBrowse: BrowseProtocol {
     private var identification = ""
     private var attributes: MPDPlayer.PlayerAttributes
     private let mpdConnector: SwiftMPD.MPDConnector
-    private let userDefaults: UserDefaults
 
     public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
-                mpdConnector: SwiftMPD.MPDConnector,
-                userDefaults: UserDefaults) {
+                mpdConnector: SwiftMPD.MPDConnector) {
         self.attributes = attributes
         self.identification = identification
         self.mpdConnector = mpdConnector
-        self.userDefaults = userDefaults
     }
     
     public func search(_ search: String, limit: Int = 20, filter: [SourceType] = []) async throws -> SearchResult {
@@ -378,8 +375,7 @@ final public class MPDBrowse: BrowseProtocol {
     // This is the old-fashioned way of getting data, using a double group by.
     private func fetchAlbums_below_20_22(genre: Genre? = nil) async throws -> [Album] {
         let filter: MPDDatabase.Expression? = (genre == nil) ? nil : MPDDatabase.Expression.tagEquals(tag: .genre, value: genre!.id)
-        let albumGroupingString = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(identification))
-        let albumGrouping: MPDDatabase.Tag = albumGroupingString == "albumartist" ? .albumArtist : .artist
+        let albumGrouping: MPDDatabase.Tag = attributes.albumGrouping == "albumartist" ? .albumArtist : .artist
         let keyValuePairs: [KeyValuePair] = try await self.mpdConnector.database.list(type: .album, filter: filter, groupBy: [albumGrouping, .date], raw: true).compactMap {
             switch $0 {
             case let .raw(keyValuePair):
@@ -401,7 +397,7 @@ final public class MPDBrowse: BrowseProtocol {
             idx += 1
             if title != "" {
                 var albumArtist = "Unknown"
-                if idx < keyValuePairs.count, keyValuePairs[idx].key == albumGroupingString {
+                if idx < keyValuePairs.count, keyValuePairs[idx].key == attributes.albumGrouping {
                     albumArtist = keyValuePairs[idx].value
                     idx += 1
                 }

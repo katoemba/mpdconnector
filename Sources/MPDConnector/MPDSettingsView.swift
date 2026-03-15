@@ -234,9 +234,42 @@ public struct MPDSettingsView: View {
                                                                                port: player.attributes.port,
                                                                                password: player.attributes.password,
                                                                                useHttpCoverArt: newValue,
-                                                                               manual: false)
+                                                                               manual: false,
+                                                                               albumGrouping: player.attributes.albumGrouping,
+                                                                               coverFilename: player.attributes.coverFilename)
                             }
                         ))
+                    }
+                }
+                
+                if player.type == .bryston, player.attributes.useHttpCoverArt == true {
+                    HStack {
+                        Text(String(localized: "Cover Filename", bundle: .module))
+                        Spacer()
+                        TextField("", text: Binding<String>(
+                            get: {
+                                player.userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(player)) ?? ""
+                            },
+                            set: { newValue in
+                                player.userDefaults.set(newValue, forKey: MPDDefaultKey.coverPostfix.stringValue(player))
+                                player.attributes = MPDPlayer.PlayerAttributes(uuid: player.attributes.uuid,
+                                                                               name: player.attributes.name,
+                                                                               type: player.attributes.type,
+                                                                               version: player.attributes.version,
+                                                                               host: player.attributes.host,
+                                                                               port: player.attributes.port,
+                                                                               password: player.attributes.password,
+                                                                               useHttpCoverArt: player.attributes.useHttpCoverArt,
+                                                                               manual: false,
+                                                                               albumGrouping: player.attributes.albumGrouping,
+                                                                               coverFilename: newValue)
+                            }
+                        ), prompt: Text("Enter cover art filename"))
+                            .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.automatic)
+                            .onChange(of: outputHostField) { _, _ in
+                                updateStreamSettings()
+                            }
                     }
                 }
             }
@@ -294,6 +327,17 @@ public struct MPDSettingsView: View {
                         .onChange(of: albumGroupingSelection) { _, newValue in
                             // Update player when type changes
                             player.userDefaults.set(newValue, forKey: MPDDefaultKey.albumGrouping.stringValue(player))
+                            player.attributes = MPDPlayer.PlayerAttributes(uuid: player.attributes.uuid,
+                                                                           name: player.attributes.name,
+                                                                           type: player.attributes.type,
+                                                                           version: player.attributes.version,
+                                                                           host: player.attributes.host,
+                                                                           port: player.attributes.port,
+                                                                           password: player.attributes.password,
+                                                                           useHttpCoverArt: player.attributes.useHttpCoverArt,
+                                                                           manual: false,
+                                                                           albumGrouping: albumGroupingSelection,
+                                                                           coverFilename: player.attributes.coverFilename)
                             player.objectWillChange.send()
                         }
                     }

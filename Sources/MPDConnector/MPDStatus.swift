@@ -483,7 +483,7 @@ extension Song {
             coverURI = CoverURI.fullPathURI("http://\(attributes.host)/coverart.php/\(coverString)")
         }
         else if attributes.type == .bryston && attributes.useHttpCoverArt == true {
-            coverURI = CoverURI.fullPathURI("http://\(attributes.host)/\(newPath)bdp_front_250.jpg")
+            coverURI = CoverURI.fullPathURI("http://\(attributes.host)/music/\(newPath)bdp_front_250.jpg")
         }
         else {
             coverURI = CoverURI.filenameOptionsURI("", mpdSong.file, [])
