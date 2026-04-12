@@ -34,10 +34,12 @@ public struct MPDSettingsView: View {
     
     private let changeNameTip = MPDChangeNameTip()
     private let deleteAction: ((any PlayerProtocol) -> ())?
-    
-    public init(player: MPDPlayer, deleteAction: ((any PlayerProtocol) -> ())?) {
+    private let hideAction: ((any PlayerProtocol) -> ())?
+
+    public init(player: MPDPlayer, deleteAction: ((any PlayerProtocol) -> ())?, hideAction: ((any PlayerProtocol) -> ())?) {
         self.player = player
         self.deleteAction = deleteAction
+        self.hideAction = hideAction
         
         // Initialize fields from userDefaults if available
         let ud = player.userDefaults
@@ -185,6 +187,9 @@ public struct MPDSettingsView: View {
                             },
                             set: { newValue in
                                 player.userDefaults.set(newValue, forKey: MPDDefaultKey.hidden.stringValue(player))
+                                if let hideAction {
+                                    hideAction(player)
+                                }
                             }
                         ))
                     }

@@ -368,8 +368,9 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     }
     
     @ViewBuilder
-    public func settingsView(deleteAction: ((any PlayerProtocol) -> ())?) -> some View {
-        MPDSettingsView(player: self, deleteAction: deleteAction)
+    public func settingsView(deleteAction: ((any PlayerProtocol) -> ())?,
+                             hideAction: ((any PlayerProtocol) -> ())?) -> some View {
+        MPDSettingsView(player: self, deleteAction: deleteAction, hideAction: hideAction)
     }
 }
 
