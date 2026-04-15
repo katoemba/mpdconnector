@@ -478,12 +478,14 @@ extension Song {
             }
         }
        
-        let coverString = mpdSong.file.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        let host = attributes.host.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? ""
         if attributes.type == .moodeaudio && attributes.useHttpCoverArt == true {
-            coverURI = CoverURI.fullPathURI("http://\(attributes.host)/coverart.php/\(coverString)")
+            let coverString = mpdSong.file.removingPercentEncoding?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+            coverURI = CoverURI.fullPathURI("http://\(host)/coverart.php/\(coverString)")
         }
         else if attributes.type == .bryston && attributes.useHttpCoverArt == true {
-            coverURI = CoverURI.fullPathURI("http://\(attributes.host)/music/\(newPath)bdp_front_250.jpg")
+            let path = "\(newPath)\(attributes.coverFilename)".addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+            coverURI = CoverURI.fullPathURI("http://\(host)/music/\(path)")
         }
         else {
             coverURI = CoverURI.filenameOptionsURI("", mpdSong.file, [])
