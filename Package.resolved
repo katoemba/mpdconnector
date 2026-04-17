@@ -7,7 +7,7 @@
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
         "branch" : "AsyncAwait",
-        "revision" : "4e00dd1b70b33ca78dae2eca3809e5e9967391c9"
+        "revision" : "07d644a9f2c021bebd3334281daeee98d4d5d442"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "558f24a4647193b5a0e2104031b71c55d31ff83a",
-        "version" : "2.97.1"
+        "revision" : "cd6710454f25733900e133c6caf5188952763c36",
+        "version" : "2.98.0"
       }
     },
     {
