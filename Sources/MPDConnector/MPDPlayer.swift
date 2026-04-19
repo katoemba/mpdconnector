@@ -83,21 +83,21 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         }
         
         // identification
-        let uuid: UUID
-        let type: MPDType
+        public let uuid: UUID
+        public let type: MPDType
 
         // player network attributes
-        let name: String
-        let version: String
-        let host: String
-        let port: Int
-        let password: String?
-        let manual: Bool
+        public let name: String
+        public let version: String
+        public let host: String
+        public let port: Int
+        public let password: String?
+        public let manual: Bool
         
         // player settings
-        let useHttpCoverArt: Bool
-        let albumGrouping: String
-        let coverFilename: String
+        public let useHttpCoverArt: Bool
+        public let albumGrouping: String
+        public let coverFilename: String
     }
     
     public var mediaServerModel: String = "MPD"
@@ -122,7 +122,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     }
     public private(set) var discoverMode = DiscoverMode.automatic
     
-    internal var attributes: PlayerAttributes {
+    public internal(set) var attributes: PlayerAttributes {
         didSet {
             let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
             if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -364,7 +364,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     }
     
     public func ping() async -> Bool {
-        await mpdConnector.ping()
+        await mpdConnector.ping(close: true)
     }
     
     @ViewBuilder

@@ -97,9 +97,11 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             guard definition.type == controllerType else { continue }
             Task {
                 guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
-                guard await player.ping() == true else {
+                if await player.ping() == false {
                     print("Couldn't ping player \(player.name)")
-                    return
+                    if player.attributes.manual == false {
+                        return
+                    }
                 }
                 
                 if !players.contains(where: { $0 as? MPDPlayer == player }) {
