@@ -224,6 +224,19 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         return URL(string: "http://192.168.1.5:8000")
     }
     
+    public var diagnosticsInfo: [DiagnosticsItem] {
+        [DiagnosticsItem(id: "id", description: uniqueID),
+         DiagnosticsItem(id: "host", description: attributes.host),
+         DiagnosticsItem(id: "connect to ip address", description: userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port)) ? "Yes" : "No"),
+         DiagnosticsItem(id: "ip address", description: userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? "Unknown"),
+         DiagnosticsItem(id: "port", description: "\(attributes.port)"),
+         DiagnosticsItem(id: "model", description: model),
+         DiagnosticsItem(id: "version", description: version),
+         DiagnosticsItem(id: "manual", description: attributes.manual ? "Yes" : "No"),
+         DiagnosticsItem(id: "hidden", description: hidden ? "Yes" : "No")
+        ]
+    }
+    
     // MARK: - Initialization and connecting
     
     /// Initialize a new player object
@@ -320,41 +333,39 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         return MPDPlayer.init(attributes, userDefaults: userDefaults)
     }
     
-    public func finishDiscovery() {
-        Task {
-            let tagTypes = try await mpdConnector.status.tagtypes()
-            self.commands = try await mpdConnector.status.commands()
-            
-            let version = mpdConnector.version
-            self.version = version.description
-            if version < SwiftMPD.MPDConnection.Version("0.19.0") {
-                connectionWarning = "MPD version \(version) too low, 0.19.0 required"
+    public func finishDiscovery() async throws {
+        let tagTypes = try await mpdConnector.status.tagtypes()
+        self.commands = try await mpdConnector.status.commands()
+        
+        let version = mpdConnector.version
+        self.version = version.description
+        if version < SwiftMPD.MPDConnection.Version("0.19.0") {
+            connectionWarning = "MPD version \(version) too low, 0.19.0 required"
+        }
+                    
+        if connectionWarning == nil {
+            var missingTagTypes = [String]()
+            if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
+                missingTagTypes.append("albumartist")
             }
-                        
-            if connectionWarning == nil {
-                var missingTagTypes = [String]()
-                if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
-                    missingTagTypes.append("albumartist")
-                }
-                if tagTypes.contains("ArtistSort") == false && tagTypes.contains("artistsort") == false {
-                    missingTagTypes.append("artistsort")
-                }
-                if tagTypes.contains("AlbumArtistSort") == false && tagTypes.contains("albumartistsort") == false {
-                    missingTagTypes.append("albumartistsort")
-                }
-                if missingTagTypes.count == 1 {
-                    connectionWarning = "id3-tag \(missingTagTypes[0]) is not configured"
-                }
-                else if missingTagTypes.count > 1 {
-                    connectionWarning = "id3-tags "
-                    for tag in missingTagTypes {
-                        if connectionWarning! != "id3-tags " {
-                            connectionWarning! += ", "
-                        }
-                        connectionWarning! += tag
+            if tagTypes.contains("ArtistSort") == false && tagTypes.contains("artistsort") == false {
+                missingTagTypes.append("artistsort")
+            }
+            if tagTypes.contains("AlbumArtistSort") == false && tagTypes.contains("albumartistsort") == false {
+                missingTagTypes.append("albumartistsort")
+            }
+            if missingTagTypes.count == 1 {
+                connectionWarning = "id3-tag \(missingTagTypes[0]) is not configured"
+            }
+            else if missingTagTypes.count > 1 {
+                connectionWarning = "id3-tags "
+                for tag in missingTagTypes {
+                    if connectionWarning! != "id3-tags " {
+                        connectionWarning! += ", "
                     }
-                    connectionWarning! += " are not configured"
+                    connectionWarning! += tag
                 }
+                connectionWarning! += " are not configured"
             }
         }
     }

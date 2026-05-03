@@ -29,8 +29,11 @@ import ConnectorProtocol
 import SwiftMPD
 import Combine
 import SwiftUI
+import os.log
 
 public class MPDStatus: StatusProtocol, @unchecked Sendable {
+    static let logger = os.Logger(subsystem: "com.katoemba.mpdconnector", category: "status")
+
     /// Connection to a MPD Player
     private var identification = ""
     private var attributes: MPDPlayer.PlayerAttributes
@@ -98,9 +101,11 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         
         elapsedTask = Task { [weak self] in
             guard let self else { return }
-            
+
             var counter = 0
             while (Task.isCancelled == false) {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+
                 if playerStatus.playing.playPauseMode == .playing {
                     var newPlayerStatus = PlayerStatus.init(playerStatus)
                     newPlayerStatus.time.elapsedTime = self.lastKnownElapsedTime + Int(Date().timeIntervalSince(self.lastKnownElapsedTimeRecorded))
@@ -117,8 +122,6 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                         lastKnownElapsedTime = playerStatus.time.elapsedTime
                     }
                 }
-                
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
         }
     }

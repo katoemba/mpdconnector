@@ -103,12 +103,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             guard definition.type == controllerType else { continue }
             Task {
                 guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
-                if await player.ping() {
-                    pushPlayerEvent(.added(player))
-                }
-                else {
-                    print("Couldn't ping player \(player.name)")
-                }
+                _ = await player.ping()
+                try? await player.finishDiscovery()
+                pushPlayerEvent(.added(player))
             }
         }
         
@@ -126,6 +123,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                                type: .classic)
                         let player = try await createPlayerFromService(connectionData)
                         // Only add if not already in the list
+                        try? await player.finishDiscovery()
                         pushPlayerEvent(.added(player))
                     } catch {
                         print("Failed to create player: \(error)")
@@ -146,10 +144,12 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                     do {
                         if let connectionData = await fetchMoodeConnectionData(from: service) {
                             let player = try await createPlayerFromService(connectionData)
+                            try? await player.finishDiscovery()
                             pushPlayerEvent(.added(player))
                         }
                         else if let connectionData = await fetchVolumioConnectionData(from: service) {
                             let player = try await createPlayerFromService(connectionData)
+                            try? await player.finishDiscovery()
                             pushPlayerEvent(.added(player))
                         }
                     } catch {
@@ -175,6 +175,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                                type: .volumio)
 
                         let player = try await createPlayerFromService(connectionData)
+                        try? await player.finishDiscovery()
                         pushPlayerEvent(.added(player))
                     } catch {
                         print("Failed to create volumio player: \(error)")
@@ -335,7 +336,10 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     public func manualAddPlayerView() -> some View {
         ManualAddMPDPlayerView(userDefaults: userDefaults) { [weak self] player in
             guard let self else { return }
-            self.pushPlayerEvent(.added(player))
+            Task {
+                try? await player.finishDiscovery()
+                self.pushPlayerEvent(.added(player))
+            }
         }
     }
 }
