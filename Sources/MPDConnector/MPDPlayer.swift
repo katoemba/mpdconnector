@@ -264,8 +264,10 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         self.mpdStatus = MPDStatus.init(attributes: attributes,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
-        Task {
-            self.commands = (try? await self.mpdConnector.status.commands()) ?? []
+        Task { [weak self] in
+            guard let self else { return }
+            let commands = (try? await self.mpdConnector.status.commands()) ?? []
+            await MainActor.run { self.commands = commands }
         }
 
         if let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))), storedType != .unknown {
