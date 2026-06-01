@@ -337,14 +337,14 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     public func finishDiscovery() async throws {
         let tagTypes = try await mpdConnector.status.tagtypes()
-        self.commands = try await mpdConnector.status.commands()
-        
+        let commands = try await mpdConnector.status.commands()
+
         let version = mpdConnector.version
-        self.version = version.description
+        var connectionWarning: String? = nil
         if version < SwiftMPD.MPDConnection.Version("0.19.0") {
             connectionWarning = "MPD version \(version) too low, 0.19.0 required"
         }
-                    
+
         if connectionWarning == nil {
             var missingTagTypes = [String]()
             if tagTypes.contains("AlbumArtist") == false && tagTypes.contains("albumartist") == false {
@@ -369,6 +369,12 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                 }
                 connectionWarning! += " are not configured"
             }
+        }
+
+        await MainActor.run {
+            self.commands = commands
+            self.version = version.description
+            self.connectionWarning = connectionWarning
         }
     }
     
