@@ -239,9 +239,11 @@ public struct MPDSettingsView: View {
                                                                                port: player.attributes.port,
                                                                                password: player.attributes.password,
                                                                                useHttpCoverArt: newValue,
-                                                                               manual: false,
+                                                                               manual: player.attributes.manual,
                                                                                albumGrouping: player.attributes.albumGrouping,
-                                                                               coverFilename: player.attributes.coverFilename)
+                                                                               coverFilename: player.attributes.coverFilename,
+                                                                               outputHost: player.attributes.outputHost,
+                                                                               outputPort: player.attributes.outputPort)
                             }
                         ))
                     }
@@ -265,9 +267,11 @@ public struct MPDSettingsView: View {
                                                                                port: player.attributes.port,
                                                                                password: player.attributes.password,
                                                                                useHttpCoverArt: player.attributes.useHttpCoverArt,
-                                                                               manual: false,
+                                                                               manual: player.attributes.manual,
                                                                                albumGrouping: player.attributes.albumGrouping,
-                                                                               coverFilename: newValue)
+                                                                               coverFilename: newValue,
+                                                                               outputHost: player.attributes.outputHost,
+                                                                               outputPort: player.attributes.outputPort)
                             }
                         ), prompt: Text("Enter cover art filename"))
                             .multilineTextAlignment(.trailing)
@@ -340,9 +344,11 @@ public struct MPDSettingsView: View {
                                                                            port: player.attributes.port,
                                                                            password: player.attributes.password,
                                                                            useHttpCoverArt: player.attributes.useHttpCoverArt,
-                                                                           manual: false,
+                                                                           manual: player.attributes.manual,
                                                                            albumGrouping: albumGroupingSelection,
-                                                                           coverFilename: player.attributes.coverFilename)
+                                                                           coverFilename: player.attributes.coverFilename,
+                                                                           outputHost: player.attributes.outputHost,
+                                                                           outputPort: player.attributes.outputPort)
                             player.objectWillChange.send()
                         }
                     }
@@ -431,18 +437,34 @@ public struct MPDSettingsView: View {
     
     func updateStreamSettings() {
         let ud = player.userDefaults
-        if outputHostField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let trimmedHost = outputHostField.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedHost.isEmpty {
             ud.removeObject(forKey: MPDDefaultKey.outputHost.stringValue(player))
         } else {
             ud.set(outputHostField, forKey: MPDDefaultKey.outputHost.stringValue(player))
         }
-        
-        if let portInt = Int(outputPortField) {
+
+        let portInt = Int(outputPortField)
+        if let portInt {
             ud.set(portInt, forKey: MPDDefaultKey.outputPort.stringValue(player))
         } else {
             ud.removeObject(forKey: MPDDefaultKey.outputPort.stringValue(player))
         }
-        
+
+        player.attributes = MPDPlayer.PlayerAttributes(uuid: player.attributes.uuid,
+                                                       name: player.attributes.name,
+                                                       type: player.attributes.type,
+                                                       version: player.attributes.version,
+                                                       host: player.attributes.host,
+                                                       port: player.attributes.port,
+                                                       password: player.attributes.password,
+                                                       useHttpCoverArt: player.attributes.useHttpCoverArt,
+                                                       manual: player.attributes.manual,
+                                                       albumGrouping: player.attributes.albumGrouping,
+                                                       coverFilename: player.attributes.coverFilename,
+                                                       outputHost: trimmedHost,
+                                                       outputPort: portInt ?? 0)
+
         player.objectWillChange.send()
     }
     

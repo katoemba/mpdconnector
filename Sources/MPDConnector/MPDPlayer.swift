@@ -68,7 +68,7 @@ public enum MPDType: Int, Codable, CaseIterable {
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
     public struct PlayerAttributes: Codable {
-        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool, albumGrouping: String, coverFilename: String) {
+        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool, albumGrouping: String, coverFilename: String, outputHost: String, outputPort: Int) {
             self.uuid = uuid
             self.name = name
             self.type = type
@@ -80,6 +80,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.manual = manual
             self.albumGrouping = albumGrouping
             self.coverFilename = coverFilename
+            self.outputHost = outputHost
+            self.outputPort = outputPort
         }
         
         // identification
@@ -98,6 +100,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         public let useHttpCoverArt: Bool
         public let albumGrouping: String
         public let coverFilename: String
+        public let outputHost: String
+        public let outputPort: Int
     }
     
     public var mediaServerModel: String = "MPD"
@@ -217,11 +221,10 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     }
     
     public var playerStreamURL: URL? {
-//        let hostString = outputHostProp ?? ""
-//        let portString = outputPortProp ?? ""
-//        guard !hostString.isEmpty, let port = Int(portString), port != 0 else { return nil }
-//        return URL(string: "http://\(hostString):\(port)")
-        return URL(string: "http://192.168.1.5:8000")
+        let hostString = attributes.outputHost
+        let port = attributes.outputPort
+        guard !hostString.isEmpty, port != 0 else { return nil }
+        return URL(string: "http://\(hostString):\(port)")
     }
     
     public var diagnosticsInfo: [DiagnosticsItem] {
@@ -270,27 +273,29 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             await MainActor.run { self.commands = commands }
         }
 
-        if let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self))), storedType != .unknown {
-            self.type = storedType
-            let useHttpCoverArt = userDefaults.object(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) as? Bool ?? attributes.useHttpCoverArt
-            let albumGrouping = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) ?? attributes.albumGrouping
-            let coverFilename = userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) ?? attributes.coverFilename
+        let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self)))
+        let resolvedType = (storedType != nil && storedType != .unknown) ? storedType! : attributes.type
+        self.type = resolvedType
 
-            self.attributes = PlayerAttributes(uuid: attributes.uuid,
-                                               name: attributes.name,
-                                               type: storedType,
-                                               version: attributes.version,
-                                               host: attributes.host,
-                                               port: attributes.port,
-                                               password: attributes.password,
-                                               useHttpCoverArt: useHttpCoverArt,
-                                               manual: attributes.manual,
-                                               albumGrouping: albumGrouping,
-                                               coverFilename: coverFilename)
-        }
-        else {
-            self.type = attributes.type
-        }
+        let useHttpCoverArt = userDefaults.object(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) as? Bool ?? attributes.useHttpCoverArt
+        let albumGrouping = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) ?? attributes.albumGrouping
+        let coverFilename = userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) ?? attributes.coverFilename
+        let outputHost = userDefaults.string(forKey: MPDDefaultKey.outputHost.stringValue(self)) ?? attributes.outputHost
+        let outputPort = (userDefaults.object(forKey: MPDDefaultKey.outputPort.stringValue(self)) as? Int) ?? attributes.outputPort
+
+        self.attributes = PlayerAttributes(uuid: attributes.uuid,
+                                           name: attributes.name,
+                                           type: resolvedType,
+                                           version: attributes.version,
+                                           host: attributes.host,
+                                           port: attributes.port,
+                                           password: attributes.password,
+                                           useHttpCoverArt: useHttpCoverArt,
+                                           manual: attributes.manual,
+                                           albumGrouping: albumGrouping,
+                                           coverFilename: coverFilename,
+                                           outputHost: outputHost,
+                                           outputPort: outputPort)
 
         if attributes.type == .chord {
             if userDefaults.value(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self)) == nil {

@@ -217,7 +217,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                                                     useHttpCoverArt: false,
                                                     manual: false,
                                                     albumGrouping: "albumartist",
-                                                    coverFilename: "")
+                                                    coverFilename: "",
+                                                    outputHost: connectionData.host,
+                                                    outputPort: 0)
 
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
@@ -418,7 +420,9 @@ private struct ManualAddMPDPlayerView: View {
                             useHttpCoverArt: false,
                             manual: true,
                             albumGrouping: "albumartist",
-                            coverFilename: ""
+                            coverFilename: "",
+                            outputHost: host,
+                            outputPort: 0
                         )
 
                         // Persist manual player, add in-memory, and dismiss
@@ -448,7 +452,9 @@ private struct ManualAddMPDPlayerView: View {
             useHttpCoverArt: false,
             manual: true,
             albumGrouping: "albumartist",
-            coverFilename: ""
+            coverFilename: "",
+            outputHost: host,
+            outputPort: 0
         )
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
