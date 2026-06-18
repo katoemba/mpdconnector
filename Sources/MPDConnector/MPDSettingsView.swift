@@ -22,7 +22,8 @@ public struct MPDSettingsView: View {
     @State private var connectToIp: Bool = false
     @State private var outputHostField: String = ""
     @State private var outputPortField: String = ""
-    
+    @State private var passwordField: String = ""
+
     // Database status
     @State private var albumGroupingSelection: String = "albumartist"
     @State private var databaseStatusText: String = ""
@@ -51,6 +52,7 @@ public struct MPDSettingsView: View {
         } else {
             self._outputPortField = State(initialValue: "")
         }
+        self._passwordField = State(initialValue: ud.string(forKey: MPDDefaultKey.password.stringValue(player)) ?? "")
         self._customPlayerName = State(initialValue: ud.string(forKey: MPDDefaultKey.customPlayerName.stringValue(player)) ?? "")
         self._isHidden = State(initialValue: ud.bool(forKey: MPDDefaultKey.hidden.stringValue(player)))
         self._useHTTPCoverArt = State(initialValue: ud.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player)))
@@ -220,7 +222,19 @@ public struct MPDSettingsView: View {
                             updateIPAddressSettings()
                         }
                 }
-                
+
+                HStack {
+                    Text(String(localized: "Password", bundle: .module))
+                    Spacer()
+                    SecureField("", text: $passwordField, prompt: Text(String(localized: "Password (optional)", bundle: .module)))
+                        .multilineTextAlignment(.trailing)
+                        .textFieldStyle(.automatic)
+                        .frame(maxWidth: 220)
+                        .onChange(of: passwordField) { _, _ in
+                            updatePasswordSettings()
+                        }
+                }
+
                 if player.type == .moodeaudio || player.type == .bryston {
                     HStack {
                         Text(String(localized: "Use HTTP cover art", bundle: .module))
@@ -468,6 +482,32 @@ public struct MPDSettingsView: View {
         player.objectWillChange.send()
     }
     
+    func updatePasswordSettings() {
+        let ud = player.userDefaults
+        let trimmed = passwordField.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            ud.removeObject(forKey: MPDDefaultKey.password.stringValue(player))
+        } else {
+            ud.set(trimmed, forKey: MPDDefaultKey.password.stringValue(player))
+        }
+
+        player.attributes = MPDPlayer.PlayerAttributes(uuid: player.attributes.uuid,
+                                                       name: player.attributes.name,
+                                                       type: player.attributes.type,
+                                                       version: player.attributes.version,
+                                                       host: player.attributes.host,
+                                                       port: player.attributes.port,
+                                                       password: trimmed.isEmpty ? nil : trimmed,
+                                                       useHttpCoverArt: player.attributes.useHttpCoverArt,
+                                                       manual: player.attributes.manual,
+                                                       albumGrouping: player.attributes.albumGrouping,
+                                                       coverFilename: player.attributes.coverFilename,
+                                                       outputHost: player.attributes.outputHost,
+                                                       outputPort: player.attributes.outputPort)
+
+        player.objectWillChange.send()
+    }
+
     func updateIPAddressSettings() {
         let ud = player.userDefaults
         if ipAddressField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
