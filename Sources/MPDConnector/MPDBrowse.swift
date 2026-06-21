@@ -888,6 +888,8 @@ final public class MPDBrowse: BrowseProtocol {
         if let key = cacheKey, let cached = cacheValidator?(key) {
             return cached
         }
+        // Bail out early if the retrieval was cancelled before it started.
+        try Task.checkCancellation()
         // Try remote URL if provided
         if let url = imageURL {
             do {
@@ -896,10 +898,12 @@ final public class MPDBrowse: BrowseProtocol {
                     return data
                 }
             } catch {
-                // Fall through to MPD-based retrieval
+                // A cancelled retrieval must propagate, not silently fall back to MPD.
+                try Task.checkCancellation()
+                // Otherwise fall through to MPD-based retrieval
             }
         }
-        
+
         // MPD albumart first, then readpicture as fallback
         do {
             let data = try await self.mpdConnector.database.getAlbumart(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
