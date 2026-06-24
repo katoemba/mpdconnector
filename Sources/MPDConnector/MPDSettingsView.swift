@@ -23,6 +23,11 @@ public struct MPDSettingsView: View {
     @State private var outputHostField: String = ""
     @State private var outputPortField: String = ""
     @State private var passwordField: String = ""
+    @State private var appliedPassword: String = ""
+    @State private var appliedIpAddress: String = ""
+    @State private var appliedConnectToIp: Bool = false
+    @FocusState private var passwordFieldFocused: Bool
+    @FocusState private var ipAddressFieldFocused: Bool
 
     // Database status
     @State private var albumGroupingSelection: String = "albumartist"
@@ -44,15 +49,21 @@ public struct MPDSettingsView: View {
         
         // Initialize fields from userDefaults if available
         let ud = player.userDefaults
-        self._ipAddressField = State(initialValue: ud.string(forKey: MPDDefaultKey.ipAddress.stringValue(player)) ??  "")
-        self._connectToIp = State(initialValue: ud.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(player)))
+        let storedIpAddress = ud.string(forKey: MPDDefaultKey.ipAddress.stringValue(player)) ??  ""
+        let storedConnectToIp = ud.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(player))
+        self._ipAddressField = State(initialValue: storedIpAddress)
+        self._connectToIp = State(initialValue: storedConnectToIp)
+        self._appliedIpAddress = State(initialValue: storedIpAddress)
+        self._appliedConnectToIp = State(initialValue: storedConnectToIp)
         self._outputHostField = State(initialValue: ud.string(forKey: MPDDefaultKey.outputHost.stringValue(player)) ?? "")
         if let portVal = ud.object(forKey: MPDDefaultKey.outputPort.stringValue(player)) as? Int {
             self._outputPortField = State(initialValue: "\(portVal)")
         } else {
             self._outputPortField = State(initialValue: "")
         }
-        self._passwordField = State(initialValue: ud.string(forKey: MPDDefaultKey.password.stringValue(player)) ?? "")
+        let storedPassword = ud.string(forKey: MPDDefaultKey.password.stringValue(player)) ?? ""
+        self._passwordField = State(initialValue: storedPassword)
+        self._appliedPassword = State(initialValue: storedPassword)
         self._customPlayerName = State(initialValue: ud.string(forKey: MPDDefaultKey.customPlayerName.stringValue(player)) ?? "")
         self._isHidden = State(initialValue: ud.bool(forKey: MPDDefaultKey.hidden.stringValue(player)))
         self._useHTTPCoverArt = State(initialValue: ud.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player)))
@@ -206,10 +217,11 @@ public struct MPDSettingsView: View {
                     Toggle("", isOn: $connectToIp)
                         .onChange(of: connectToIp) { _, _ in
                             updateIPAddressSettings()
+                            commitConnectionSettingsIfNeeded()
                         }
-                    
+
                 }
-                
+
                 HStack {
                     Text(String(localized: "IP Address to Use", bundle: .module))
                     Spacer()
@@ -218,8 +230,17 @@ public struct MPDSettingsView: View {
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .frame(maxWidth: 120)
+                        .focused($ipAddressFieldFocused)
                         .onChange(of: ipAddressField) { _, _ in
                             updateIPAddressSettings()
+                        }
+                        .onChange(of: ipAddressFieldFocused) { _, isFocused in
+                            if isFocused == false {
+                                commitConnectionSettingsIfNeeded()
+                            }
+                        }
+                        .onSubmit {
+                            commitConnectionSettingsIfNeeded()
                         }
                 }
 
@@ -230,8 +251,17 @@ public struct MPDSettingsView: View {
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .frame(maxWidth: 220)
+                        .focused($passwordFieldFocused)
                         .onChange(of: passwordField) { _, _ in
                             updatePasswordSettings()
+                        }
+                        .onChange(of: passwordFieldFocused) { _, isFocused in
+                            if isFocused == false {
+                                commitConnectionSettingsIfNeeded()
+                            }
+                        }
+                        .onSubmit {
+                            commitConnectionSettingsIfNeeded()
                         }
                 }
 
@@ -447,6 +477,22 @@ public struct MPDSettingsView: View {
                 }
             }
         }
+        .onDisappear {
+            commitConnectionSettingsIfNeeded()
+        }
+    }
+
+    func commitConnectionSettingsIfNeeded() {
+        let trimmedPassword = passwordField.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedIp = ipAddressField.trimmingCharacters(in: .whitespacesAndNewlines)
+        let needsApply = trimmedPassword != appliedPassword
+            || trimmedIp != appliedIpAddress
+            || connectToIp != appliedConnectToIp
+        guard needsApply else { return }
+        appliedPassword = trimmedPassword
+        appliedIpAddress = trimmedIp
+        appliedConnectToIp = connectToIp
+        player.applyConnectionSettingsChange()
     }
     
     func updateStreamSettings() {

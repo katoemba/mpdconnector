@@ -63,6 +63,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     private var lastKnownElapsedTime = 0
     private var lastKnownElapsedTimeRecorded = Date()
     private var elapsedTask: Task<Void, Never>?
+    private var idleTask: Task<Void, Never>?
 
     public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
@@ -73,7 +74,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         self.mpdConnector = mpdConnector
         self.mpdIdleConnector = mpdIdleConnector
     }
-    
+
     /// Cleanup connection object
     deinit {
         disconnectFromMPD()
@@ -83,22 +84,10 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         guard connectionStatus != .online, let mpdIdleConnector else {
             return
         }
-        
+
         connectionStatus = .online
-        Task {
-            while (true) {
-                if let playerStatus = try? await playerStatus(connector: mpdIdleConnector) {
-                    self.playerStatus = playerStatus
-                    lastKnownElapsedTimeRecorded = Date()
-                    lastKnownElapsedTime = playerStatus.time.elapsedTime
-                }
-                
-                guard let changes = try? await mpdIdleConnector.status.idle([.player, .playlist, .mixer, .output, .options]), changes.count > 0 else {
-                    break
-                }
-            }
-        }
-        
+        startIdleLoop(with: mpdIdleConnector)
+
         elapsedTask = Task { [weak self] in
             guard let self else { return }
 
@@ -130,11 +119,52 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     public func stop() {
         elapsedTask?.cancel()
         elapsedTask = nil
+        idleTask?.cancel()
+        idleTask = nil
         connectionStatus = .offline
         Task {
             await statusStream.unsubscribeAll()
             statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
             try? await mpdIdleConnector?.status.noidle()
+        }
+    }
+
+    private func startIdleLoop(with idleConnector: SwiftMPD.MPDConnector) {
+        idleTask?.cancel()
+        idleTask = Task { [weak self] in
+            guard let self else { return }
+            while Task.isCancelled == false {
+                if let playerStatus = try? await self.playerStatus(connector: idleConnector) {
+                    self.playerStatus = playerStatus
+                    self.lastKnownElapsedTimeRecorded = Date()
+                    self.lastKnownElapsedTime = playerStatus.time.elapsedTime
+                }
+
+                guard let changes = try? await idleConnector.status.idle([.player, .playlist, .mixer, .output, .options]), changes.count > 0 else {
+                    break
+                }
+            }
+        }
+    }
+
+    /// Swap in new connectors (for example after the user changes the password) without
+    /// tearing down the existing status/connection streams that views are subscribed to.
+    public func replaceConnectors(mpdConnector: SwiftMPD.MPDConnector, mpdIdleConnector: SwiftMPD.MPDConnector?) {
+        let oldIdleConnector = self.mpdIdleConnector
+        self.mpdConnector = mpdConnector
+        self.mpdIdleConnector = mpdIdleConnector
+
+        guard connectionStatus == .online else { return }
+
+        // Break the in-flight idle on the old connection so the previous loop exits,
+        // then start a new idle loop bound to the new connector.
+        Task {
+            try? await oldIdleConnector?.status.noidle()
+            await oldIdleConnector?.closeConnection()
+        }
+
+        if let mpdIdleConnector {
+            startIdleLoop(with: mpdIdleConnector)
         }
     }
             

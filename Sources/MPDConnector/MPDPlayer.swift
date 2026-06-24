@@ -148,8 +148,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
 
     public private(set) var connectionWarning: String?
     
-    internal let mpdConnector: SwiftMPD.MPDConnector
-    private let mpdIdleConnector: SwiftMPD.MPDConnector
+    internal private(set) var mpdConnector: SwiftMPD.MPDConnector
+    private var mpdIdleConnector: SwiftMPD.MPDConnector
     
     public var description: String {
         return type.description + " " + version
@@ -332,7 +332,28 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public func deactivate() {
         mpdStatus.stop()
     }
-    
+
+    /// Rebuild the underlying connectors using the latest connection settings (host, password)
+    /// from UserDefaults. Existing connections are torn down so the next operation reconnects
+    /// with the new credentials. Streams exposed via `status` are preserved.
+    public func applyConnectionSettingsChange() {
+        let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port))
+        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : attributes.host
+        let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(host: attributes.host, port: attributes.port)) ?? ""
+
+        let newMpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+        let newMpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+
+        let oldMpdConnector = self.mpdConnector
+        self.mpdConnector = newMpdConnector
+        self.mpdIdleConnector = newMpdIdleConnector
+        mpdStatus.replaceConnectors(mpdConnector: newMpdConnector, mpdIdleConnector: newMpdIdleConnector)
+
+        Task {
+            await oldMpdConnector.closeConnection()
+        }
+    }
+
     /// Create a copy of a player
     ///
     /// - Returns: copy of the this player
