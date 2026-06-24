@@ -883,7 +883,7 @@ final public class MPDBrowse: BrowseProtocol {
         try await Array(albums(genre: nil).shuffled().prefix(count))
     }
     
-    private func loadCoverData(path: String, imageURL: URL?, cacheKey: String?, cacheValidator: ((String) -> Data?)?) async throws -> Data {
+    private func loadCoverData(path: String, album: Album? = nil, imageURL: URL?, cacheKey: String?, cacheValidator: ((String) -> Data?)?) async throws -> Data {
         // Cache first if available
         if let key = cacheKey, let cached = cacheValidator?(key) {
             return cached
@@ -900,24 +900,31 @@ final public class MPDBrowse: BrowseProtocol {
             }
         }
         
+        // Only at this point complete the album, when it's sure that it's not in the cache.
+        var completedPath = path
+        if let album {
+            if let completedAlbum = try? await complete(album) {
+                completedPath = completedAlbum.coverURI.path
+            }
+        }
         // MPD albumart first, then readpicture as fallback
         do {
-            let data = try await self.mpdConnector.database.getAlbumart(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
+            let data = try await self.mpdConnector.database.getAlbumart(path: completedPath, key: cacheKey ?? "", cacheValidator: cacheValidator)
             if data == Data() {
-                return try await self.mpdConnector.database.getReadpicture(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
+                return try await self.mpdConnector.database.getReadpicture(path: completedPath, key: cacheKey ?? "", cacheValidator: cacheValidator)
             }
             return data
         } catch {
-            return try await self.mpdConnector.database.getReadpicture(path: path, key: cacheKey ?? "", cacheValidator: cacheValidator)
+            return try await self.mpdConnector.database.getReadpicture(path: completedPath, key: cacheKey ?? "", cacheValidator: cacheValidator)
         }
     }
     
     public func coverData(_ album: Album) async throws -> Data {
-        try await loadCoverData(path: album.coverURI.path, imageURL: album.coverURI.imageURL, cacheKey: nil, cacheValidator: nil)
+        try await loadCoverData(path: album.coverURI.path, album: album, imageURL: album.coverURI.imageURL, cacheKey: nil, cacheValidator: nil)
     }
     
     public func coverData(_ album: Album, cacheValidator: @escaping (String) -> Data?) async throws -> Data {
-        try await loadCoverData(path: album.coverURI.path, imageURL: album.coverURI.imageURL, cacheKey: album.cacheKey, cacheValidator: cacheValidator)
+        try await loadCoverData(path: album.coverURI.path, album: album, imageURL: album.coverURI.imageURL, cacheKey: album.cacheKey, cacheValidator: cacheValidator)
     }
     
     public func coverData(_ song: Song) async throws -> Data {
