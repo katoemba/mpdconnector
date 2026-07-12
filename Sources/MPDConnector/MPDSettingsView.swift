@@ -477,8 +477,49 @@ public struct MPDSettingsView: View {
                 }
             }
         }
+        .onChange(of: player.uniqueID) { _, _ in
+            resetStateFromPlayer()
+        }
         .onDisappear {
             commitConnectionSettingsIfNeeded()
+        }
+    }
+
+    private func resetStateFromPlayer() {
+        let ud = player.userDefaults
+        selectedType = player.type
+        let storedIpAddress = ud.string(forKey: MPDDefaultKey.ipAddress.stringValue(player)) ?? ""
+        let storedConnectToIp = ud.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(player))
+        ipAddressField = storedIpAddress
+        connectToIp = storedConnectToIp
+        appliedIpAddress = storedIpAddress
+        appliedConnectToIp = storedConnectToIp
+        outputHostField = ud.string(forKey: MPDDefaultKey.outputHost.stringValue(player)) ?? ""
+        if let portVal = ud.object(forKey: MPDDefaultKey.outputPort.stringValue(player)) as? Int {
+            outputPortField = "\(portVal)"
+        } else {
+            outputPortField = ""
+        }
+        let storedPassword = ud.string(forKey: MPDDefaultKey.password.stringValue(player)) ?? ""
+        passwordField = storedPassword
+        appliedPassword = storedPassword
+        customPlayerName = ud.string(forKey: MPDDefaultKey.customPlayerName.stringValue(player)) ?? ""
+        isHidden = ud.bool(forKey: MPDDefaultKey.hidden.stringValue(player))
+        useHTTPCoverArt = ud.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player))
+        albumGroupingSelection = ud.string(forKey: MPDDefaultKey.albumGrouping.stringValue(player)) ?? "albumartist"
+        databaseStatusText = ""
+        databaseArtists = "-"
+        databaseAlbums = "-"
+        databaseSongs = "-"
+        Task {
+            if let browse = player.browse as? MPDBrowse {
+                databaseStatusText = (try? await browse.databaseStatus()) ?? ""
+                if let stats = try? await browse.databaseStats() {
+                    databaseArtists = "\(stats.artists)"
+                    databaseAlbums = "\(stats.albums)"
+                    databaseSongs = "\(stats.songs)"
+                }
+            }
         }
     }
 
