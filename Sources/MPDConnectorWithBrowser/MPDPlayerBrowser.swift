@@ -280,9 +280,8 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                     outputPort: 0
                 )
                 let player = MPDPlayer(attributes, userDefaults: userDefaults)
+                self.pushPlayerEvent(.added(player))
                 Task {
-                    _ = await player.ping()
-                    self.pushPlayerEvent(.added(player))
                     try? await player.finishDiscovery()
                 }
             }
@@ -403,9 +402,10 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     public func manualAddPlayerView() -> some View {
         ManualAddMPDPlayerView(userDefaults: userDefaults) { [weak self] player in
             guard let self else { return }
+            // Push immediately — user already verified connectivity via the connection test.
+            // Calling ping() again here hangs on hotspot/direct-AP networks after the first connection closes.
+            self.pushPlayerEvent(.added(player))
             Task {
-                _ = await player.ping()
-                self.pushPlayerEvent(.added(player))
                 try? await player.finishDiscovery()
             }
         }
