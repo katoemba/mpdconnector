@@ -99,6 +99,12 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         
         isListening = true
         
+        let predefinedPlayerIDs = Set(predefinedPlayers.compactMap { definition -> String? in
+            guard definition.type == controllerType,
+                  let player = try? JSONDecoder().decode(MPDPlayer.PlayerAttributes.self, from: definition.typeSpecificData) else { return nil }
+            return MPDPlayer.uniqueIDForPlayer(host: player.host, port: player.port)
+        })
+
         for definition in predefinedPlayers {
             guard definition.type == controllerType else { continue }
             Task {
@@ -108,7 +114,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                 pushPlayerEvent(.added(player))
             }
         }
-        
+
+        migrateLegacyManualPlayersIfNeeded(predefinedPlayerIDs: predefinedPlayerIDs)
+
         let mpdBrowser = AsyncServiceBrowser()
         self.mpdBrowser = mpdBrowser
         Task {
@@ -224,6 +232,63 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
     
+    // MARK: - Legacy migration
+
+    private static let legacyMigrationDoneKey = "MPD.ManualPlayersMigrated"
+
+    /// Reads manual players stored by the old app version and injects them into the new PlayerManager
+    /// via the event stream. Runs at most once, gated by a UserDefaults flag.
+    private func migrateLegacyManualPlayersIfNeeded(predefinedPlayerIDs: Set<String>) {
+        guard !userDefaults.bool(forKey: Self.legacyMigrationDoneKey) else { return }
+        userDefaults.set(true, forKey: Self.legacyMigrationDoneKey)
+
+        // Old format: [playerName: [String: Any]] stored under one of these keys.
+        let legacyKeys = ["MPD.ManualPlayers", "mpd.browser.manualplayers"]
+        for key in legacyKeys {
+            guard let stored = userDefaults.dictionary(forKey: key), !stored.isEmpty else { continue }
+            for (_, value) in stored {
+                guard let props = value as? [String: Any],
+                      let host = props["Host"] as? String, !host.isEmpty,
+                      let port = props["Port"] as? Int, port > 0 else { continue }
+
+                // Skip players already present in the new persistence.
+                let playerID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
+                guard !predefinedPlayerIDs.contains(playerID) else { continue }
+
+                let name = (props["Name"] as? String) ?? host
+                let typeInt = (props["type"] as? Int) ?? MPDType.classic.rawValue
+                let mpdType = MPDType(rawValue: typeInt) ?? .classic
+                let rawPassword = (props["Password"] as? String) ?? ""
+                let password: String? = rawPassword.isEmpty ? nil : rawPassword
+                // Old format may use "ipAddress" (lowercase) or "MPD.IpAddress"
+                let ipAddress = (props["ipAddress"] as? String) ?? (props["MPD.IpAddress"] as? String)
+
+                let attributes = MPDPlayer.PlayerAttributes(
+                    uuid: UUID(),
+                    name: name,
+                    type: mpdType,
+                    version: "0.0.0",
+                    ipAddress: ipAddress,
+                    host: host,
+                    port: port,
+                    password: password,
+                    useHttpCoverArt: false,
+                    manual: true,
+                    albumGrouping: "albumartist",
+                    coverFilename: "",
+                    outputHost: host,
+                    outputPort: 0
+                )
+                let player = MPDPlayer(attributes, userDefaults: userDefaults)
+                Task {
+                    _ = await player.ping()
+                    self.pushPlayerEvent(.added(player))
+                    try? await player.finishDiscovery()
+                }
+            }
+        }
+    }
+
     /// Stop listening for players.
     public func stopListening() async {
         guard isListening == true else {
@@ -339,8 +404,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         ManualAddMPDPlayerView(userDefaults: userDefaults) { [weak self] player in
             guard let self else { return }
             Task {
-                try? await player.finishDiscovery()
+                _ = await player.ping()
                 self.pushPlayerEvent(.added(player))
+                try? await player.finishDiscovery()
             }
         }
     }
