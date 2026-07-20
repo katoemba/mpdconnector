@@ -159,7 +159,9 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         }
     }
     public func updateVersion(_ version: String) {
-        self.version = version
+        if version != "0.0.0" {
+            self.version = version
+        }
     }
 
     public var hidden: Bool {
