@@ -141,7 +141,27 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public internal(set) var type: MPDType
     private var uuid = UUID()
     
-    public private(set) var version: String
+    public private(set) var version: String {
+        didSet {
+            attributes = MPDPlayer.PlayerAttributes(uuid: attributes.uuid,
+                                                    name: attributes.name,
+                                                    type: attributes.type,
+                                                    version: version,
+                                                    host: attributes.host,
+                                                    port: attributes.port,
+                                                    password: attributes.password,
+                                                    useHttpCoverArt: attributes.useHttpCoverArt,
+                                                    manual: attributes.manual,
+                                                    albumGrouping: attributes.albumGrouping,
+                                                    coverFilename: attributes.coverFilename,
+                                                    outputHost: attributes.outputHost,
+                                                    outputPort: attributes.outputPort)
+        }
+    }
+    public func updateVersion(_ version: String) {
+        self.version = version
+    }
+
     public var hidden: Bool {
         return userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(self))
     }
