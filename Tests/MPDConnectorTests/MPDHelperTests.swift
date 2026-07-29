@@ -28,8 +28,6 @@ import Foundation
 import XCTest
 import ConnectorProtocol
 import MPDConnector
-import RxSwift
-import RxBlocking
 
 class MPDHelperTests: XCTestCase {
 }

@@ -382,7 +382,9 @@ final public class MPDControl: ControlProtocol {
             
             executors.removeAll()
             if let end = try? statusExecutor.processResults().playlistlength {
-                executors.append(mpdConnector.queue.moveExecutor(range: UInt(addDetails.playerStatus.playqueue.length)...UInt(end), topos: .absolute(UInt(pos))))
+                if addDetails.playerStatus.playqueue.length >= 0, end >= 0, addDetails.playerStatus.playqueue.length <= end {
+                    executors.append(mpdConnector.queue.moveExecutor(range: UInt(addDetails.playerStatus.playqueue.length)...UInt(end), topos: .absolute(UInt(pos))))
+                }
             }
             
             if addDetails.addMode == .addNextAndPlay {
@@ -416,6 +418,7 @@ final public class MPDControl: ControlProtocol {
     ///   - from: the position of the song to change
     ///   - to: the position to move the song to
     public func moveSong(playlist: Playlist, from: Int, to: Int) async throws {
+        guard from >= 0, to >= 0 else { return }
         try await mpdConnector.playlist.playlistmove(name: playlist.id, from: UInt(from), to: UInt(to))
     }
     
@@ -445,9 +448,10 @@ final public class MPDControl: ControlProtocol {
         if from == nil && to == nil {
             try await mpdConnector.queue.clear()
         } else if let playerStatus {
-            let start = UInt(from ?? 0)
-            let end = UInt(to ?? playerStatus.playqueue.length)
-            try await mpdConnector.queue.delete(range: start...end)
+            let rawStart = from ?? 0
+            let rawEnd   = to ?? playerStatus.playqueue.length
+            guard rawStart >= 0, rawEnd >= 0, rawStart <= rawEnd else { return }
+            try await mpdConnector.queue.delete(range: UInt(rawStart)...UInt(rawEnd))
         }
     }
     

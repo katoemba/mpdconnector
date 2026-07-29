@@ -27,8 +27,6 @@
 import XCTest
 import ConnectorProtocol
 import MPDConnector
-import RxSwift
-import RxTest
 
 class MPDBrowseTests: XCTestCase {
 }
