@@ -401,6 +401,7 @@ final public class MPDControl: ControlProtocol {
     ///   - from: the position of the song to change
     ///   - to: the position to move the song to
     public func moveSong(from: Int, to: Int) async throws {
+        guard from >= 0, to >= 0 else { return }
         try await mpdConnector.queue.move(frompos: from, topos: .absolute(UInt(to)))
     }
     
@@ -408,6 +409,7 @@ final public class MPDControl: ControlProtocol {
     ///
     /// - Parameter at: the position of the song to remove
     public func deleteSong(_ at: Int) async throws {
+        guard at >= 0 else { return }
         try await mpdConnector.queue.delete(at)
     }
     
@@ -428,6 +430,7 @@ final public class MPDControl: ControlProtocol {
     ///   - playlist: the playlist from which to remove the song
     ///   - at: the position of the song to remove
     public func deleteSong(playlist: Playlist, at: Int) async throws {
+        guard at >= 0 else { return }
         try await mpdConnector.playlist.playlistdelete(name: playlist.id, songpos: UInt(at))
     }
     
