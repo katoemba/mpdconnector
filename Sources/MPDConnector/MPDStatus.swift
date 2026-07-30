@@ -29,6 +29,7 @@ import ConnectorProtocol
 import SwiftMPD
 import Combine
 import SwiftUI
+import os
 import os.log
 
 public class MPDStatus: StatusProtocol, @unchecked Sendable {
@@ -42,28 +43,50 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     private var mpdIdleConnector: SwiftMPD.MPDConnector?
     private var mpdConnector: SwiftMPD.MPDConnector
     
+    /// The state that the monitoring loops write and the rest of the app reads, at any moment and
+    /// from any thread. It is guarded by a lock: a PlayerStatus is a large struct holding strings
+    /// and arrays, so reading one while it is being replaced hands out a copy with broken
+    /// reference counts, which crashes later on when that copy is released.
+    private struct SharedState {
+        var playerStatus = PlayerStatus()
+        var connectionStatus = ConnectionStatus.unknown
+        var lastKnownElapsedTime = 0
+        var lastKnownElapsedTimeRecorded = Date()
+    }
+    private let sharedState = OSAllocatedUnfairLock(initialState: SharedState())
+
     public private(set) var statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
-    public var playerStatus: PlayerStatus = PlayerStatus() {
-        didSet {
-            Task {
-                await statusStream.send(playerStatus)
-            }
+    public var playerStatus: PlayerStatus {
+        get {
+            sharedState.withLock { $0.playerStatus }
+        }
+        set {
+            sharedState.withLock { $0.playerStatus = newValue }
+            send(newValue)
         }
     }
-    
+
     public private(set) var connectionStatusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.ConnectionStatus>()
-    public var connectionStatus: ConnectionStatus = .unknown  {
-        didSet {
-            Task {
-                await connectionStatusStream.send(connectionStatus)
-            }
+    public var connectionStatus: ConnectionStatus {
+        get {
+            sharedState.withLock { $0.connectionStatus }
+        }
+        set {
+            setConnectionStatus(newValue)
         }
     }
-    
-    private var lastKnownElapsedTime = 0
-    private var lastKnownElapsedTimeRecorded = Date()
+
     private var elapsedTask: Task<Void, Never>?
     private var idleTask: Task<Void, Never>?
+
+    /// Whether status monitoring is running. Deliberately separate from `connectionStatus`, which
+    /// tells whether the player is actually reachable and can therefore change while monitoring.
+    private var isMonitoring = false
+    private var connectionObservers = Set<AnyCancellable>()
+
+    /// Seconds to wait before re-establishing a lost monitoring connection, per consecutive
+    /// failure. The last value is used for all further attempts.
+    private static let reconnectDelays: [UInt64] = [1, 2, 5, 10, 20, 30]
 
     public init(attributes: MPDPlayer.PlayerAttributes,
                 identification: String = "NoID",
@@ -77,73 +100,180 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
 
     /// Cleanup connection object
     deinit {
+        elapsedTask?.cancel()
+        idleTask?.cancel()
         disconnectFromMPD()
     }
 
     public func start() {
-        guard connectionStatus != .online, let mpdIdleConnector else {
+        guard isMonitoring == false, let mpdIdleConnector else {
             return
         }
 
-        connectionStatus = .online
+        isMonitoring = true
+        observeConnectionState()
         startIdleLoop(with: mpdIdleConnector)
+        startElapsedLoop()
+    }
 
+    private func startElapsedLoop() {
         elapsedTask = Task { [weak self] in
-            guard let self else { return }
-
             var counter = 0
             while (Task.isCancelled == false) {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
 
-                if playerStatus.playing.playPauseMode == .playing {
-                    var newPlayerStatus = PlayerStatus.init(playerStatus)
-                    newPlayerStatus.time.elapsedTime = self.lastKnownElapsedTime + Int(Date().timeIntervalSince(self.lastKnownElapsedTimeRecorded))
+                guard let self else { return }
 
-                    self.playerStatus = newPlayerStatus
-                }
+                self.updateElapsedTime()
 
                 counter += 1
                 if counter > 5 {
                     counter = 0
                     if let playerStatus = try? await playerStatus() {
-                        self.playerStatus = playerStatus
-                        lastKnownElapsedTimeRecorded = Date()
-                        lastKnownElapsedTime = playerStatus.time.elapsedTime
+                        self.store(playerStatus)
                     }
                 }
             }
         }
     }
     
-    /// Stop monitoring status changes on a player, and close the active connection
+    /// Stop monitoring status changes on a player, and close the active connections
     public func stop() {
+        isMonitoring = false
+        connectionObservers.removeAll()
         elapsedTask?.cancel()
         elapsedTask = nil
         idleTask?.cancel()
         idleTask = nil
-        connectionStatus = .offline
-        Task {
-            await statusStream.unsubscribeAll()
-            statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
-            try? await mpdIdleConnector?.status.noidle()
-        }
+        setConnectionStatus(.offline)
+
+        // Note that statusStream is deliberately left in place: subscribers are long-lived and
+        // must keep receiving updates when monitoring is started again. Closing the connections
+        // also breaks the pending idle command, so the idle loop stops even if it was parked.
+        disconnectFromMPD()
     }
 
+    /// Monitor the player for changes.
+    ///
+    /// Every iteration reads the status and then waits for the player to report a change. Any
+    /// failure is recoverable: the connection is dropped so that the next command establishes a
+    /// fresh one, and the loop retries with a backoff until it succeeds or monitoring is stopped.
+    /// Failing to recover here means no more status updates at all, so the loop must never end
+    /// on its own.
     private func startIdleLoop(with idleConnector: SwiftMPD.MPDConnector) {
         idleTask?.cancel()
         idleTask = Task { [weak self] in
-            guard let self else { return }
+            var failures = 0
+
             while Task.isCancelled == false {
-                if let playerStatus = try? await self.playerStatus(connector: idleConnector) {
-                    self.playerStatus = playerStatus
-                    self.lastKnownElapsedTimeRecorded = Date()
-                    self.lastKnownElapsedTime = playerStatus.time.elapsedTime
+                do {
+                    guard let self else { return }
+
+                    let playerStatus = try await self.playerStatus(connector: idleConnector)
+                    self.store(playerStatus)
+                    self.setConnectionStatus(.online)
+                    failures = 0
+                }
+                catch {
+                    guard Task.isCancelled == false, let self else { return }
+
+                    failures += 1
+                    await self.recoverFromMonitoringFailure(error, connector: idleConnector, attempt: failures)
+                    continue
                 }
 
-                guard let changes = try? await idleConnector.status.idle([.player, .playlist, .mixer, .output, .options]), changes.count > 0 else {
-                    break
+                do {
+                    // No reference to self is held while waiting here, which can take arbitrarily
+                    // long on a player that isn't doing anything.
+                    _ = try await idleConnector.status.idle([.player, .playlist, .mixer, .output, .options])
+                }
+                catch {
+                    guard Task.isCancelled == false, let self else { return }
+
+                    failures += 1
+                    await self.recoverFromMonitoringFailure(error, connector: idleConnector, attempt: failures)
                 }
             }
+        }
+    }
+
+    /// Report the player as unreachable and drop the monitoring connection, so the next command
+    /// on it connects again. Closing is essential: a connection can be half-open, or the player
+    /// can still be in idle mode after an idle command timed out, and in both cases only a fresh
+    /// connection recovers.
+    private func recoverFromMonitoringFailure(_ error: Error, connector: SwiftMPD.MPDConnector, attempt: Int) async {
+        MPDStatus.logger.info("Status monitoring on \(self.identification, privacy: .public) failed (attempt \(attempt)): \(error.localizedDescription, privacy: .public)")
+
+        setConnectionStatus(.offline)
+        await connector.closeConnection()
+
+        let delay = MPDStatus.reconnectDelays[min(attempt - 1, MPDStatus.reconnectDelays.count - 1)]
+        try? await Task.sleep(nanoseconds: delay * 1_000_000_000)
+    }
+
+    /// Notice a connection that is dropped underneath us (the player is switched off or reboots,
+    /// the network changes, iOS tears down sockets while the app is suspended), so the player is
+    /// reported as offline right away instead of only when the idle loop notices.
+    /// Only the monitoring connection is observed, as that is the one that is meant to stay open;
+    /// the command connection is closed and reopened as part of normal operation.
+    private func observeConnectionState() {
+        connectionObservers.removeAll()
+
+        mpdIdleConnector?.connectedStatus
+            .sink { [weak self] connected in
+                guard let self, self.isMonitoring, connected == false else { return }
+
+                self.setConnectionStatus(.offline)
+            }
+            .store(in: &connectionObservers)
+    }
+
+    private func setConnectionStatus(_ status: ConnectionStatus) {
+        let changed = sharedState.withLock { state -> Bool in
+            guard state.connectionStatus != status else { return false }
+
+            state.connectionStatus = status
+            return true
+        }
+        guard changed else { return }
+
+        Task {
+            await connectionStatusStream.send(status)
+        }
+    }
+
+    /// Store a status as freshly read from the player, and use it as the anchor from which the
+    /// elapsed time is counted up in between reads.
+    private func store(_ playerStatus: PlayerStatus) {
+        sharedState.withLock { state in
+            state.playerStatus = playerStatus
+            state.lastKnownElapsedTimeRecorded = Date()
+            state.lastKnownElapsedTime = playerStatus.time.elapsedTime
+        }
+        send(playerStatus)
+    }
+
+    /// Advance the elapsed time of the current status while the player is playing, so that the
+    /// position keeps running in between two reads from the player. Read and write happen under
+    /// a single lock, as the idle loop can replace the status at any moment.
+    private func updateElapsedTime() {
+        let updated: PlayerStatus? = sharedState.withLock { state in
+            guard state.playerStatus.playing.playPauseMode == .playing else { return nil }
+
+            var playerStatus = PlayerStatus(state.playerStatus)
+            playerStatus.time.elapsedTime = state.lastKnownElapsedTime + Int(Date().timeIntervalSince(state.lastKnownElapsedTimeRecorded))
+            state.playerStatus = playerStatus
+
+            return playerStatus
+        }
+
+        guard let updated else { return }
+        send(updated)
+    }
+
+    private func send(_ playerStatus: PlayerStatus) {
+        Task {
+            await statusStream.send(playerStatus)
         }
     }
 
@@ -154,15 +284,15 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         self.mpdConnector = mpdConnector
         self.mpdIdleConnector = mpdIdleConnector
 
-        guard connectionStatus == .online else { return }
+        guard isMonitoring else { return }
 
-        // Break the in-flight idle on the old connection so the previous loop exits,
-        // then start a new idle loop bound to the new connector.
+        // Closing the old connection breaks the in-flight idle, so the previous loop exits.
+        idleTask?.cancel()
         Task {
-            try? await oldIdleConnector?.status.noidle()
             await oldIdleConnector?.closeConnection()
         }
 
+        observeConnectionState()
         if let mpdIdleConnector {
             startIdleLoop(with: mpdIdleConnector)
         }
@@ -248,17 +378,24 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         }
     }
     
+    /// Close the connections to the player. Any following command reconnects, so this is also the
+    /// way to get rid of connections that have gone stale, for example because the app was
+    /// suspended and the sockets were torn down while it wasn't running.
     public func disconnectFromMPD() {
+        let connector = mpdConnector
+        let idleConnector = mpdIdleConnector
+
+        Task {
+            await idleConnector?.closeConnection()
+            await connector.closeConnection()
+        }
     }
 
     /// Force a refresh of the status.
     public func forceStatusRefresh() {
         Task {
-            do {
-                playerStatus = try await playerStatus()
-            }
-            catch {
-                
+            if let playerStatus = try? await playerStatus() {
+                store(playerStatus)
             }
         }
     }
