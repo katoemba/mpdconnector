@@ -367,7 +367,12 @@ final public class MPDControl: ControlProtocol {
             pos = addDetails.playerStatus.playqueue.length
         }
         
-        executors.append(mpdConnector.queue.addExecutor(folder.path))
+        if mpdConnector.version >= MPDConnection.Version("0.23.3") {
+            executors.append(mpdConnector.queue.addExecutor(folder.path, position: pos))
+        }
+        else {
+            executors.append(mpdConnector.queue.addExecutor(folder.path))
+        }
         
         if addDetails.addMode == .replace {
             if addDetails.shuffle == true {
@@ -375,22 +380,26 @@ final public class MPDControl: ControlProtocol {
             }
             executors.append(mpdConnector.playback.playExecutor(Int(addDetails.startWithSong)))
         }
-        else if addDetails.addMode == .addNext || addDetails.addMode == .addNextAndPlay {
-            let statusExecutor = mpdConnector.status.statusExecutor()
-            executors.append(statusExecutor)
-            _ = try? await mpdConnector.batchCommand(executors)
-            
-            executors.removeAll()
-            if let end = try? statusExecutor.processResults().playlistlength {
-                if addDetails.playerStatus.playqueue.length >= 0, end >= 0, addDetails.playerStatus.playqueue.length <= end {
-                    executors.append(mpdConnector.queue.moveExecutor(range: UInt(addDetails.playerStatus.playqueue.length)...UInt(end), topos: .absolute(UInt(pos))))
+        
+        if mpdConnector.version < MPDConnection.Version("0.23.3") {
+            if addDetails.addMode == .addNext || addDetails.addMode == .addNextAndPlay {
+                _ = try? await mpdConnector.batchCommand(executors)
+
+                if let status = try? await mpdConnector.status.getStatus() {
+                    executors.removeAll()
+                    if let end = status.playlistlength {
+                        if addDetails.playerStatus.playqueue.length >= 0, end >= 0, addDetails.playerStatus.playqueue.length <= end {
+                            executors.append(mpdConnector.queue.moveExecutor(range: UInt(addDetails.playerStatus.playqueue.length)...UInt(end), topos: .absolute(UInt(pos))))
+                        }
+                    }
                 }
             }
-            
-            if addDetails.addMode == .addNextAndPlay {
-                executors.append(mpdConnector.playback.playExecutor(pos))
-            }
         }
+        
+        if addDetails.addMode == .addNextAndPlay {
+            executors.append(mpdConnector.playback.playExecutor(pos))
+        }
+
         try await mpdConnector.batchCommand(executors)
     }
     

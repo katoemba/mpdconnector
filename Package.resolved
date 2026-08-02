@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "b5544ba79a70a0cb3563e75bf26dc198d6b40ed3",
-        "version" : "1.7.4"
+        "revision" : "50688cacbd41d547e9eb9f7a213542340b7c442b",
+        "version" : "1.7.5"
       }
     },
     {
@@ -52,7 +52,7 @@
       "location" : "https://github.com/katoemba/SwiftMPD.git",
       "state" : {
         "branch" : "main",
-        "revision" : "b02cdb668fb901c852b89a27973032eabba9d684"
+        "revision" : "c9db135faafd5bd0f3cb3a58250d8235ab095877"
       }
     },
     {
