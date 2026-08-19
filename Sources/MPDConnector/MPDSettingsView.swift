@@ -88,6 +88,7 @@ public struct MPDSettingsView: View {
                         }
                     }
                     .labelsHidden()
+                    .accessibilityLabel(Text("Type", bundle: .module))
                     .onChange(of: selectedType) { _, newValue in
                         // Update player when type changes
                         player.type = newValue
@@ -102,14 +103,21 @@ public struct MPDSettingsView: View {
                             HStack {
                                 Text(String(describing: t))
                                 Spacer()
-                                if t == selectedType { Image(systemName: "checkmark") }
+                                if t == selectedType {
+                                    Image(systemName: "checkmark")
+                                        .accessibilityHidden(true)
+                                }
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                selectedType = t
-                                player.type = t
-                                player.userDefaults.set(t.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(player))
-                                player.objectWillChange.send()
+                                selectType(t)
+                            }
+                            // The row is tapped rather than being a button, and the
+                            // checkmark is the only thing that marks the selected type.
+                            .accessibilityElement(children: .combine)
+                            .accessibilityAddTraits(t == selectedType ? [.isButton, .isSelected] : .isButton)
+                            .accessibilityAction {
+                                selectType(t)
                             }
                         }
                     }
@@ -121,6 +129,7 @@ public struct MPDSettingsView: View {
                         Text(String(describing: selectedType))
                             .foregroundColor(.secondary)
                     }
+                    .accessibilityElement(children: .combine)
                 }
 #endif
                 
@@ -132,6 +141,7 @@ public struct MPDSettingsView: View {
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .frame(maxWidth: 220)
+                        .accessibilityLabel(Text("Name", bundle: .module))
                         .popoverTip(changeNameTip)
                         .onChange(of: customPlayerName) { _, newValue in
                             let key = MPDDefaultKey.customPlayerName.stringValue(player)
@@ -153,6 +163,7 @@ public struct MPDSettingsView: View {
                     Text(player.mpdConnector.version.description)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 
                 // Host and Port display
                 HStack {
@@ -161,6 +172,7 @@ public struct MPDSettingsView: View {
                     Text(player.attributes.host)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 
                 HStack {
                     Text("Port", bundle: .module)
@@ -168,6 +180,7 @@ public struct MPDSettingsView: View {
                     Text(verbatim: "\(player.attributes.port)")
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 
                 if player.attributes.manual {
                     HStack {
@@ -194,7 +207,7 @@ public struct MPDSettingsView: View {
                     HStack {
                         Text(String(localized: "Hide Player", bundle: .module))
                         Spacer()
-                        Toggle("", isOn: Binding<Bool>(
+                        Toggle(String(localized: "Hide Player", bundle: .module), isOn: Binding<Bool>(
                             get: {
                                 player.userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(player))
                             },
@@ -205,6 +218,7 @@ public struct MPDSettingsView: View {
                                 }
                             }
                         ))
+                        .labelsHidden()
                     }
                 }
             }
@@ -214,7 +228,8 @@ public struct MPDSettingsView: View {
                 HStack {
                     Text(String(localized: "Use IP Address", bundle: .module))
                     Spacer()
-                    Toggle("", isOn: $connectToIp)
+                    Toggle(String(localized: "Use IP Address", bundle: .module), isOn: $connectToIp)
+                        .labelsHidden()
                         .onChange(of: connectToIp) { _, _ in
                             updateIPAddressSettings()
                             commitConnectionSettingsIfNeeded()
@@ -226,6 +241,7 @@ public struct MPDSettingsView: View {
                     Text(String(localized: "IP Address to Use", bundle: .module))
                     Spacer()
                     TextField("", text: $ipAddressField)
+                        .accessibilityLabel(Text("IP Address to Use", bundle: .module))
                         .disabled(connectToIp == false)
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
@@ -248,6 +264,7 @@ public struct MPDSettingsView: View {
                     Text(String(localized: "Password", bundle: .module))
                     Spacer()
                     SecureField("", text: $passwordField, prompt: Text(String(localized: "Password (optional)", bundle: .module)))
+                        .accessibilityLabel(Text("Password", bundle: .module))
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .frame(maxWidth: 220)
@@ -269,7 +286,7 @@ public struct MPDSettingsView: View {
                     HStack {
                         Text(String(localized: "Use HTTP cover art", bundle: .module))
                         Spacer()
-                        Toggle("", isOn: Binding<Bool>(
+                        Toggle(String(localized: "Use HTTP cover art", bundle: .module), isOn: Binding<Bool>(
                             get: {
                                 player.userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player))
                             },
@@ -290,6 +307,7 @@ public struct MPDSettingsView: View {
                                                                                outputPort: player.attributes.outputPort)
                             }
                         ))
+                        .labelsHidden()
                     }
                 }
                 
@@ -318,6 +336,7 @@ public struct MPDSettingsView: View {
                                                                                outputPort: player.attributes.outputPort)
                             }
                         ), prompt: Text("Enter cover art filename"))
+                            .accessibilityLabel(Text("Cover Filename", bundle: .module))
                             .multilineTextAlignment(.trailing)
                             .textFieldStyle(.automatic)
                             .onChange(of: outputHostField) { _, _ in
@@ -333,6 +352,7 @@ public struct MPDSettingsView: View {
                     Text(String(localized: "Host or IP Address", bundle: .module))
                     Spacer()
                     TextField("", text: $outputHostField, prompt: Text("Enter hostname or IP"))
+                        .accessibilityLabel(Text("Host or IP Address", bundle: .module))
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
                         .onChange(of: outputHostField) { _, _ in
@@ -351,6 +371,7 @@ public struct MPDSettingsView: View {
                         }
                     )
                     TextField("", text: portFieldBinding, prompt: Text("Enter port"))
+                        .accessibilityLabel(Text("Port number", bundle: .module))
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.automatic)
 #if os(iOS) || os(tvOS)
@@ -367,16 +388,18 @@ public struct MPDSettingsView: View {
                     Text(databaseStatusText)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 
                 if player.mpdConnector.version < MPDConnection.Version("0.20.0") {
                     HStack {
                         Text("Album Grouping", bundle: .module)
                         Spacer()
-                        Picker("", selection: $albumGroupingSelection) {
+                        Picker(String(localized: "Album Grouping", bundle: .module), selection: $albumGroupingSelection) {
                             Text("Album Artist", bundle: .module).tag("albumartist")
                             Text("Artist", bundle: .module).tag("artist")
                         }
                         .pickerStyle(.segmented)
+                        .labelsHidden()
                         .onChange(of: albumGroupingSelection) { _, newValue in
                             // Update player when type changes
                             player.userDefaults.set(newValue, forKey: MPDDefaultKey.albumGrouping.stringValue(player))
@@ -404,18 +427,21 @@ public struct MPDSettingsView: View {
                     Text(databaseArtists)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 HStack {
                     Text("Albums", bundle: .module)
                     Spacer()
                     Text(databaseAlbums)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 HStack {
                     Text("Songs", bundle: .module)
                     Spacer()
                     Text(databaseSongs)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 
                 HStack(spacing: 25){
                     Spacer()
@@ -483,6 +509,13 @@ public struct MPDSettingsView: View {
         .onDisappear {
             commitConnectionSettingsIfNeeded()
         }
+    }
+
+    private func selectType(_ type: MPDType) {
+        selectedType = type
+        player.type = type
+        player.userDefaults.set(type.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(player))
+        player.objectWillChange.send()
     }
 
     private func resetStateFromPlayer() {
