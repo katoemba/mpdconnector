@@ -179,7 +179,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     private var commands: [String]
     public var supportedFunctions: [Functions] {
-        return [.playRecursiveFolder, .repeatSingle, .consume, .radio, .randomSongs, .randomAlbums, .composers, .performers, .conductors, .quality, .recentlyAddedAlbums, .stream, .playlists, .volumeAdjustment] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : [])
+        return [.playRecursiveFolder, .repeatSingle, .consume, .radio, .randomSongs, .randomAlbums, .composers, .performers, .conductors, .quality, .recentlyAddedAlbums, .stream, .playlists, .volumeAdjustment] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : []) + (attributes.useHttpCoverArt ? [.httpImageRetrieval] : [])
     }
     
     /// Current status

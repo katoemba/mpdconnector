@@ -7,7 +7,7 @@
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
         "branch" : "AsyncAwait",
-        "revision" : "12f0cc19b1f13af2d24570b4b1b99fcb21cc632c"
+        "revision" : "705856a8ed04747e1395a98d31f089b89b16868e"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "50688cacbd41d547e9eb9f7a213542340b7c442b",
-        "version" : "1.7.5"
+        "revision" : "869129b7bf4ecc57b97d0193ad29690ca2134750",
+        "version" : "1.8.1"
       }
     },
     {
@@ -52,7 +52,7 @@
       "location" : "https://github.com/katoemba/SwiftMPD.git",
       "state" : {
         "branch" : "main",
-        "revision" : "c9db135faafd5bd0f3cb3a58250d8235ab095877"
+        "revision" : "4a5bd31e5336ea513928cffc6b1bd0db33836bc7"
       }
     },
     {
