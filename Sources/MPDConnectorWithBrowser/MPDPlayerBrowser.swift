@@ -69,6 +69,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     private var playerEventContinuation: AsyncStream<ConnectorProtocol.PlayerBrowserEvent>.Continuation?
 
     private var isListening = false
+    private var discoveryTasks: [String: Task<Void, Never>] = [:]
     private var userDefaults: UserDefaults
     
     private var mpdBrowser: AsyncServiceBrowser?
@@ -123,22 +124,19 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             for await event in mpdBrowser.discover(type: "_mpd._tcp.") {
                 switch event {
                 case .found(let service):
-                    do {
+                    handleFound(taskKey: "mpd:\(service.name)") { [self] in
                         let connectionData = MPDConnectionData(name: service.name,
                                                                host: service.service.hostName ?? "",
-                                                               ip: service.ipAddresses?.first,
+                                                               ip: service.ipv4Address,
                                                                port: service.service.port,
                                                                type: .classic)
-                        let player = try await createPlayerFromService(connectionData)
-                        // Only add if not already in the list
-                        try? await player.finishDiscovery()
-                        pushPlayerEvent(.added(player))
-                    } catch {
-                        print("Failed to create player: \(error)")
+                        return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
                 case .removed(let service):
-                    // Find and remove player with matching name
-                    pushPlayerEvent(.removed(service.name))
+                    cancelDiscovery(taskKey: "mpd:\(service.name)")
+                    // Players are keyed by host:port, so build the same key used when the player was added.
+                    pushPlayerEvent(.removed(MPDPlayer.uniqueIDForPlayer(host: service.service.hostName ?? "",
+                                                                         port: service.service.port)))
                 }
             }
         }
@@ -149,21 +147,19 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             for await event in httpBrowser.discover(type: "_http._tcp.") {
                 switch event {
                 case .found(let service):
-                    do {
-                        if let connectionData = await fetchMoodeConnectionData(from: service) {
-                            let player = try await createPlayerFromService(connectionData)
-                            try? await player.finishDiscovery()
-                            pushPlayerEvent(.added(player))
+                    handleFound(taskKey: "http:\(service.name)") { [self] in
+                        let connectionData: MPDConnectionData?
+                        if let moode = await fetchMoodeConnectionData(from: service) {
+                            connectionData = moode
                         }
-                        else if let connectionData = await fetchVolumioConnectionData(from: service) {
-                            let player = try await createPlayerFromService(connectionData)
-                            try? await player.finishDiscovery()
-                            pushPlayerEvent(.added(player))
+                        else {
+                            connectionData = await fetchVolumioConnectionData(from: service)
                         }
-                    } catch {
-                        print("Failed to create moOde player: \(error)")
+                        guard let connectionData else { return nil }
+                        return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
                 case .removed(let service):
+                    cancelDiscovery(taskKey: "http:\(service.name)")
                     pushPlayerEvent(.removed(service.name))
                 }
             }
@@ -175,28 +171,73 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             for await event in volumioBrowser.discover(type: "_Volumio._tcp.") {
                 switch event {
                 case .found(let service):
-                    do {
+                    handleFound(taskKey: "volumio:\(service.name)") { [self] in
                         let connectionData = MPDConnectionData(name: service.name,
                                                                host: service.service.hostName ?? "",
-                                                               ip: service.ipAddresses?.first,
+                                                               ip: service.ipv4Address,
                                                                port: 6600,
                                                                type: .volumio)
-
-                        let player = try await createPlayerFromService(connectionData)
-                        try? await player.finishDiscovery()
-                        pushPlayerEvent(.added(player))
-                    } catch {
-                        print("Failed to create volumio player: \(error)")
+                        return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
                 case .removed(let service):
+                    cancelDiscovery(taskKey: "volumio:\(service.name)")
                     pushPlayerEvent(.removed(service.name))
                 }
             }
         }
     }
     
+    /// Handle a discovered service without blocking the discovery loop. The player is announced as soon as it
+    /// is created, so it shows up immediately. The slow, network-bound part (connect and finishDiscovery) runs
+    /// in a per-service task, after which the player is announced again so the manager picks up its details.
+    private func handleFound(taskKey: String,
+                             createPlayer: @escaping @MainActor () async throws -> (MPDPlayer, String?)?) {
+        // A discovery for this service is already in flight.
+        guard discoveryTasks[taskKey] == nil else { return }
+
+        discoveryTasks[taskKey] = Task { [weak self] in
+            defer { self?.discoveryTasks.removeValue(forKey: taskKey) }
+            do {
+                guard let (player, ipAddress) = try await createPlayer(), !Task.isCancelled, let self else { return }
+                self.pushPlayerEvent(.added(player))
+                await self.connect(player, ipAddress: ipAddress)
+                guard !Task.isCancelled else { return }
+                self.pushPlayerEvent(.added(player))
+            } catch {
+                print("Failed to create player: \(error)")
+            }
+        }
+    }
+
+    private func cancelDiscovery(taskKey: String) {
+        discoveryTasks.removeValue(forKey: taskKey)?.cancel()
+    }
+
+    /// Finish discovery for a newly discovered player. Players connect via their hostname; if that fails but
+    /// discovery resolved an IPv4 address, fall back to that address. The fallback is stored per player and is
+    /// cleared again as soon as the hostname works.
+    private func connect(_ player: MPDPlayer, ipAddress: String?) async {
+        if await player.ping() == false, let ip = ipAddress, !ip.isEmpty, ip != player.attributes.host {
+            let key = MPDDefaultKey.discoveredIpAddress.stringValue(host: player.attributes.host, port: player.attributes.port)
+            userDefaults.set(ip, forKey: key)
+            player.applyConnectionSettingsChange()
+            if await player.ping() == false {
+                userDefaults.removeObject(forKey: key)
+                player.applyConnectionSettingsChange()
+            }
+        }
+        try? await player.finishDiscovery()
+    }
+
     /// Create a player from a discovered service
     private func createPlayerFromService(_ connectionData: MPDConnectionData) async throws -> MPDPlayer {
+        // Forget any fallback address from an earlier discovery, the hostname is tried first.
+        userDefaults.removeObject(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(host: connectionData.host, port: connectionData.port))
+        // Remember the address discovery resolved, for display in diagnostics.
+        let resolvedKey = MPDDefaultKey.resolvedIpAddress.stringValue(host: connectionData.host, port: connectionData.port)
+        if let ip = connectionData.ip, !ip.isEmpty {
+            userDefaults.set(ip, forKey: resolvedKey)
+        }
         // Create connection properties
         var type: MPDType = connectionData.type
         if type == .classic {
@@ -294,6 +335,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             return
         }
         
+        discoveryTasks.values.forEach { $0.cancel() }
+        discoveryTasks.removeAll()
+
         mpdBrowser?.stopListening()
         mpdBrowser = nil
         
@@ -352,7 +396,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                 return nil
             }
 
-            return MPDConnectionData(name: host, host: host, ip: service.ipAddresses?.first, port: 6600, type: .moodeaudio)
+            return MPDConnectionData(name: host, host: host, ip: service.ipv4Address, port: 6600, type: .moodeaudio)
         } catch {
             return nil
         }
@@ -386,7 +430,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             }
 
             if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ,json["album"] != nil, json["artist"] != nil {
-                return MPDConnectionData(name: host, host: host, ip: service.ipAddresses?.first, port: 6600, type: .volumio)
+                return MPDConnectionData(name: host, host: host, ip: service.ipv4Address, port: 6600, type: .volumio)
             }
             return nil
         } catch {
@@ -404,7 +448,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             guard let self else { return }
             // Push immediately — user already verified connectivity via the connection test.
             // Calling ping() again here hangs on hotspot/direct-AP networks after the first connection closes.
-            self.pushPlayerEvent(.added(player))
+            self.pushPlayerEvent(.updated(player))
             Task {
                 try? await player.finishDiscovery()
             }

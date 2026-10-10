@@ -16,6 +16,8 @@ public enum MPDDefaultKey: String {
     case outputHost = "MPD.Output.Host"
     case outputPort = "MPD.Output.Port"
     case ipAddress = "MPD.IpAddress"
+    case discoveredIpAddress = "MPD.DiscoveredIpAddress"
+    case resolvedIpAddress = "MPD.ResolvedIpAddress"
     case connectToIpAddress = "MPD.ConnectToIpAddress"
     case customPlayerName = "MPD.CustomPlayerName"
     case hidden = "MPD.Hidden"

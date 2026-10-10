@@ -175,6 +175,15 @@ public struct MPDSettingsView: View {
                 .accessibilityElement(children: .combine)
                 
                 HStack {
+                    Text(String(localized: "Detected IP Address", bundle: .module))
+                    Spacer()
+                    Text(player.userDefaults.string(forKey: MPDDefaultKey.resolvedIpAddress.stringValue(player)) ?? String(localized: "Unknown", bundle: .module))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                }
+                .accessibilityElement(children: .combine)
+
+                HStack {
                     Text("Port", bundle: .module)
                     Spacer()
                     Text(verbatim: "\(player.attributes.port)")

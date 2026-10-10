@@ -253,7 +253,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         [DiagnosticsItem(id: "id", description: uniqueID),
          DiagnosticsItem(id: "host", description: attributes.host),
          DiagnosticsItem(id: "connect to ip address", description: userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port)) ? "Yes" : "No"),
-         DiagnosticsItem(id: "ip address", description: userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? "Unknown"),
+         DiagnosticsItem(id: "ip address", description: userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? userDefaults.string(forKey: MPDDefaultKey.resolvedIpAddress.stringValue(host: attributes.host, port: attributes.port)) ?? "Unknown"),
          DiagnosticsItem(id: "port", description: "\(attributes.port)"),
          DiagnosticsItem(id: "model", description: model),
          DiagnosticsItem(id: "version", description: version),
@@ -281,7 +281,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         self.commands = []
         
         let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port))
-        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : attributes.host
+        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host)
         let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(host: attributes.host, port: attributes.port)) ?? ""
         
         self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
@@ -360,7 +360,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     /// with the new credentials. Streams exposed via `status` are preserved.
     public func applyConnectionSettingsChange() {
         let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port))
-        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : attributes.host
+        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host)
         let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(host: attributes.host, port: attributes.port)) ?? ""
 
         let newMpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
