@@ -289,17 +289,18 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             guard let stored = userDefaults.dictionary(forKey: key), !stored.isEmpty else { continue }
             for (_, value) in stored {
                 guard let props = value as? [String: Any],
-                      let host = props["Host"] as? String, !host.isEmpty,
-                      let port = props["Port"] as? Int, port > 0 else { continue }
+                      // The old app used capitalised keys, savePlayer() in this package uses lowercase ones.
+                      let host = (props["Host"] ?? props["host"]) as? String, !host.isEmpty,
+                      let port = (props["Port"] ?? props["port"]) as? Int, port > 0 else { continue }
 
                 // Skip players already present in the new persistence.
                 let playerID = MPDPlayer.uniqueIDForPlayer(host: host, port: port)
                 guard !predefinedPlayerIDs.contains(playerID) else { continue }
 
-                let name = (props["Name"] as? String) ?? host
+                let name = ((props["Name"] ?? props["name"]) as? String) ?? host
                 let typeInt = (props["type"] as? Int) ?? MPDType.classic.rawValue
                 let mpdType = MPDType(rawValue: typeInt) ?? .classic
-                let rawPassword = (props["Password"] as? String) ?? ""
+                let rawPassword = ((props["Password"] ?? props["password"]) as? String) ?? ""
                 let password: String? = rawPassword.isEmpty ? nil : rawPassword
                 // Old format may use "ipAddress" (lowercase) or "MPD.IpAddress"
                 let ipAddress = (props["ipAddress"] as? String) ?? (props["MPD.IpAddress"] as? String)

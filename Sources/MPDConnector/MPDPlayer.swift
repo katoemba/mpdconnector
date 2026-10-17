@@ -221,7 +221,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         try ConnectorProtocol.PlayerDefinition(id: uniqueID,
                                                name: name,
                                                type: controllerType,
-                                               typeSpecificData: encodePlayer())
+                                               typeSpecificData: encodePlayer(),
+                                               isManual: attributes.manual)
     }
     
     /// Create a unique object for every request for a control object
