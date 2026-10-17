@@ -535,11 +535,12 @@ private struct ManualAddMPDPlayerView: View {
                             albumGrouping: "albumartist",
                             coverFilename: "",
                             outputHost: host,
-                            outputPort: 0
+                            outputPort: 0,
+                            instanceID: name.isEmpty ? host : name
                         )
 
                         // Persist manual player, add in-memory, and dismiss
-                        MPDPlayer.storePassword(attributes.password, host: host, port: port, userDefaults: userDefaults)
+                        MPDPlayer.storePassword(attributes.password, host: host, port: port, instanceID: attributes.instanceID, userDefaults: userDefaults)
                         let player = MPDPlayer(attributes, userDefaults: userDefaults)
                         onSave(player)
                         dismiss()
@@ -568,10 +569,11 @@ private struct ManualAddMPDPlayerView: View {
             albumGrouping: "albumartist",
             coverFilename: "",
             outputHost: host,
-            outputPort: 0
+            outputPort: 0,
+            instanceID: name.isEmpty ? host : name
         )
         // The connection reads the password from UserDefaults, so it must be there before testing.
-        MPDPlayer.storePassword(attributes.password, host: host, port: port, userDefaults: userDefaults)
+        MPDPlayer.storePassword(attributes.password, host: host, port: port, instanceID: attributes.instanceID, userDefaults: userDefaults)
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
 

@@ -68,7 +68,7 @@ public enum MPDType: Int, Codable, CaseIterable {
 
 public class MPDPlayer: PlayerProtocol, ObservableObject {
     public struct PlayerAttributes: Codable {
-        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool, albumGrouping: String, coverFilename: String, outputHost: String, outputPort: Int) {
+        public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool, albumGrouping: String, coverFilename: String, outputHost: String, outputPort: Int, instanceID: String? = nil) {
             self.uuid = uuid
             self.name = name
             self.type = type
@@ -82,11 +82,12 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.coverFilename = coverFilename
             self.outputHost = outputHost
             self.outputPort = outputPort
+            self.instanceID = instanceID
         }
         
         private enum CodingKeys: String, CodingKey {
             case uuid, type, name, version, host, port, password, manual
-            case useHttpCoverArt, albumGrouping, coverFilename, outputHost, outputPort
+            case useHttpCoverArt, albumGrouping, coverFilename, outputHost, outputPort, instanceID
         }
 
         // Tolerant decoding: persisted players written by older versions may lack newer fields, and a player
@@ -107,6 +108,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.coverFilename = (try? container.decode(String.self, forKey: .coverFilename)) ?? ""
             self.outputHost = (try? container.decode(String.self, forKey: .outputHost)) ?? host
             self.outputPort = (try? container.decode(Int.self, forKey: .outputPort)) ?? 0
+            self.instanceID = try? container.decodeIfPresent(String.self, forKey: .instanceID)
         }
 
         // identification
@@ -127,6 +129,17 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         public let coverFilename: String
         public let outputHost: String
         public let outputPort: Int
+
+        /// Set for a manual player that shares host and port with another player, so both can exist side by side.
+        /// Nil for all other players, which keeps their uniqueID (and everything stored under it) unchanged.
+        public let instanceID: String?
+
+        func withInstanceID(_ instanceID: String?) -> PlayerAttributes {
+            PlayerAttributes(uuid: uuid, name: name, type: type, version: version, host: host, port: port,
+                             password: password, useHttpCoverArt: useHttpCoverArt, manual: manual,
+                             albumGrouping: albumGrouping, coverFilename: coverFilename,
+                             outputHost: outputHost, outputPort: outputPort, instanceID: instanceID)
+        }
     }
     
     public var mediaServerModel: String = "MPD"
@@ -153,6 +166,11 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     public internal(set) var attributes: PlayerAttributes {
         didSet {
+            // Attributes are rebuilt in several places; make sure the player's identity survives that.
+            if attributes.instanceID != instanceID {
+                attributes = attributes.withInstanceID(instanceID)
+                return
+            }
             let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
             if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 name = customName
@@ -165,6 +183,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     public internal(set) var type: MPDType
     private var uuid = UUID()
+    private let instanceID: String?
     
     public private(set) var version: String {
         didSet {
@@ -220,15 +239,21 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     }
     
     private static func uniqueIDForPlayer(_ player: MPDPlayer) -> String {
-        return uniqueIDForPlayer(host: player.attributes.host, port: player.attributes.port)
+        return uniqueIDForPlayer(host: player.attributes.host, port: player.attributes.port, instanceID: player.instanceID)
+    }
+
+    public static func uniqueIDForPlayer(host: String, port: Int, instanceID: String?) -> String {
+        let id = uniqueIDForPlayer(host: host, port: port)
+        guard let instanceID else { return id }
+        return "\(id)#\(instanceID)"
     }
     
     /// The connection password is read from UserDefaults, not from the attributes, so a player created with a
     /// password (manual add, legacy migration) must have it stored there. An empty password is left alone,
     /// so a password set earlier in the player settings is never wiped.
-    public static func storePassword(_ password: String?, host: String, port: Int, userDefaults: UserDefaults) {
+    public static func storePassword(_ password: String?, host: String, port: Int, instanceID: String? = nil, userDefaults: UserDefaults) {
         guard let password, !password.isEmpty else { return }
-        userDefaults.set(password, forKey: MPDDefaultKey.password.stringValue(host: host, port: port))
+        userDefaults.set(password, forKey: MPDDefaultKey.password.stringValue(uniqueIDForPlayer(host: host, port: port, instanceID: instanceID)))
     }
     
     public static func uniqueIDForPlayer(host: String, port: Int) -> String {
@@ -286,8 +311,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public var diagnosticsInfo: [DiagnosticsItem] {
         [DiagnosticsItem(id: "id", description: uniqueID),
          DiagnosticsItem(id: "host", description: attributes.host),
-         DiagnosticsItem(id: "connect to ip address", description: userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port)) ? "Yes" : "No"),
-         DiagnosticsItem(id: "ip address", description: userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? userDefaults.string(forKey: MPDDefaultKey.resolvedIpAddress.stringValue(host: attributes.host, port: attributes.port)) ?? "Unknown"),
+         DiagnosticsItem(id: "connect to ip address", description: userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self)) ? "Yes" : "No"),
+         DiagnosticsItem(id: "ip address", description: userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(self)) ?? userDefaults.string(forKey: MPDDefaultKey.resolvedIpAddress.stringValue(self)) ?? "Unknown"),
          DiagnosticsItem(id: "port", description: "\(attributes.port)"),
          DiagnosticsItem(id: "model", description: model),
          DiagnosticsItem(id: "version", description: version),
@@ -307,6 +332,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public init(_ attributes: PlayerAttributes,
                   userDefaults: UserDefaults) {
         self.attributes = attributes
+        self.instanceID = attributes.instanceID
         self.userDefaults = userDefaults
         self.name = attributes.name
         self.version = attributes.version
@@ -314,9 +340,11 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
 
         self.commands = []
         
-        let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port))
-        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host)
-        let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(host: attributes.host, port: attributes.port)) ?? ""
+        // Per-player settings are keyed by uniqueID, so a manual copy never shares them with another player.
+        let settingsID = MPDPlayer.uniqueIDForPlayer(host: attributes.host, port: attributes.port, instanceID: attributes.instanceID)
+        let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(settingsID))
+        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(settingsID)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(settingsID)) ?? attributes.host)
+        let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(settingsID)) ?? ""
         
         self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
         self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
@@ -351,7 +379,8 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                            albumGrouping: albumGrouping,
                                            coverFilename: coverFilename,
                                            outputHost: outputHost,
-                                           outputPort: outputPort)
+                                           outputPort: outputPort,
+                                           instanceID: attributes.instanceID)
 
         if attributes.type == .chord {
             if userDefaults.value(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self)) == nil {
@@ -393,9 +422,9 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     /// from UserDefaults. Existing connections are torn down so the next operation reconnects
     /// with the new credentials. Streams exposed via `status` are preserved.
     public func applyConnectionSettingsChange() {
-        let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(host: attributes.host, port: attributes.port))
-        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(host: attributes.host, port: attributes.port)) ?? attributes.host)
-        let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(host: attributes.host, port: attributes.port)) ?? ""
+        let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self))
+        let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(self)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(self)) ?? attributes.host)
+        let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(self)) ?? ""
 
         let newMpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
         let newMpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))

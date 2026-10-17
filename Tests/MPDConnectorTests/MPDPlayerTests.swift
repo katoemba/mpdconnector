@@ -26,7 +26,7 @@
 
 import XCTest
 import ConnectorProtocol
-import MPDConnector
+@testable import MPDConnector
 
 class MPDPlayerTests: XCTestCase {
     private func decode(_ json: String) throws -> MPDPlayer.PlayerAttributes {
@@ -92,5 +92,58 @@ class MPDPlayerTests: XCTestCase {
         MPDPlayer.storePassword("", host: "nas", port: 6600, userDefaults: defaults)
 
         XCTAssertEqual(defaults.string(forKey: key), "fromSettings")
+    }
+
+    private func attributes(name: String, instanceID: String?) -> MPDPlayer.PlayerAttributes {
+        MPDPlayer.PlayerAttributes(uuid: UUID(), name: name, type: .classic, version: "0.0.0", host: "nas", port: 6600,
+                                   password: nil, useHttpCoverArt: false, manual: instanceID != nil, albumGrouping: "albumartist",
+                                   coverFilename: "", outputHost: "nas", outputPort: 0, instanceID: instanceID)
+    }
+
+    func testManualCopyHasDistinctIDAndKeepsItsName() throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let discovered = MPDPlayer(attributes(name: "Discovered", instanceID: nil), userDefaults: defaults)
+        let manual = MPDPlayer(attributes(name: "Manual", instanceID: "Manual"), userDefaults: defaults)
+
+        XCTAssertEqual(discovered.uniqueID, "nas:6600")
+        XCTAssertNotEqual(manual.uniqueID, discovered.uniqueID)
+        XCTAssertEqual(manual.name, "Manual")
+        XCTAssertEqual(try manual.playerDefinition().id, manual.uniqueID)
+        XCTAssertTrue(try manual.playerDefinition().isManual)
+    }
+
+    func testIdentitySurvivesAttributeRebuildAndPersistence() throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let manual = MPDPlayer(attributes(name: "Manual", instanceID: "Manual"), userDefaults: defaults)
+        let id = manual.uniqueID
+
+        // Rebuilding attributes without the instanceID (as the settings screen does) must not change the identity.
+        manual.attributes = attributes(name: "Manual", instanceID: nil)
+        XCTAssertEqual(manual.uniqueID, id)
+
+        let restored = try JSONDecoder().decode(MPDPlayer.PlayerAttributes.self, from: manual.encodePlayer())
+        XCTAssertEqual(MPDPlayer(restored, userDefaults: defaults).uniqueID, id)
+    }
+
+    func testSettingsAreStrictlySeparatePerPlayer() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let discovered = MPDPlayer(attributes(name: "Discovered", instanceID: nil), userDefaults: defaults)
+        let manual = MPDPlayer(attributes(name: "Manual", instanceID: "Manual"), userDefaults: defaults)
+
+        for key in [MPDDefaultKey.password, .ipAddress, .connectToIpAddress, .discoveredIpAddress, .customPlayerName, .hidden] {
+            XCTAssertNotEqual(key.stringValue(manual), key.stringValue(discovered), "\(key)")
+        }
+        // A discovered player keeps the key it has always used.
+        XCTAssertEqual(MPDDefaultKey.password.stringValue(discovered), MPDDefaultKey.password.stringValue(host: "nas", port: 6600))
+    }
+
+    func testManualCopyPasswordIsStoredUnderItsOwnKey() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        MPDPlayer.storePassword("secret", host: "nas", port: 6600, instanceID: "Manual", userDefaults: defaults)
+
+        let manual = MPDPlayer(attributes(name: "Manual", instanceID: "Manual"), userDefaults: defaults)
+        let discovered = MPDPlayer(attributes(name: "Discovered", instanceID: nil), userDefaults: defaults)
+        XCTAssertEqual(defaults.string(forKey: MPDDefaultKey.password.stringValue(manual)), "secret")
+        XCTAssertNil(defaults.string(forKey: MPDDefaultKey.password.stringValue(discovered)))
     }
 }
