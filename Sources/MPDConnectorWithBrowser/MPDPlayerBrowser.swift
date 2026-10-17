@@ -281,7 +281,8 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     /// via the event stream. Runs at most once, gated by a UserDefaults flag.
     private func migrateLegacyManualPlayersIfNeeded(predefinedPlayerIDs: Set<String>) {
         guard !userDefaults.bool(forKey: Self.legacyMigrationDoneKey) else { return }
-        userDefaults.set(true, forKey: Self.legacyMigrationDoneKey)
+        // Only flag the migration as done once it has completed, so an interrupted run is retried.
+        defer { userDefaults.set(true, forKey: Self.legacyMigrationDoneKey) }
 
         // Old format: [playerName: [String: Any]] stored under one of these keys.
         let legacyKeys = ["MPD.ManualPlayers", "mpd.browser.manualplayers"]

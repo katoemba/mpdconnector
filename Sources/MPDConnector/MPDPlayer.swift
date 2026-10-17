@@ -84,6 +84,31 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
             self.outputPort = outputPort
         }
         
+        private enum CodingKeys: String, CodingKey {
+            case uuid, type, name, version, host, port, password, manual
+            case useHttpCoverArt, albumGrouping, coverFilename, outputHost, outputPort
+        }
+
+        // Tolerant decoding: persisted players written by older versions may lack newer fields, and a player
+        // that fails to decode would silently disappear. Only host and port are essential.
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let host = try container.decode(String.self, forKey: .host)
+            self.host = host
+            self.port = try container.decode(Int.self, forKey: .port)
+            self.uuid = (try? container.decode(UUID.self, forKey: .uuid)) ?? UUID()
+            self.type = (try? container.decode(MPDType.self, forKey: .type)) ?? .classic
+            self.name = (try? container.decode(String.self, forKey: .name)) ?? host
+            self.version = (try? container.decode(String.self, forKey: .version)) ?? "0.0.0"
+            self.password = try? container.decodeIfPresent(String.self, forKey: .password)
+            self.manual = (try? container.decode(Bool.self, forKey: .manual)) ?? false
+            self.useHttpCoverArt = (try? container.decode(Bool.self, forKey: .useHttpCoverArt)) ?? false
+            self.albumGrouping = (try? container.decode(String.self, forKey: .albumGrouping)) ?? "albumartist"
+            self.coverFilename = (try? container.decode(String.self, forKey: .coverFilename)) ?? ""
+            self.outputHost = (try? container.decode(String.self, forKey: .outputHost)) ?? host
+            self.outputPort = (try? container.decode(Int.self, forKey: .outputPort)) ?? 0
+        }
+
         // identification
         public let uuid: UUID
         public let type: MPDType
