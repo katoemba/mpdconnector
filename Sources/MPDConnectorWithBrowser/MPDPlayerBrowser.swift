@@ -322,6 +322,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                     outputHost: host,
                     outputPort: 0
                 )
+                MPDPlayer.storePassword(password, host: host, port: port, userDefaults: userDefaults)
                 let player = MPDPlayer(attributes, userDefaults: userDefaults)
                 self.pushPlayerEvent(.added(player))
                 Task {
@@ -538,6 +539,7 @@ private struct ManualAddMPDPlayerView: View {
                         )
 
                         // Persist manual player, add in-memory, and dismiss
+                        MPDPlayer.storePassword(attributes.password, host: host, port: port, userDefaults: userDefaults)
                         let player = MPDPlayer(attributes, userDefaults: userDefaults)
                         onSave(player)
                         dismiss()
@@ -568,6 +570,8 @@ private struct ManualAddMPDPlayerView: View {
             outputHost: host,
             outputPort: 0
         )
+        // The connection reads the password from UserDefaults, so it must be there before testing.
+        MPDPlayer.storePassword(attributes.password, host: host, port: port, userDefaults: userDefaults)
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
 

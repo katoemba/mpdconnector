@@ -223,6 +223,14 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         return uniqueIDForPlayer(host: player.attributes.host, port: player.attributes.port)
     }
     
+    /// The connection password is read from UserDefaults, not from the attributes, so a player created with a
+    /// password (manual add, legacy migration) must have it stored there. An empty password is left alone,
+    /// so a password set earlier in the player settings is never wiped.
+    public static func storePassword(_ password: String?, host: String, port: Int, userDefaults: UserDefaults) {
+        guard let password, !password.isEmpty else { return }
+        userDefaults.set(password, forKey: MPDDefaultKey.password.stringValue(host: host, port: port))
+    }
+    
     public static func uniqueIDForPlayer(host: String, port: Int) -> String {
         return "\(host):\(port)"
     }

@@ -71,4 +71,26 @@ class MPDPlayerTests: XCTestCase {
         let player = MPDPlayer(attributes, userDefaults: UserDefaults(suiteName: UUID().uuidString)!)
         XCTAssertTrue(try player.playerDefinition().isManual)
     }
+
+    func testStorePasswordWritesTheKeyTheConnectorReads() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        MPDPlayer.storePassword("secret", host: "nas", port: 6600, userDefaults: defaults)
+        XCTAssertEqual(defaults.string(forKey: MPDDefaultKey.password.stringValue(host: "nas", port: 6600)), "secret")
+
+        // The settings screen and the player use the per-player variant of the same key.
+        let attributes = try! decode(#"{"host":"nas","port":6600}"#)
+        let player = MPDPlayer(attributes, userDefaults: defaults)
+        XCTAssertEqual(defaults.string(forKey: MPDDefaultKey.password.stringValue(player)), "secret")
+    }
+
+    func testStoreEmptyPasswordKeepsExistingPassword() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let key = MPDDefaultKey.password.stringValue(host: "nas", port: 6600)
+        defaults.set("fromSettings", forKey: key)
+
+        MPDPlayer.storePassword(nil, host: "nas", port: 6600, userDefaults: defaults)
+        MPDPlayer.storePassword("", host: "nas", port: 6600, userDefaults: defaults)
+
+        XCTAssertEqual(defaults.string(forKey: key), "fromSettings")
+    }
 }
