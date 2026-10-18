@@ -167,10 +167,12 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public internal(set) var attributes: PlayerAttributes {
         didSet {
             // Attributes are rebuilt in several places; make sure the player's identity survives that.
+            // (Assigning here doesn't call didSet again.)
             if attributes.instanceID != instanceID {
                 attributes = attributes.withInstanceID(instanceID)
-                return
             }
+            // The status builds the cover art URLs from these, so a changed setting applies right away.
+            mpdStatus.updateAttributes(attributes)
             let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
             if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 name = customName
@@ -240,6 +242,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     
     private static func uniqueIDForPlayer(_ player: MPDPlayer) -> String {
         return uniqueIDForPlayer(host: player.attributes.host, port: player.attributes.port, instanceID: player.instanceID)
+    }
+
+    /// Remove everything stored for the player with this id, such as its password and address settings.
+    public static func forgetSettings(uniqueID: String, userDefaults: UserDefaults) {
+        for key in MPDDefaultKey.allCases where key != .manualPlayers {
+            userDefaults.removeObject(forKey: key.stringValue(uniqueID))
+        }
     }
 
     public static func uniqueIDForPlayer(host: String, port: Int, instanceID: String?) -> String {
@@ -342,62 +351,49 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         
         // Per-player settings are keyed by uniqueID, so a manual copy never shares them with another player.
         let settingsID = MPDPlayer.uniqueIDForPlayer(host: attributes.host, port: attributes.port, instanceID: attributes.instanceID)
+        let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(settingsID)))
+        let resolvedType = (storedType != nil && storedType != .unknown) ? storedType! : attributes.type
+        self.type = resolvedType
+
+        // The type's defaults go in before the settings are read below, so a new player starts with them.
+        MPDPlayer.storeDefaults(for: resolvedType, settingsID: settingsID, userDefaults: userDefaults)
+
         let connectToIpAddress = userDefaults.bool(forKey: MPDDefaultKey.connectToIpAddress.stringValue(settingsID))
         let ipAddress = connectToIpAddress ? userDefaults.string(forKey: MPDDefaultKey.ipAddress.stringValue(settingsID)) ?? attributes.host : (userDefaults.string(forKey: MPDDefaultKey.discoveredIpAddress.stringValue(settingsID)) ?? attributes.host)
         let password = userDefaults.string(forKey: MPDDefaultKey.password.stringValue(settingsID)) ?? ""
-        
+
+        let useHttpCoverArt = userDefaults.object(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(settingsID)) as? Bool ?? attributes.useHttpCoverArt
+        let albumGrouping = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(settingsID)) ?? attributes.albumGrouping
+        let coverFilename = userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(settingsID)) ?? attributes.coverFilename
+        let outputHost = userDefaults.string(forKey: MPDDefaultKey.outputHost.stringValue(settingsID)) ?? attributes.outputHost
+        let outputPort = (userDefaults.object(forKey: MPDDefaultKey.outputPort.stringValue(settingsID)) as? Int) ?? attributes.outputPort
+
+        let resolvedAttributes = PlayerAttributes(uuid: attributes.uuid,
+                                                  name: attributes.name,
+                                                  type: resolvedType,
+                                                  version: attributes.version,
+                                                  host: attributes.host,
+                                                  port: attributes.port,
+                                                  password: attributes.password,
+                                                  useHttpCoverArt: useHttpCoverArt,
+                                                  manual: attributes.manual,
+                                                  albumGrouping: albumGrouping,
+                                                  coverFilename: coverFilename,
+                                                  outputHost: outputHost,
+                                                  outputPort: outputPort,
+                                                  instanceID: attributes.instanceID)
+
         self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
         self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
-        self.mpdStatus = MPDStatus.init(attributes: attributes,
+        // The status builds the cover art URLs, so it needs the settings, not just what was decoded.
+        self.mpdStatus = MPDStatus.init(attributes: resolvedAttributes,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
+        self.attributes = resolvedAttributes
         Task { [weak self] in
             guard let self else { return }
             let commands = (try? await self.mpdConnector.status.commands()) ?? []
             await MainActor.run { self.commands = commands }
-        }
-
-        let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(self)))
-        let resolvedType = (storedType != nil && storedType != .unknown) ? storedType! : attributes.type
-        self.type = resolvedType
-
-        let useHttpCoverArt = userDefaults.object(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) as? Bool ?? attributes.useHttpCoverArt
-        let albumGrouping = userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) ?? attributes.albumGrouping
-        let coverFilename = userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) ?? attributes.coverFilename
-        let outputHost = userDefaults.string(forKey: MPDDefaultKey.outputHost.stringValue(self)) ?? attributes.outputHost
-        let outputPort = (userDefaults.object(forKey: MPDDefaultKey.outputPort.stringValue(self)) as? Int) ?? attributes.outputPort
-
-        self.attributes = PlayerAttributes(uuid: attributes.uuid,
-                                           name: attributes.name,
-                                           type: resolvedType,
-                                           version: attributes.version,
-                                           host: attributes.host,
-                                           port: attributes.port,
-                                           password: attributes.password,
-                                           useHttpCoverArt: useHttpCoverArt,
-                                           manual: attributes.manual,
-                                           albumGrouping: albumGrouping,
-                                           coverFilename: coverFilename,
-                                           outputHost: outputHost,
-                                           outputPort: outputPort,
-                                           instanceID: attributes.instanceID)
-
-        if attributes.type == .chord {
-            if userDefaults.value(forKey: MPDDefaultKey.connectToIpAddress.stringValue(self)) == nil {
-                userDefaults.set(true, forKey: MPDDefaultKey.connectToIpAddress.stringValue(self))
-            }
-        }
-
-        if attributes.type == .bryston {
-            if userDefaults.value(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) == nil {
-                userDefaults.set(true, forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self))
-            }
-            if userDefaults.value(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) == nil {
-                userDefaults.set("albumartist", forKey: MPDDefaultKey.albumGrouping.stringValue(self))
-            }
-            if userDefaults.value(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) == nil {
-                userDefaults.set("bdp_front_250.jpg", forKey: MPDDefaultKey.coverPostfix.stringValue(self))
-            }
         }
 
         let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
@@ -437,6 +433,48 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         Task {
             await oldMpdConnector.closeConnection()
         }
+    }
+
+    /// Settings some types need to work well. They only fill in what the user hasn't set.
+    static func storeDefaults(for type: MPDType, settingsID: String, userDefaults: UserDefaults) {
+        func setIfMissing(_ value: Any, _ key: MPDDefaultKey) {
+            if userDefaults.object(forKey: key.stringValue(settingsID)) == nil {
+                userDefaults.set(value, forKey: key.stringValue(settingsID))
+            }
+        }
+        switch type {
+        case .chord:
+            setIfMissing(true, .connectToIpAddress)
+        case .bryston:
+            setIfMissing(true, .useHttpCoverArt)
+            setIfMissing("albumartist", .albumGrouping)
+            setIfMissing("bdp_front_250.jpg", .coverPostfix)
+        default:
+            break
+        }
+    }
+
+    /// Switch to another type, as chosen in the player settings. The type ends up in the attributes, which the
+    /// cover art URLs and the stored player definition are built from.
+    func changeType(_ type: MPDType) {
+        self.type = type
+        userDefaults.set(type.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(self))
+        MPDPlayer.storeDefaults(for: type, settingsID: uniqueID, userDefaults: userDefaults)
+        attributes = PlayerAttributes(uuid: attributes.uuid,
+                                      name: attributes.name,
+                                      type: type,
+                                      version: attributes.version,
+                                      host: attributes.host,
+                                      port: attributes.port,
+                                      password: attributes.password,
+                                      useHttpCoverArt: userDefaults.object(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(self)) as? Bool ?? attributes.useHttpCoverArt,
+                                      manual: attributes.manual,
+                                      albumGrouping: userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(self)) ?? attributes.albumGrouping,
+                                      coverFilename: userDefaults.string(forKey: MPDDefaultKey.coverPostfix.stringValue(self)) ?? attributes.coverFilename,
+                                      outputHost: attributes.outputHost,
+                                      outputPort: attributes.outputPort,
+                                      instanceID: instanceID)
+        objectWillChange.send()
     }
 
     /// Create a copy of a player

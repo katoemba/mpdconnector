@@ -37,8 +37,12 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
 
     /// Connection to a MPD Player
     private var identification = ""
-    private var attributes: MPDPlayer.PlayerAttributes
-    
+    /// Changed from the player settings while the monitoring loops read it, hence the lock (see SharedState).
+    private let attributesLock: OSAllocatedUnfairLock<MPDPlayer.PlayerAttributes>
+    private var attributes: MPDPlayer.PlayerAttributes {
+        attributesLock.withLockUnchecked { $0 }
+    }
+
     /// ConectionStatus for the player
     private var mpdIdleConnector: SwiftMPD.MPDConnector?
     private var mpdConnector: SwiftMPD.MPDConnector
@@ -92,10 +96,15 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                 identification: String = "NoID",
                 mpdConnector: SwiftMPD.MPDConnector,
                 mpdIdleConnector: SwiftMPD.MPDConnector? = nil) {
-        self.attributes = attributes
+        self.attributesLock = OSAllocatedUnfairLock(uncheckedState: attributes)
         self.identification = identification
         self.mpdConnector = mpdConnector
         self.mpdIdleConnector = mpdIdleConnector
+    }
+
+    /// The player's settings changed (e.g. its type or cover art settings).
+    func updateAttributes(_ attributes: MPDPlayer.PlayerAttributes) {
+        attributesLock.withLockUnchecked { $0 = attributes }
     }
 
     /// Cleanup connection object

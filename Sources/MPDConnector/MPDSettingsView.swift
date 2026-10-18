@@ -90,10 +90,8 @@ public struct MPDSettingsView: View {
                     .labelsHidden()
                     .accessibilityLabel(Text("Type", bundle: .module))
                     .onChange(of: selectedType) { _, newValue in
-                        // Update player when type changes
-                        player.type = newValue
-                        player.userDefaults.set(newValue.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(player))
-                        player.objectWillChange.send()
+                        guard newValue != player.type else { return }
+                        selectType(newValue)
                     }
                 }
 #else
@@ -522,9 +520,10 @@ public struct MPDSettingsView: View {
 
     private func selectType(_ type: MPDType) {
         selectedType = type
-        player.type = type
-        player.userDefaults.set(type.rawValue, forKey: MPDDefaultKey.MPDType.stringValue(player))
-        player.objectWillChange.send()
+        player.changeType(type)
+        // The new type may have filled in defaults for these.
+        useHTTPCoverArt = player.userDefaults.bool(forKey: MPDDefaultKey.useHttpCoverArt.stringValue(player))
+        albumGroupingSelection = player.userDefaults.string(forKey: MPDDefaultKey.albumGrouping.stringValue(player)) ?? "albumartist"
     }
 
     private func resetStateFromPlayer() {

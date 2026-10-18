@@ -26,7 +26,7 @@ struct DiscoveredService {
 }
 
 class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
-    private let browser = NetServiceBrowser()
+    private var browser = NetServiceBrowser()
     private var continuation: AsyncStream<DiscoveredService.ChangeType>.Continuation?
     private var resolvingServices = [NetService]()
     private var discoveredServices = Set<NetService>()
@@ -34,10 +34,16 @@ class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelega
     private var isStopped = false
     private let resolveTimeout: TimeInterval = 5.0
     private let maxRetryDelay: TimeInterval = 30.0
+    private var serviceType = ""
+    private var serviceDomain = ""
+    private var restartAttempts = 0
+    private var isRestartPending = false
 
     func discover(type: String, in domain: String = "") -> AsyncStream<DiscoveredService.ChangeType> {
         return AsyncStream { continuation in
             self.continuation = continuation
+            self.serviceType = type
+            self.serviceDomain = domain
             self.browser.delegate = self
             self.browser.searchForServices(ofType: type, inDomain: domain)
         }
@@ -59,6 +65,7 @@ class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelega
     }
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        restartAttempts = 0
         if !discoveredServices.contains(service) {
             discoveredServices.insert(service)
             service.delegate = self
@@ -137,10 +144,48 @@ class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelega
     }
 
     func netServiceBrowserDidStopSearch(_ browser: NetServiceBrowser) {
-        continuation?.finish()
+        searchEnded(browser)
     }
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String : NSNumber]) {
-        continuation?.finish()
+        searchEnded(browser)
+    }
+
+    /// A search can end without being asked to, for example when mDNSResponder restarts or the network goes away.
+    /// Nothing would be found for the rest of the session, so search again, with a growing delay while it keeps
+    /// failing. What was found before is reported as removed: it is reported again when the new search finds it.
+    private func searchEnded(_ endedBrowser: NetServiceBrowser) {
+        guard !isStopped else {
+            continuation?.finish()
+            return
+        }
+        guard endedBrowser === browser, !isRestartPending else { return }
+
+        for service in resolvingServices {
+            service.stop()
+        }
+        resolvingServices.removeAll()
+        resolveAttempts.removeAll()
+        for service in discoveredServices {
+            continuation?.yield(.removed(DiscoveredService(name: service.name,
+                                                           type: service.type,
+                                                           domain: service.domain,
+                                                           service: service,
+                                                           ipAddresses: nil)))
+        }
+        discoveredServices.removeAll()
+
+        restartAttempts += 1
+        isRestartPending = true
+        let delay = min(Double(restartAttempts) * 5.0, maxRetryDelay)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self else { return }
+            self.isRestartPending = false
+            guard !self.isStopped else { return }
+            let browser = NetServiceBrowser()
+            browser.delegate = self
+            self.browser = browser
+            browser.searchForServices(ofType: self.serviceType, inDomain: self.serviceDomain)
+        }
     }
 }

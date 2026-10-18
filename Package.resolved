@@ -1,5 +1,5 @@
 {
-  "originHash" : "a1dba216ed2a9fae6153b4a85aececac068e474d1d0a93b16ddf06ca7ef29b3f",
+  "originHash" : "196ebaed446b56c59eddf5fa3d52e1f4df725705a34b478247372335281dd474",
   "pins" : [
     {
       "identity" : "connectorprotocol",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
         "branch" : "AsyncAwait",
-        "revision" : "3925d0ee8748257925f914f338251e723331e38b"
+        "revision" : "1752d9bac54e6a15a10d94edb3ef1c03a126cd36"
       }
     },
     {

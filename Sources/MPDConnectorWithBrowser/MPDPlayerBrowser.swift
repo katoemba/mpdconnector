@@ -70,6 +70,10 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
 
     private var isListening = false
     private var discoveryTasks: [String: Task<Void, Never>] = [:]
+    /// The player each discovered service turned into, so its removal can be reported under the player's id.
+    private var discoveredPlayerIDs: [String: String] = [:]
+    /// Announcements of cached players still in progress, by player id. A token tells a task apart from a later one.
+    private var announceTasks: [String: (token: UUID, task: Task<Void, Never>)] = [:]
     private var userDefaults: UserDefaults
     
     private var mpdBrowser: AsyncServiceBrowser?
@@ -108,12 +112,14 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
 
         for definition in predefinedPlayers {
             guard definition.type == controllerType else { continue }
-            Task {
-                guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
-                _ = await player.ping()
-                try? await player.finishDiscovery()
-                pushPlayerEvent(.added(player))
+            let token = UUID()
+            let task = Task { [weak self] in
+                await self?.announce(definition)
+                if self?.announceTasks[definition.id]?.token == token {
+                    self?.announceTasks.removeValue(forKey: definition.id)
+                }
             }
+            announceTasks[definition.id] = (token, task)
         }
 
         migrateLegacyManualPlayersIfNeeded(predefinedPlayerIDs: predefinedPlayerIDs)
@@ -133,10 +139,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                         return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
                 case .removed(let service):
-                    cancelDiscovery(taskKey: "mpd:\(service.name)")
-                    // Players are keyed by host:port, so build the same key used when the player was added.
-                    pushPlayerEvent(.removed(MPDPlayer.uniqueIDForPlayer(host: service.service.hostName ?? "",
-                                                                         port: service.service.port)))
+                    serviceRemoved(taskKey: "mpd:\(service.name)")
                 }
             }
         }
@@ -159,8 +162,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                         return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
                 case .removed(let service):
-                    cancelDiscovery(taskKey: "http:\(service.name)")
-                    pushPlayerEvent(.removed(service.name))
+                    serviceRemoved(taskKey: "http:\(service.name)")
                 }
             }
         }
@@ -180,8 +182,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
                         return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
                 case .removed(let service):
-                    cancelDiscovery(taskKey: "volumio:\(service.name)")
-                    pushPlayerEvent(.removed(service.name))
+                    serviceRemoved(taskKey: "volumio:\(service.name)")
                 }
             }
         }
@@ -190,7 +191,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     /// Handle a discovered service without blocking the discovery loop. The player is announced as soon as it
     /// is created, so it shows up immediately. The slow, network-bound part (connect and finishDiscovery) runs
     /// in a per-service task, after which the player is announced again so the manager picks up its details.
-    private func handleFound(taskKey: String,
+    func handleFound(taskKey: String,
                              createPlayer: @escaping @MainActor () async throws -> (MPDPlayer, String?)?) {
         // A discovery for this service is already in flight.
         guard discoveryTasks[taskKey] == nil else { return }
@@ -199,6 +200,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             defer { self?.discoveryTasks.removeValue(forKey: taskKey) }
             do {
                 guard let (player, ipAddress) = try await createPlayer(), !Task.isCancelled, let self else { return }
+                self.discoveredPlayerIDs[taskKey] = player.uniqueID
                 self.pushPlayerEvent(.added(player))
                 await self.connect(player, ipAddress: ipAddress)
                 guard !Task.isCancelled else { return }
@@ -206,6 +208,15 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
             } catch {
                 print("Failed to create player: \(error)")
             }
+        }
+    }
+
+    /// A service went away. Players are keyed by host and port, which for moOde and Volumio is not in the service
+    /// itself, so report the removal under the id of the player the service was turned into.
+    func serviceRemoved(taskKey: String) {
+        cancelDiscovery(taskKey: taskKey)
+        if let uniqueID = discoveredPlayerIDs.removeValue(forKey: taskKey) {
+            pushPlayerEvent(.removed(uniqueID))
         }
     }
 
@@ -332,6 +343,23 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         }
     }
 
+    /// Announce a player that is known from an earlier session.
+    ///
+    /// Announcing a player counts as having seen it, which is what keeps a cached player from expiring. So a
+    /// cached player is only announced when it answers: otherwise players that are gone (another network, a
+    /// changed hostname) would stay in the list forever, and only manual players can be deleted. Manual players
+    /// are always announced, as they can't be rediscovered.
+    func announce(_ definition: PlayerDefinition) async {
+        guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
+        let isReachable = await player.ping()
+        try? await player.finishDiscovery()
+        // Cancelled when the player was deleted in the meantime: announcing it would bring it back.
+        guard !Task.isCancelled else { return }
+        if isReachable || definition.isManual || player.attributes.manual {
+            pushPlayerEvent(.added(player))
+        }
+    }
+
     /// Stop listening for players.
     public func stopListening() async {
         guard isListening == true else {
@@ -340,6 +368,9 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         
         discoveryTasks.values.forEach { $0.cancel() }
         discoveryTasks.removeAll()
+        discoveredPlayerIDs.removeAll()
+        announceTasks.values.forEach { $0.task.cancel() }
+        announceTasks.removeAll()
 
         mpdBrowser?.stopListening()
         mpdBrowser = nil
@@ -445,6 +476,26 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         try await MPDPlayer.decodePlayer(playerDefinition.typeSpecificData, userDefaults: userDefaults)
     }
 
+    /// The user deleted a manual player: forget its settings (password, address, name, ...), so that adding the
+    /// same player again starts afresh instead of silently reusing them.
+    public func playerRemoved(_ playerDefinition: ConnectorProtocol.PlayerDefinition) {
+        guard playerDefinition.type == controllerType else { return }
+        // An announcement still in progress would bring the player back.
+        announceTasks.removeValue(forKey: playerDefinition.id)?.task.cancel()
+
+        guard playerDefinition.isManual || isManualPlayer(playerDefinition) else { return }
+        MPDPlayer.forgetSettings(uniqueID: playerDefinition.id, userDefaults: userDefaults)
+    }
+
+    /// Whether a persisted player was added manually. Only reads the attributes, so it is cheap.
+    public func isManualPlayer(_ playerDefinition: ConnectorProtocol.PlayerDefinition) -> Bool {
+        guard playerDefinition.type == controllerType,
+              let attributes = try? JSONDecoder().decode(MPDPlayer.PlayerAttributes.self, from: playerDefinition.typeSpecificData) else {
+            return false
+        }
+        return attributes.manual
+    }
+
     @ViewBuilder
     public func manualAddPlayerView() -> some View {
         ManualAddMPDPlayerView(userDefaults: userDefaults) { [weak self] player in
@@ -462,7 +513,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
 private struct ManualAddMPDPlayerView: View {
     @State private var name: String = ""
     @State private var host: String = ""
-    @State private var port: Int = 6600
+    @State private var portText: String = "6600"
     @State private var type: MPDType = .classic
     @State private var password: String = ""
     @State private var isTesting = false
@@ -475,6 +526,14 @@ private struct ManualAddMPDPlayerView: View {
     let userDefaults: UserDefaults
     let onSave: (MPDPlayer) -> Void
 
+    /// The entered port, or nil when it isn't a valid one.
+    private var port: Int? {
+        guard let port = Int(portText.trimmingCharacters(in: .whitespaces)), (1...65535).contains(port) else {
+            return nil
+        }
+        return port
+    }
+
     var body: some View {
         VStack(alignment: .leading) {
             Form {
@@ -483,7 +542,13 @@ private struct ManualAddMPDPlayerView: View {
                         .textContentType(.name)
                     TextField(String(localized: "IP address or host", bundle: .module), text: $host)
                         .autocorrectionDisabled(true)
-                    TextField(String(localized: "Port", bundle: .module), value: $port, formatter: NumberFormatter())
+                    // Bound to text rather than through a formatter: a formatter only hands over the value on
+                    // Return or when the field loses focus, so tapping Test or Save straight after typing would
+                    // use the previous port.
+                    TextField(String(localized: "Port", bundle: .module), text: $portText)
+                    #if os(iOS)
+                        .keyboardType(.numberPad)
+                    #endif
                     Picker(String(localized: "Type", bundle: .module), selection: $type) {
                         Text("Classic").tag(MPDType.classic)
                         Text("Chord").tag(MPDType.chord)
@@ -496,7 +561,13 @@ private struct ManualAddMPDPlayerView: View {
                 .onChange(of: host) { _, _ in
                     resetTest()
                 }
-                .onChange(of: port) { _, _ in
+                .onChange(of: portText) { _, _ in
+                    resetTest()
+                }
+                .onChange(of: type) { _, _ in
+                    resetTest()
+                }
+                .onChange(of: password) { _, _ in
                     resetTest()
                 }
 
@@ -521,31 +592,14 @@ private struct ManualAddMPDPlayerView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(String(localized: "Save", bundle: .module)) {
-                        let attributes = MPDPlayer.PlayerAttributes(
-                            uuid: UUID(),
-                            name: name.isEmpty ? host : name,
-                            type: type,
-                            version: "0.0.0",
-                            ipAddress: host,
-                            host: host,
-                            port: port,
-                            password: password.isEmpty ? nil : password,
-                            useHttpCoverArt: false,
-                            manual: true,
-                            albumGrouping: "albumartist",
-                            coverFilename: "",
-                            outputHost: host,
-                            outputPort: 0,
-                            instanceID: name.isEmpty ? host : name
-                        )
-
-                        // Persist manual player, add in-memory, and dismiss
-                        MPDPlayer.storePassword(attributes.password, host: host, port: port, instanceID: attributes.instanceID, userDefaults: userDefaults)
-                        let player = MPDPlayer(attributes, userDefaults: userDefaults)
+                        // Every manually added player gets its own id: adding the same server again, even under a
+                        // name used before, adds a player instead of silently replacing one and inheriting its settings.
+                        guard let port else { return }
+                        let player = buildPlayer(instanceID: UUID().uuidString, port: port)
                         onSave(player)
                         dismiss()
                     }
-                    .disabled(!testSucceeded || name.isEmpty)
+                    .disabled(!testSucceeded || name.isEmpty || port == nil)
                 }
             }
         }
@@ -554,7 +608,7 @@ private struct ManualAddMPDPlayerView: View {
         }
     }
 
-    private func buildPlayer() -> MPDPlayer {
+    private func buildPlayer(instanceID: String, port: Int) -> MPDPlayer {
         let attributes = MPDPlayer.PlayerAttributes(
             uuid: UUID(),
             name: name.isEmpty ? host : name,
@@ -570,10 +624,10 @@ private struct ManualAddMPDPlayerView: View {
             coverFilename: "",
             outputHost: host,
             outputPort: 0,
-            instanceID: name.isEmpty ? host : name
+            instanceID: instanceID
         )
-        // The connection reads the password from UserDefaults, so it must be there before testing.
-        MPDPlayer.storePassword(attributes.password, host: host, port: port, instanceID: attributes.instanceID, userDefaults: userDefaults)
+        // The connection reads the password from UserDefaults, so it must be there before connecting.
+        MPDPlayer.storePassword(attributes.password, host: host, port: port, instanceID: instanceID, userDefaults: userDefaults)
         return MPDPlayer(attributes, userDefaults: userDefaults)
     }
 
@@ -584,8 +638,13 @@ private struct ManualAddMPDPlayerView: View {
         testResult = String(localized: "Testing...", bundle: .module)
         testColor = .primary
 
-        let player = buildPlayer()
+        // Test with a throwaway id, and forget what it stored (the password, and the defaults a player of the
+        // chosen type writes), so nothing of the test sticks to the player that gets saved, or to another one.
+        guard let port else { return }
+        let testID = "test-\(UUID().uuidString)"
+        let player = buildPlayer(instanceID: testID, port: port)
         let ok = await player.ping()
+        MPDPlayer.forgetSettings(uniqueID: player.uniqueID, userDefaults: userDefaults)
         if ok {
             testResult = String(localized: "Connection successful", bundle: .module)
             testColor = .green
@@ -598,27 +657,10 @@ private struct ManualAddMPDPlayerView: View {
     }
     
     private func resetTest() {
-        canTest = !host.isEmpty && port != 0
+        canTest = !host.isEmpty && port != nil
         testResult = String(localized: "Not Connected", bundle: .module)
         testColor = .secondary
         testSucceeded = false
-    }
-
-    @MainActor
-    private func savePlayer() {
-        var persistedPlayers = userDefaults.dictionary(forKey: "mpd.browser.manualplayers") as? [String: [String: Any]] ?? [:]
-        let playerName = name.isEmpty ? host : name
-        let dict: [String: Any] = [
-            "name": playerName,
-            "host": host,
-            "ipAddress": host,
-            "port": port,
-            "type": type.rawValue,
-            "password": password.isEmpty ? "" : password,
-            "useHttpCoverArt": false
-        ]
-        persistedPlayers[playerName] = dict
-        userDefaults.set(persistedPlayers, forKey: "mpd.browser.manualplayers")
     }
 }
 

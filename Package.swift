@@ -31,6 +31,6 @@ let package = Package(
                            .product(name: "SWXMLHash", package: "swxmlhash")]),
         .testTarget(
             name: "MPDConnectorTests",
-            dependencies: ["MPDConnector"])
+            dependencies: ["MPDConnector", "MPDConnectorWithBrowser"])
     ]
 )

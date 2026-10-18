@@ -146,4 +146,50 @@ class MPDPlayerTests: XCTestCase {
         XCTAssertEqual(defaults.string(forKey: MPDDefaultKey.password.stringValue(manual)), "secret")
         XCTAssertNil(defaults.string(forKey: MPDDefaultKey.password.stringValue(discovered)))
     }
+
+    // MARK: - Type defaults and type changes
+
+    private func brystonAttributes() -> MPDPlayer.PlayerAttributes {
+        MPDPlayer.PlayerAttributes(uuid: UUID(), name: "Bryston", type: .bryston, version: "0.0.0", host: "bdp", port: 6600,
+                                   password: nil, useHttpCoverArt: false, manual: true, albumGrouping: "artist",
+                                   coverFilename: "", outputHost: "bdp", outputPort: 0, instanceID: "Bryston")
+    }
+
+    func testANewPlayerStartsWithTheDefaultsOfItsType() throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let player = MPDPlayer(brystonAttributes(), userDefaults: defaults)
+
+        // Right away, not only from the next launch on: the cover art comes from the player over http.
+        XCTAssertTrue(player.attributes.useHttpCoverArt)
+        XCTAssertEqual(player.attributes.coverFilename, "bdp_front_250.jpg")
+        XCTAssertEqual(player.attributes.albumGrouping, "albumartist")
+        XCTAssertTrue(player.supportedFunctions.contains(.httpImageRetrieval))
+        let saved = try JSONDecoder().decode(MPDPlayer.PlayerAttributes.self, from: player.playerDefinition().typeSpecificData)
+        XCTAssertTrue(saved.useHttpCoverArt)
+        XCTAssertEqual(saved.coverFilename, "bdp_front_250.jpg")
+    }
+
+    func testTheDefaultsOfATypeDoNotOverrideWhatTheUserSet() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        defaults.set(false, forKey: MPDDefaultKey.useHttpCoverArt.stringValue("bdp:6600#Bryston"))
+        let player = MPDPlayer(brystonAttributes(), userDefaults: defaults)
+
+        XCTAssertFalse(player.attributes.useHttpCoverArt)
+    }
+
+    func testChangingTheTypeEndsUpInTheSavedDefinition() throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let player = MPDPlayer(attributes(name: "Manual", instanceID: "Manual"), userDefaults: defaults)
+
+        player.changeType(.bryston)
+
+        XCTAssertEqual(player.type, .bryston)
+        XCTAssertEqual(player.attributes.type, .bryston)
+        XCTAssertTrue(player.attributes.useHttpCoverArt)
+        let saved = try JSONDecoder().decode(MPDPlayer.PlayerAttributes.self, from: player.playerDefinition().typeSpecificData)
+        XCTAssertEqual(saved.type, .bryston)
+        XCTAssertEqual(saved.instanceID, "Manual")
+        // And a restart picks it up.
+        XCTAssertEqual(MPDPlayer(saved, userDefaults: defaults).type, .bryston)
+    }
 }
