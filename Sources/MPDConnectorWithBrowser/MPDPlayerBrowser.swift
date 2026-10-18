@@ -130,9 +130,9 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 case .found(let service):
                     handleFound(taskKey: "mpd:\(service.name)") { [self] in
                         let connectionData = MPDConnectionData(name: service.name,
-                                                               host: service.service.hostName ?? "",
+                                                               host: service.hostName ?? "",
                                                                ip: service.ipv4Address,
-                                                               port: service.service.port,
+                                                               port: service.port,
                                                                type: .classic)
                         return (try await createPlayerFromService(connectionData), connectionData.ip)
                     }
@@ -173,7 +173,7 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
                 case .found(let service):
                     handleFound(taskKey: "volumio:\(service.name)") { [self] in
                         let connectionData = MPDConnectionData(name: service.name,
-                                                               host: service.service.hostName ?? "",
+                                                               host: service.hostName ?? "",
                                                                ip: service.ipv4Address,
                                                                port: 6600,
                                                                type: .volumio)
@@ -402,12 +402,12 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// Fetch and parse /browserconfig.xml to determine whether this HTTP service is a moOde instance.
     /// Returns nil if the endpoint is missing/invalid.
     private func fetchMoodeConnectionData(from service: DiscoveredService) async -> MPDConnectionData? {
-        let host = service.service.hostName ?? service.ipAddresses?.first ?? ""
+        let host = service.hostName ?? service.ipAddresses?.first ?? ""
         guard !host.isEmpty else { return nil }
 
         // Prefer the resolved numeric IP for the HTTP call.
         let httpHost = service.ipAddresses?.first ?? host
-        let port = service.service.port
+        let port = service.port
 
         // Try /browserconfig.xml over HTTP.
         guard let url = URL(string: "http://\(httpHost):\(port)/browserconfig.xml") else { return nil }
@@ -439,12 +439,12 @@ public class MPDPlayerBrowser: PlayerBrowserProtocol {
     /// Fetch and parse /browserconfig.xml to determine whether this HTTP service is a moOde instance.
     /// Returns nil if the endpoint is missing/invalid.
     private func fetchVolumioConnectionData(from service: DiscoveredService) async -> MPDConnectionData? {
-        let host = service.service.hostName ?? service.ipAddresses?.first ?? ""
+        let host = service.hostName ?? service.ipAddresses?.first ?? ""
         guard !host.isEmpty else { return nil }
 
         // Prefer the resolved numeric IP for the HTTP call.
         let httpHost = service.ipAddresses?.first ?? host
-        let port = service.service.port
+        let port = service.port
         print("host \(httpHost) \(port)")
         
         // Try /browserconfig.xml over HTTP.

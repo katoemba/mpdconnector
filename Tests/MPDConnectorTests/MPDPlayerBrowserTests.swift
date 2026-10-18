@@ -1,33 +1,37 @@
 import XCTest
 import Network
+import Synchronization
 import ConnectorProtocol
 @testable import MPDConnector
 @testable import MPDConnectorWithBrowser
 
 /// The state handler of a listener is called more than once; a continuation may only be resumed once.
-private final class ResumeOnce: @unchecked Sendable {
-    private let lock = NSLock()
-    private var claimed = false
+private final class ResumeOnce: Sendable {
+    private let claimed = Mutex(false)
 
     func claim() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        if claimed {
-            return false
+        claimed.withLock { claimed in
+            if claimed {
+                return false
+            }
+            claimed = true
+            return true
         }
-        claimed = true
-        return true
     }
 }
 
 /// Just enough of an MPD server for a player to see that something is there: it sends the greeting that
 /// carries the version, and answers every command with an empty "OK".
-private final class FakeMPDServer: @unchecked Sendable {
+private final class FakeMPDServer: Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "FakeMPDServer")
-    private var connections: [NWConnection] = []
+    private let connections = Mutex<[NWConnection]>([])
+    private let delayBeforeGreeting = Mutex<TimeInterval>(0)
     /// Like a slow or busy server: it takes a while before it greets a new connection.
-    var greetingDelay: TimeInterval = 0
+    var greetingDelay: TimeInterval {
+        get { delayBeforeGreeting.withLock { $0 } }
+        set { delayBeforeGreeting.withLock { $0 = newValue } }
+    }
 
     init() throws {
         listener = try NWListener(using: .tcp, on: .any)
@@ -36,7 +40,7 @@ private final class FakeMPDServer: @unchecked Sendable {
     func start() async throws -> Int {
         listener.newConnectionHandler = { [weak self] connection in
             guard let self else { return }
-            self.connections.append(connection)
+            self.connections.withLock { $0.append(connection) }
             connection.start(queue: self.queue)
             self.queue.asyncAfter(deadline: .now() + self.greetingDelay) {
                 connection.send(content: Data("OK MPD 0.23.5\n".utf8), completion: .contentProcessed { _ in })
@@ -65,7 +69,7 @@ private final class FakeMPDServer: @unchecked Sendable {
 
     func stop() {
         listener.cancel()
-        connections.forEach { $0.cancel() }
+        connections.withLock { $0 }.forEach { $0.cancel() }
     }
 
     private func receive(on connection: NWConnection) {

@@ -30,21 +30,41 @@ import SwiftMPD
 import SwiftUI
 import os
 import os.log
+import Synchronization
 
-public class MPDStatus: StatusProtocol, @unchecked Sendable {
+public final class MPDStatus: StatusProtocol {
     static let logger = os.Logger(subsystem: "com.katoemba.mpdconnector", category: "status")
 
     /// Connection to a MPD Player
-    private var identification = ""
+    private let identification: String
     /// Changed from the player settings while the monitoring loops read it, hence the lock (see SharedState).
     private let attributesLock: OSAllocatedUnfairLock<MPDPlayer.PlayerAttributes>
     private var attributes: MPDPlayer.PlayerAttributes {
-        attributesLock.withLockUnchecked { $0 }
+        attributesLock.withLock { $0 }
     }
 
-    /// ConectionStatus for the player
-    private var mpdIdleConnector: SwiftMPD.MPDConnector?
-    private var mpdConnector: SwiftMPD.MPDConnector
+    /// What start, stop and replaceConnectors change: the connectors, and the tasks that monitor the player.
+    private struct Monitoring {
+        var mpdConnector: SwiftMPD.MPDConnector
+        var mpdIdleConnector: SwiftMPD.MPDConnector?
+        /// Whether status monitoring is running. Deliberately separate from `connectionStatus`, which
+        /// tells whether the player is actually reachable and can therefore change while monitoring.
+        var isMonitoring = false
+        var elapsedTask: Task<Void, Never>?
+        var idleTask: Task<Void, Never>?
+        var connectionObservationTask: Task<Void, Never>?
+    }
+    private let monitoring: Mutex<Monitoring>
+
+    private var mpdConnector: SwiftMPD.MPDConnector {
+        monitoring.withLock { $0.mpdConnector }
+    }
+    private var mpdIdleConnector: SwiftMPD.MPDConnector? {
+        monitoring.withLock { $0.mpdIdleConnector }
+    }
+    private var isMonitoring: Bool {
+        monitoring.withLock { $0.isMonitoring }
+    }
     
     /// The state that the monitoring loops write and the rest of the app reads, at any moment and
     /// from any thread. It is guarded by a lock: a PlayerStatus is a large struct holding strings
@@ -58,7 +78,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     }
     private let sharedState = OSAllocatedUnfairLock(initialState: SharedState())
 
-    public private(set) var statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
+    public let statusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.PlayerStatus>()
     public var playerStatus: PlayerStatus {
         get {
             sharedState.withLock { $0.playerStatus }
@@ -69,7 +89,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         }
     }
 
-    public private(set) var connectionStatusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.ConnectionStatus>()
+    public let connectionStatusStream = ConnectorProtocol.AsyncValueBroadcaster<ConnectorProtocol.ConnectionStatus>()
     public var connectionStatus: ConnectionStatus {
         get {
             sharedState.withLock { $0.connectionStatus }
@@ -79,13 +99,6 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
         }
     }
 
-    private var elapsedTask: Task<Void, Never>?
-    private var idleTask: Task<Void, Never>?
-
-    /// Whether status monitoring is running. Deliberately separate from `connectionStatus`, which
-    /// tells whether the player is actually reachable and can therefore change while monitoring.
-    private var isMonitoring = false
-    private var connectionObservationTask: Task<Void, Never>?
 
     /// Seconds to wait before re-establishing a lost monitoring connection, per consecutive
     /// failure. The last value is used for all further attempts.
@@ -95,37 +108,43 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                 identification: String = "NoID",
                 mpdConnector: SwiftMPD.MPDConnector,
                 mpdIdleConnector: SwiftMPD.MPDConnector? = nil) {
-        self.attributesLock = OSAllocatedUnfairLock(uncheckedState: attributes)
+        self.attributesLock = OSAllocatedUnfairLock(initialState: attributes)
         self.identification = identification
-        self.mpdConnector = mpdConnector
-        self.mpdIdleConnector = mpdIdleConnector
+        self.monitoring = Mutex(Monitoring(mpdConnector: mpdConnector, mpdIdleConnector: mpdIdleConnector))
     }
 
     /// The player's settings changed (e.g. its type or cover art settings).
     func updateAttributes(_ attributes: MPDPlayer.PlayerAttributes) {
-        attributesLock.withLockUnchecked { $0 = attributes }
+        attributesLock.withLock { $0 = attributes }
     }
 
     /// Cleanup connection object
     deinit {
-        elapsedTask?.cancel()
-        idleTask?.cancel()
+        monitoring.withLock { monitoring in
+            monitoring.elapsedTask?.cancel()
+            monitoring.idleTask?.cancel()
+            monitoring.connectionObservationTask?.cancel()
+        }
         disconnectFromMPD()
     }
 
     public func start() {
-        guard isMonitoring == false, let mpdIdleConnector else {
-            return
+        let idleConnector = monitoring.withLock { monitoring -> SwiftMPD.MPDConnector? in
+            guard monitoring.isMonitoring == false, let idleConnector = monitoring.mpdIdleConnector else {
+                return nil
+            }
+            monitoring.isMonitoring = true
+            return idleConnector
         }
+        guard let idleConnector else { return }
 
-        isMonitoring = true
         observeConnectionState()
-        startIdleLoop(with: mpdIdleConnector)
+        startIdleLoop(with: idleConnector)
         startElapsedLoop()
     }
 
     private func startElapsedLoop() {
-        elapsedTask = Task { [weak self] in
+        let task = Task { [weak self] in
             var counter = 0
             while (Task.isCancelled == false) {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -143,17 +162,23 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                 }
             }
         }
+        monitoring.withLock { monitoring in
+            monitoring.elapsedTask?.cancel()
+            monitoring.elapsedTask = task
+        }
     }
     
     /// Stop monitoring status changes on a player, and close the active connections
     public func stop() {
-        isMonitoring = false
-        connectionObservationTask?.cancel()
-        connectionObservationTask = nil
-        elapsedTask?.cancel()
-        elapsedTask = nil
-        idleTask?.cancel()
-        idleTask = nil
+        monitoring.withLock { monitoring in
+            monitoring.isMonitoring = false
+            monitoring.connectionObservationTask?.cancel()
+            monitoring.connectionObservationTask = nil
+            monitoring.elapsedTask?.cancel()
+            monitoring.elapsedTask = nil
+            monitoring.idleTask?.cancel()
+            monitoring.idleTask = nil
+        }
         setConnectionStatus(.offline)
 
         // Note that statusStream is deliberately left in place: subscribers are long-lived and
@@ -170,8 +195,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Failing to recover here means no more status updates at all, so the loop must never end
     /// on its own.
     private func startIdleLoop(with idleConnector: SwiftMPD.MPDConnector) {
-        idleTask?.cancel()
-        idleTask = Task { [weak self] in
+        let task = Task { [weak self] in
             var failures = 0
 
             while Task.isCancelled == false {
@@ -204,6 +228,10 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
                 }
             }
         }
+        monitoring.withLock { monitoring in
+            monitoring.idleTask?.cancel()
+            monitoring.idleTask = task
+        }
     }
 
     /// Report the player as unreachable and drop the monitoring connection, so the next command
@@ -226,18 +254,21 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Only the monitoring connection is observed, as that is the one that is meant to stay open;
     /// the command connection is closed and reopened as part of normal operation.
     private func observeConnectionState() {
-        connectionObservationTask?.cancel()
-        connectionObservationTask = nil
-
         // The stream is requested here, not in the task, so no change is missed in between.
-        guard let connectionChanges = mpdIdleConnector?.connectedStatus else { return }
-        connectionObservationTask = Task { [weak self] in
-            for await connected in connectionChanges {
-                guard let self else { return }
-                guard self.isMonitoring, connected == false else { continue }
+        let connectionChanges = mpdIdleConnector?.connectedStatus
+        let task = connectionChanges.map { connectionChanges in
+            Task { [weak self] in
+                for await connected in connectionChanges {
+                    guard let self else { return }
+                    guard self.isMonitoring, connected == false else { continue }
 
-                self.setConnectionStatus(.offline)
+                    self.setConnectionStatus(.offline)
+                }
             }
+        }
+        monitoring.withLock { monitoring in
+            monitoring.connectionObservationTask?.cancel()
+            monitoring.connectionObservationTask = task
         }
     }
 
@@ -293,14 +324,17 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Swap in new connectors (for example after the user changes the password) without
     /// tearing down the existing status/connection streams that views are subscribed to.
     public func replaceConnectors(mpdConnector: SwiftMPD.MPDConnector, mpdIdleConnector: SwiftMPD.MPDConnector?) {
-        let oldIdleConnector = self.mpdIdleConnector
-        self.mpdConnector = mpdConnector
-        self.mpdIdleConnector = mpdIdleConnector
+        let (oldIdleConnector, wasMonitoring) = monitoring.withLock { monitoring in
+            let oldIdleConnector = monitoring.mpdIdleConnector
+            monitoring.mpdConnector = mpdConnector
+            monitoring.mpdIdleConnector = mpdIdleConnector
+            return (oldIdleConnector, monitoring.isMonitoring)
+        }
 
-        guard isMonitoring else { return }
+        guard wasMonitoring else { return }
 
         // Closing the old connection breaks the in-flight idle, so the previous loop exits.
-        idleTask?.cancel()
+        monitoring.withLock { $0.idleTask?.cancel() }
         Task {
             await oldIdleConnector?.closeConnection()
         }

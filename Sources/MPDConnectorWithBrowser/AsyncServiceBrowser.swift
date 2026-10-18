@@ -7,9 +7,7 @@
 
 import Foundation
 
-/// `@unchecked Sendable`: the `NetService` is only ever used on the main thread, where the browser creates it,
-/// and the other members are immutable values.
-struct DiscoveredService: @unchecked Sendable {
+struct DiscoveredService: Sendable {
     enum ChangeType: Sendable {
         case found(DiscoveredService)
         case removed(DiscoveredService)
@@ -18,7 +16,8 @@ struct DiscoveredService: @unchecked Sendable {
     let name: String
     let type: String
     let domain: String
-    let service: NetService
+    let hostName: String?
+    let port: Int
     let ipAddresses: [String]?
 
     /// First resolved IPv4 address. IPv6 link-local addresses lack a scope id, so they are not usable for connecting.
@@ -109,7 +108,8 @@ final class AsyncServiceBrowser: NSObject, @preconcurrency NetServiceBrowserDele
                 name: service.name,
                 type: service.type,
                 domain: service.domain,
-                service: service,
+                hostName: service.hostName,
+                port: service.port,
                 ipAddresses: nil
             )
             continuation?.yield(.removed(result))
@@ -134,7 +134,8 @@ final class AsyncServiceBrowser: NSObject, @preconcurrency NetServiceBrowserDele
                 name: service.name,
                 type: service.type,
                 domain: service.domain,
-                service: service,
+                hostName: service.hostName,
+                port: service.port,
                 ipAddresses: ipAddresses
             )
             continuation?.yield(.found(result))
@@ -175,7 +176,8 @@ final class AsyncServiceBrowser: NSObject, @preconcurrency NetServiceBrowserDele
             continuation?.yield(.removed(DiscoveredService(name: service.name,
                                                            type: service.type,
                                                            domain: service.domain,
-                                                           service: service,
+                                                           hostName: service.hostName,
+                                                           port: service.port,
                                                            ipAddresses: nil)))
         }
         discoveredServices.removeAll()
