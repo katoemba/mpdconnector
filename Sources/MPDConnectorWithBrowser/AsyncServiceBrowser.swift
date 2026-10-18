@@ -7,8 +7,10 @@
 
 import Foundation
 
-struct DiscoveredService {
-    enum ChangeType {
+/// `@unchecked Sendable`: the `NetService` is only ever used on the main thread, where the browser creates it,
+/// and the other members are immutable values.
+struct DiscoveredService: @unchecked Sendable {
+    enum ChangeType: Sendable {
         case found(DiscoveredService)
         case removed(DiscoveredService)
     }
@@ -25,7 +27,10 @@ struct DiscoveredService {
     }
 }
 
-class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
+/// NetService calls its delegates on the run loop it is scheduled on, which is the main one: the browser is
+/// started from the main actor.
+@MainActor
+final class AsyncServiceBrowser: NSObject, @preconcurrency NetServiceBrowserDelegate, @preconcurrency NetServiceDelegate {
     private var browser = NetServiceBrowser()
     private var continuation: AsyncStream<DiscoveredService.ChangeType>.Continuation?
     private var resolvingServices = [NetService]()
@@ -122,7 +127,7 @@ class AsyncServiceBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelega
                     let sockaddr = pointer.baseAddress?.assumingMemoryBound(to: sockaddr.self)
                     getnameinfo(sockaddr, socklen_t(addressData.count), &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST)
                 }
-                return String(cString: hostname)
+                return String(decoding: hostname.prefix(while: { $0 != 0 }).map { UInt8(bitPattern: $0) }, as: UTF8.self)
             }
             
             let result = DiscoveredService(

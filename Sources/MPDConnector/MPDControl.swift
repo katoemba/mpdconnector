@@ -29,8 +29,8 @@ import ConnectorProtocol
 import SwiftMPD
 
 final public class MPDControl: ControlProtocol {
-    private var identification = ""
-    private var attributes: MPDPlayer.PlayerAttributes
+    private let identification: String
+    private let attributes: MPDPlayer.PlayerAttributes
     private let mpdConnector: SwiftMPD.MPDConnector
     
     public init(attributes: MPDPlayer.PlayerAttributes,

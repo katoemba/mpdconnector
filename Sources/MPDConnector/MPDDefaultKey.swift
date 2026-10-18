@@ -5,7 +5,7 @@
 //  Created by Berrie Kremers on 26/12/2025.
 //
 
-public enum MPDDefaultKey: String, CaseIterable {
+public enum MPDDefaultKey: String, CaseIterable, Sendable {
     case coverHttpPort = "MPD.Uri.Port"
     case coverPrefix = "MPD.Uri.Prefix"
     case coverPostfix = "MPD.Uri.Postfix"

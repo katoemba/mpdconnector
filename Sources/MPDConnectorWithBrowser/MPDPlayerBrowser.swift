@@ -40,7 +40,7 @@ enum MPDError: Error {
 
 /// Class to monitor mpdPlayers appearing and disappearing from the network.
 @MainActor
-public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
+public class MPDPlayerBrowser: PlayerBrowserProtocol {
     struct MPDConnectionData {
         let name: String
         let host: String
@@ -61,12 +61,14 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
         }
     }
     
-    public var controllerType: String {
+    // The synchronous requirements of PlayerBrowserProtocol are not main actor isolated, so the members that
+    // satisfy them are `nonisolated`: they only touch immutable values, or hop to the main actor themselves.
+    public nonisolated var controllerType: String {
         MPDPlayer.controllerType
     }
     
-    public var playerEventStream: AsyncStream<ConnectorProtocol.PlayerBrowserEvent>
-    private var playerEventContinuation: AsyncStream<ConnectorProtocol.PlayerBrowserEvent>.Continuation?
+    public nonisolated let playerEventStream: AsyncStream<ConnectorProtocol.PlayerBrowserEvent>
+    private let playerEventContinuation: AsyncStream<ConnectorProtocol.PlayerBrowserEvent>.Continuation
 
     private var isListening = false
     private var discoveryTasks: [String: Task<Void, Never>] = [:]
@@ -89,11 +91,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
 
     public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
-        var continuation: AsyncStream<ConnectorProtocol.PlayerBrowserEvent>.Continuation?
-        self.playerEventStream = AsyncStream { streamContinuation in
-            continuation = streamContinuation
-        }
-        self.playerEventContinuation = continuation
+        (self.playerEventStream, self.playerEventContinuation) = AsyncStream.makeStream(of: ConnectorProtocol.PlayerBrowserEvent.self)
     }
     
     /// Start listening for players on the local domain.
@@ -350,7 +348,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     /// changed hostname) would stay in the list forever, and only manual players can be deleted. Manual players
     /// are always announced, as they can't be rediscovered.
     func announce(_ definition: PlayerDefinition) async {
-        guard let player = try? await MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
+        guard let player = try? MPDPlayer.decodePlayer(definition.typeSpecificData, userDefaults: userDefaults) else { return }
         let isReachable = await player.ping()
         try? await player.finishDiscovery()
         // Cancelled when the player was deleted in the meantime: announcing it would bring it back.
@@ -396,7 +394,7 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     }
     
     private func pushPlayerEvent(_ event: ConnectorProtocol.PlayerBrowserEvent) {
-        playerEventContinuation?.yield(event)
+        playerEventContinuation.yield(event)
     }
 
     // MARK: - moOde discovery helpers
@@ -473,22 +471,25 @@ public class MPDPlayerBrowser: @preconcurrency PlayerBrowserProtocol {
     }
     
     public func decodePlayer(_ playerDefinition: ConnectorProtocol.PlayerDefinition) async throws -> any ConnectorProtocol.PlayerProtocol {
-        try await MPDPlayer.decodePlayer(playerDefinition.typeSpecificData, userDefaults: userDefaults)
+        try MPDPlayer.decodePlayer(playerDefinition.typeSpecificData, userDefaults: userDefaults)
     }
 
     /// The user deleted a manual player: forget its settings (password, address, name, ...), so that adding the
     /// same player again starts afresh instead of silently reusing them.
-    public func playerRemoved(_ playerDefinition: ConnectorProtocol.PlayerDefinition) {
-        guard playerDefinition.type == controllerType else { return }
-        // An announcement still in progress would bring the player back.
-        announceTasks.removeValue(forKey: playerDefinition.id)?.task.cancel()
+    public nonisolated func playerRemoved(_ playerDefinition: ConnectorProtocol.PlayerDefinition) {
+        // Called by the player manager, which runs on the main actor.
+        MainActor.assumeIsolated {
+            guard playerDefinition.type == controllerType else { return }
+            // An announcement still in progress would bring the player back.
+            announceTasks.removeValue(forKey: playerDefinition.id)?.task.cancel()
 
-        guard playerDefinition.isManual || isManualPlayer(playerDefinition) else { return }
-        MPDPlayer.forgetSettings(uniqueID: playerDefinition.id, userDefaults: userDefaults)
+            guard playerDefinition.isManual || isManualPlayer(playerDefinition) else { return }
+            MPDPlayer.forgetSettings(uniqueID: playerDefinition.id, userDefaults: userDefaults)
+        }
     }
 
     /// Whether a persisted player was added manually. Only reads the attributes, so it is cheap.
-    public func isManualPlayer(_ playerDefinition: ConnectorProtocol.PlayerDefinition) -> Bool {
+    public nonisolated func isManualPlayer(_ playerDefinition: ConnectorProtocol.PlayerDefinition) -> Bool {
         guard playerDefinition.type == controllerType,
               let attributes = try? JSONDecoder().decode(MPDPlayer.PlayerAttributes.self, from: playerDefinition.typeSpecificData) else {
             return false

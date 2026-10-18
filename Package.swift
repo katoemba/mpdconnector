@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "MPDConnector",
     defaultLocalization: "en",
-    platforms: [.macOS(.v14), .iOS(.v17), .watchOS(.v10), .tvOS(.v17)],
+    platforms: [.macOS(.v15), .iOS(.v18), .watchOS(.v11), .tvOS(.v18)],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
         .library(name: "MPDConnector", targets: ["MPDConnector"]),
@@ -14,8 +14,8 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "AsyncAwait"),
-        .package(url: "https://github.com/katoemba/SwiftMPD.git", branch: "main"),
+        .package(url: "https://github.com/katoemba/connectorprotocol.git", branch: "Swift6"),
+        .package(url: "https://github.com/katoemba/SwiftMPD.git", branch: "swift-6"),
         .package(url: "https://github.com/drmohundro/SWXMLHash.git", .upToNextMajor(from: "7.0.0"))
     ],
     targets: [

@@ -33,7 +33,7 @@ enum ConnectionError: Error {
     case internalError
 }
 
-public enum MPDType: Int, Codable, CaseIterable {
+public enum MPDType: Int, Codable, CaseIterable, Sendable {
     case unknown = 0
     case classic = 1
     case volumio = 3
@@ -66,8 +66,11 @@ public enum MPDType: Int, Codable, CaseIterable {
     }
 }
 
-public class MPDPlayer: PlayerProtocol, ObservableObject {
-    public struct PlayerAttributes: Codable {
+/// `@unchecked Sendable`: a player is handed to tasks and other threads, while the settings views change it from the
+/// main thread. The state that changes after `init` (`_name`, `_attributes`, `_type`, `_version`, `_commands`,
+/// `_connectionWarning` and the two connectors) is guarded by `stateLock`; everything else is set once in `init`.
+public final class MPDPlayer: PlayerProtocol, ObservableObject, @unchecked Sendable {
+    public struct PlayerAttributes: Codable, Sendable {
         public init(uuid: UUID, name: String, type: MPDType, version: String, ipAddress: String? = nil, host: String, port: Int, password: String?, useHttpCoverArt: Bool, manual: Bool, albumGrouping: String, coverFilename: String, outputHost: String, outputPort: Int, instanceID: String? = nil) {
             self.uuid = uuid
             self.name = name
@@ -142,11 +145,13 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         }
     }
     
-    public var mediaServerModel: String = "MPD"
+    private let stateLock = NSLock()
+
+    public let mediaServerModel: String = "MPD"
     
-    public var mediaAvailable: Bool = true
+    public let mediaAvailable: Bool = true
     
-    public var mediaServers: [BrowseProtocol] = []
+    public let mediaServers: [BrowseProtocol] = []
     
     public func selectMediaServer(_ mediaServer: BrowseProtocol, source: ConnectorProtocol.SourceType) {
     }
@@ -157,42 +162,59 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     public var deviceName: String {
         return attributes.name
     }
-    @Published public var name: String
+    private var _name: String
+    /// Changes are announced to SwiftUI by hand, as `@Published` storage is not safe to read from other threads.
+    public var name: String {
+        get { stateLock.withLock { _name } }
+        set {
+            objectWillChange.send()
+            stateLock.withLock { _name = newValue }
+        }
+    }
 
     public var controllerType: String {
         return MPDPlayer.controllerType
     }
-    public private(set) var discoverMode = DiscoverMode.automatic
+    public let discoverMode = DiscoverMode.automatic
     
+    private var _attributes: PlayerAttributes
     public internal(set) var attributes: PlayerAttributes {
-        didSet {
+        get { stateLock.withLock { _attributes } }
+        set {
             // Attributes are rebuilt in several places; make sure the player's identity survives that.
-            // (Assigning here doesn't call didSet again.)
-            if attributes.instanceID != instanceID {
-                attributes = attributes.withInstanceID(instanceID)
+            var newAttributes = newValue
+            if newAttributes.instanceID != instanceID {
+                newAttributes = newAttributes.withInstanceID(instanceID)
             }
+            stateLock.withLock { _attributes = newAttributes }
             // The status builds the cover art URLs from these, so a changed setting applies right away.
-            mpdStatus.updateAttributes(attributes)
+            mpdStatus.updateAttributes(newAttributes)
             let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
             if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 name = customName
             }
             else {
-                name = attributes.name
+                name = newAttributes.name
             }
         }
     }
     
-    public internal(set) var type: MPDType
-    private var uuid = UUID()
+    private var _type: MPDType
+    public internal(set) var type: MPDType {
+        get { stateLock.withLock { _type } }
+        set { stateLock.withLock { _type = newValue } }
+    }
     private let instanceID: String?
     
+    private var _version: String
     public private(set) var version: String {
-        didSet {
+        get { stateLock.withLock { _version } }
+        set {
+            stateLock.withLock { _version = newValue }
             attributes = MPDPlayer.PlayerAttributes(uuid: attributes.uuid,
                                                     name: attributes.name,
                                                     type: attributes.type,
-                                                    version: version,
+                                                    version: newValue,
                                                     host: attributes.host,
                                                     port: attributes.port,
                                                     password: attributes.password,
@@ -214,22 +236,38 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         return userDefaults.bool(forKey: MPDDefaultKey.hidden.stringValue(self))
     }
 
-    public private(set) var connectionWarning: String?
+    private var _connectionWarning: String?
+    public private(set) var connectionWarning: String? {
+        get { stateLock.withLock { _connectionWarning } }
+        set { stateLock.withLock { _connectionWarning = newValue } }
+    }
     
-    internal private(set) var mpdConnector: SwiftMPD.MPDConnector
-    private var mpdIdleConnector: SwiftMPD.MPDConnector
+    private var _mpdConnector: SwiftMPD.MPDConnector
+    internal private(set) var mpdConnector: SwiftMPD.MPDConnector {
+        get { stateLock.withLock { _mpdConnector } }
+        set { stateLock.withLock { _mpdConnector = newValue } }
+    }
+    private var _mpdIdleConnector: SwiftMPD.MPDConnector
+    private var mpdIdleConnector: SwiftMPD.MPDConnector {
+        get { stateLock.withLock { _mpdIdleConnector } }
+        set { stateLock.withLock { _mpdIdleConnector = newValue } }
+    }
     
     public var description: String {
         return type.description + " " + version
     }
     
-    private var commands: [String]
+    private var _commands: [String]
+    private var commands: [String] {
+        get { stateLock.withLock { _commands } }
+        set { stateLock.withLock { _commands = newValue } }
+    }
     public var supportedFunctions: [Functions] {
         return [.playRecursiveFolder, .repeatSingle, .consume, .radio, .randomSongs, .randomAlbums, .composers, .performers, .conductors, .quality, .recentlyAddedAlbums, .stream, .playlists, .volumeAdjustment] + (commands.contains("albumart") ? [.binaryImageRetrieval] : [])  + (commands.contains("readpicture") ? [.embeddedImageRetrieval] : []) + (attributes.useHttpCoverArt ? [.httpImageRetrieval] : [])
     }
     
     /// Current status
-    private var mpdStatus: MPDStatus
+    private let mpdStatus: MPDStatus
     public var status: StatusProtocol {
         return mpdStatus
     }
@@ -279,7 +317,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         return try JSONEncoder().encode(attributes)
     }
     
-    public static func decodePlayer(_ data: Data, userDefaults: UserDefaults) async throws -> Self {
+    public static func decodePlayer(_ data: Data, userDefaults: UserDefaults) throws -> Self {
         let decodedPlayer = try JSONDecoder().decode(PlayerAttributes.self, from: data)
         return MPDPlayer(decodedPlayer, userDefaults: userDefaults) as! Self
     }
@@ -340,20 +378,20 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
     ///   - password: Password to use when connection, default is ""
     public init(_ attributes: PlayerAttributes,
                   userDefaults: UserDefaults) {
-        self.attributes = attributes
+        self._attributes = attributes
         self.instanceID = attributes.instanceID
         self.userDefaults = userDefaults
-        self.name = attributes.name
-        self.version = attributes.version
-        self.type = attributes.type
+        self._name = attributes.name
+        self._version = attributes.version
+        self._type = attributes.type
 
-        self.commands = []
+        self._commands = []
         
         // Per-player settings are keyed by uniqueID, so a manual copy never shares them with another player.
         let settingsID = MPDPlayer.uniqueIDForPlayer(host: attributes.host, port: attributes.port, instanceID: attributes.instanceID)
         let storedType = MPDType(rawValue: userDefaults.integer(forKey: MPDDefaultKey.MPDType.stringValue(settingsID)))
         let resolvedType = (storedType != nil && storedType != .unknown) ? storedType! : attributes.type
-        self.type = resolvedType
+        self._type = resolvedType
 
         // The type's defaults go in before the settings are read below, so a new player starts with them.
         MPDPlayer.storeDefaults(for: resolvedType, settingsID: settingsID, userDefaults: userDefaults)
@@ -383,13 +421,15 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
                                                   outputPort: outputPort,
                                                   instanceID: attributes.instanceID)
 
-        self.mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
-        self.mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+        let mpdConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+        let mpdIdleConnector = MPDConnector(MPDDeviceSettings(ipAddress: ipAddress, port: attributes.port, password: password, connectTimeout: 3, uuid: attributes.uuid, playerName: attributes.name))
+        self._mpdConnector = mpdConnector
+        self._mpdIdleConnector = mpdIdleConnector
         // The status builds the cover art URLs, so it needs the settings, not just what was decoded.
         self.mpdStatus = MPDStatus.init(attributes: resolvedAttributes,
                                         mpdConnector: mpdConnector,
                                         mpdIdleConnector: mpdIdleConnector)
-        self.attributes = resolvedAttributes
+        self._attributes = resolvedAttributes
         Task { [weak self] in
             guard let self else { return }
             let commands = (try? await self.mpdConnector.status.commands()) ?? []
@@ -398,7 +438,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
 
         let customName = userDefaults.string(forKey: MPDDefaultKey.customPlayerName.stringValue(self))
         if let customName = customName, !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            self.name = customName
+            self._name = customName
         }
     }
     
@@ -535,7 +575,7 @@ public class MPDPlayer: PlayerProtocol, ObservableObject {
         await mpdConnector.ping(close: true)
     }
     
-    @ViewBuilder
+    @MainActor @ViewBuilder
     public func settingsView(deleteAction: ((any PlayerProtocol) -> ())?,
                              hideAction: ((any PlayerProtocol) -> ())?) -> some View {
         MPDSettingsView(player: self, deleteAction: deleteAction, hideAction: hideAction)

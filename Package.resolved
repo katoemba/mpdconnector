@@ -1,13 +1,13 @@
 {
-  "originHash" : "196ebaed446b56c59eddf5fa3d52e1f4df725705a34b478247372335281dd474",
+  "originHash" : "5b59d0589debaf9e271237d6ec9f562ccf10913cfd7f30f6ec08f3ddfdeccdc1",
   "pins" : [
     {
       "identity" : "connectorprotocol",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/katoemba/connectorprotocol.git",
       "state" : {
-        "branch" : "AsyncAwait",
-        "revision" : "1752d9bac54e6a15a10d94edb3ef1c03a126cd36"
+        "branch" : "Swift6",
+        "revision" : "2ede204f6e2a9697f97ec111a92bf35f2bc31f53"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/katoemba/SwiftMPD.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "8e6af53053e474aaa44a7803812416af8cf16c10"
+        "branch" : "swift-6",
+        "revision" : "d29684b6fe9d43c6c17e8de4d5d8b439747fb1c7"
       }
     },
     {

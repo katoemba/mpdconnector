@@ -27,7 +27,6 @@
 import Foundation
 import ConnectorProtocol
 import SwiftMPD
-import Combine
 import SwiftUI
 import os
 import os.log
@@ -86,7 +85,7 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Whether status monitoring is running. Deliberately separate from `connectionStatus`, which
     /// tells whether the player is actually reachable and can therefore change while monitoring.
     private var isMonitoring = false
-    private var connectionObservers = Set<AnyCancellable>()
+    private var connectionObservationTask: Task<Void, Never>?
 
     /// Seconds to wait before re-establishing a lost monitoring connection, per consecutive
     /// failure. The last value is used for all further attempts.
@@ -149,7 +148,8 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Stop monitoring status changes on a player, and close the active connections
     public func stop() {
         isMonitoring = false
-        connectionObservers.removeAll()
+        connectionObservationTask?.cancel()
+        connectionObservationTask = nil
         elapsedTask?.cancel()
         elapsedTask = nil
         idleTask?.cancel()
@@ -226,15 +226,19 @@ public class MPDStatus: StatusProtocol, @unchecked Sendable {
     /// Only the monitoring connection is observed, as that is the one that is meant to stay open;
     /// the command connection is closed and reopened as part of normal operation.
     private func observeConnectionState() {
-        connectionObservers.removeAll()
+        connectionObservationTask?.cancel()
+        connectionObservationTask = nil
 
-        mpdIdleConnector?.connectedStatus
-            .sink { [weak self] connected in
-                guard let self, self.isMonitoring, connected == false else { return }
+        // The stream is requested here, not in the task, so no change is missed in between.
+        guard let connectionChanges = mpdIdleConnector?.connectedStatus else { return }
+        connectionObservationTask = Task { [weak self] in
+            for await connected in connectionChanges {
+                guard let self else { return }
+                guard self.isMonitoring, connected == false else { continue }
 
                 self.setConnectionStatus(.offline)
             }
-            .store(in: &connectionObservers)
+        }
     }
 
     private func setConnectionStatus(_ status: ConnectionStatus) {

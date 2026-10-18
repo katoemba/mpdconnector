@@ -38,13 +38,12 @@ extension Array where Element:Hashable {
 }
 
 final public class MPDBrowse: BrowseProtocol {
-    public var cacheStatus: String?
+    public let cacheStatus: String? = nil
 
-    public var name = "mpd"
+    public let name = "mpd"
     
-    private static var operationQueue: OperationQueue?
-    private var identification = ""
-    private var attributes: MPDPlayer.PlayerAttributes
+    private let identification: String
+    private let attributes: MPDPlayer.PlayerAttributes
     private let mpdConnector: SwiftMPD.MPDConnector
 
     public init(attributes: MPDPlayer.PlayerAttributes,

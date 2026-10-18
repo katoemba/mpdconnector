@@ -86,15 +86,15 @@ final class MPDPlayerBrowserTests: XCTestCase {
     private var defaults: UserDefaults!
     private var suiteName = ""
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         suiteName = "MPDPlayerBrowserTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         defaults.removePersistentDomain(forName: suiteName)
-        super.tearDown()
+        try await super.tearDown()
     }
 
     private func definition(name: String, host: String, port: Int, manual: Bool) throws -> PlayerDefinition {
